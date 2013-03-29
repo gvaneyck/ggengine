@@ -1,0 +1,6 @@
+{
+"args":["one", "two"],
+"code":"
+println 'test'
+"
+}
