@@ -1,0 +1,7 @@
+{
+"args":["one", "two"],
+"code":"
+println 'test4'
+testDir.test4c()
+"
+}
