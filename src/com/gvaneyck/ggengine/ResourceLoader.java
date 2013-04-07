@@ -10,7 +10,7 @@ import com.gvaneyck.util.json.JSON;
 import com.gvaneyck.util.json.ObjectMap;
 
 public class ResourceLoader {
-	private String actionDir = "scripts";
+	private String actionDir = "actions";
 	
 	private List<Action> actions;
 	
