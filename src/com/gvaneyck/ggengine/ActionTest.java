@@ -5,17 +5,16 @@ import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ActionTest {
 	public static void main(String[] args) {
 		ResourceLoader resources = new ResourceLoader();
 		resources.loadResources();
-		List<Action> actions = resources.getActions();
+		Map<String, Action> actions = resources.getActions();
 		
 		StringBuilder scriptText = new StringBuilder();
-		for (Action action : actions) {
+		for (Action action : actions.values()) {
 			scriptText.append(action.getDefinition());
 			scriptText.append("\n");
 		}
@@ -30,7 +29,7 @@ public class ActionTest {
 		Script executor = shell.parse(scriptText.toString());
 		
 		// Test run all the functions
-		for (Action action : actions) {
+		for (Action action : actions.values()) {
 			System.out.println("--------");
 			System.out.println(action.getName() + ":");
 			String[] args2 = null;

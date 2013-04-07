@@ -2,8 +2,8 @@ package com.gvaneyck.ggengine;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.gvaneyck.util.FileUtils;
 import com.gvaneyck.util.json.JSON;
@@ -13,7 +13,7 @@ import com.gvaneyck.util.json.ObjectMap;
 public class ResourceLoader {
 	private String actionDir = "actions";
 	
-	private List<Action> actions;
+	private Map<String, Action> actions;
 	
 	public ResourceLoader() {
 		
@@ -25,7 +25,7 @@ public class ResourceLoader {
 		}
 	}
 	
-	public List<Action> getActions() {
+	public Map<String, Action> getActions() {
 		return actions;
 	}
 	
@@ -33,23 +33,23 @@ public class ResourceLoader {
 		actions = loadActions(new File(actionDir));
 	}
 	
-	private List<Action> loadActions(File dir) {
+	private Map<String, Action> loadActions(File dir) {
 		return loadActions(dir, "", true);
 	}
 	
-	private List<Action> loadActions(File dir, String prefix, boolean recurse) {
-		List<Action> actions = new ArrayList<Action>();
+	private Map<String, Action> loadActions(File dir, String prefix, boolean recurse) {
+		Map<String, Action> actions = new HashMap<String, Action>();
 		
 		for (File file : dir.listFiles()) {
 			if (file.isDirectory() && recurse) {
 				String namePrefix = file.getName() + "_";
-				actions.addAll(loadActions(file, namePrefix, false));
+				actions.putAll(loadActions(file, namePrefix, false));
 			}
 			else if (file.isFile() && file.getName().endsWith(".act")) {
 				try {
 					ObjectMap data = (ObjectMap)JSON.parse(FileUtils.readFile(file));
-					String name = file.getName().substring(0, file.getName().length() - 4);
-					actions.add(Action.loadAction(data, prefix + name));				
+					String name = prefix + file.getName().substring(0, file.getName().length() - 4);
+					actions.put(name, Action.loadAction(data, name));				
 				}
 				catch (IOException e) {
 					System.out.println("Error when reading " + file.getName());
