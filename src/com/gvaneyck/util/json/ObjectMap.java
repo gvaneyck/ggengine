@@ -1,5 +1,6 @@
 package com.gvaneyck.util.json;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -81,6 +82,18 @@ public class ObjectMap extends HashMap<String, Object> {
 	 */
 	public Object[] getArray(String key) {
 		return (Object[])get(key);
+	}
+	
+	/**
+	 * Convenience for retrieving an array of a specific type
+	 * 
+	 * @param key The key of the array
+	 * @param newType The type of the array
+	 * @return The typed array
+	 */
+	public <T> T[] getTypedArray(String key, Class<? extends T[]> newType) {
+		Object[] array = getArray(key);
+		return Arrays.copyOf(array, array.length, newType);
 	}
 
 	/**
