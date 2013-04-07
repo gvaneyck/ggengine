@@ -75,7 +75,13 @@ public class Action {
 
 			buffer.append("def ");
 			buffer.append(name);
-			buffer.append("() {\n");
+			buffer.append("(");
+			for (int i = 0; i < args.length; i++) {
+				buffer.append(args[i]);
+				if (i < args.length - 1)
+					buffer.append(", ");
+			}
+			buffer.append(") {\n");
 
 			buffer.append(code);
 			buffer.append("\n");

@@ -1,5 +1,4 @@
 {
-"args":["one", "two"],
 "code":"
 println 'test4c'
 "

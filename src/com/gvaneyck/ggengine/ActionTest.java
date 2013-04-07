@@ -33,7 +33,10 @@ public class ActionTest {
 		for (Action action : actions) {
 			System.out.println("--------");
 			System.out.println(action.getName() + ":");
-			executor.invokeMethod(action.getName(), null);
+			String[] args2 = null;
+			if (action.getArgs().length > 0)
+				args2 = action.getArgs();
+			executor.invokeMethod(action.getName(), args2);
 		}
 		
 		// Test the game state

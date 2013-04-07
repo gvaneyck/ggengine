@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.gvaneyck.util.FileUtils;
 import com.gvaneyck.util.json.JSON;
+import com.gvaneyck.util.json.JSONParsingException;
 import com.gvaneyck.util.json.ObjectMap;
 
 public class ResourceLoader {
@@ -52,6 +53,10 @@ public class ResourceLoader {
 				}
 				catch (IOException e) {
 					System.out.println("Error when reading " + file.getName());
+					e.printStackTrace();
+				}
+				catch (JSONParsingException e) {
+					System.out.println("Failed to parse JSON in " + file.getName());
 					e.printStackTrace();
 				}
 			}
