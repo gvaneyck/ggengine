@@ -1,0 +1,6 @@
+{
+"code":"
+println 'testCallOtherClass'
+Test1.testPrint()
+"
+}

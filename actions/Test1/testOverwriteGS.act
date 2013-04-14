@@ -1,0 +1,6 @@
+{
+"code":"
+println 'testOverwriteGS'
+gs = [newMap: 'bar']
+"
+}

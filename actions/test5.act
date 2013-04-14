@@ -1,8 +1,0 @@
-{
-"args":["one", "two"],
-"code":"
-println 'test5'
-println one
-println two
-"
-}

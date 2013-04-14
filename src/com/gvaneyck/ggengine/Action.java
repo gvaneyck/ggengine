@@ -1,11 +1,8 @@
 package com.gvaneyck.ggengine;
 
-import groovy.lang.GroovyShell;
-
-import java.util.regex.Pattern;
-
 import org.codehaus.groovy.control.CompilationFailedException;
 
+import com.gvaneyck.util.Utils;
 import com.gvaneyck.util.json.ObjectMap;
 
 /**
@@ -20,16 +17,14 @@ public class Action {
 
 	private String definition;
 	
-	private static GroovyShell shell = new GroovyShell();
-
 	public static Action loadAction(ObjectMap action, String name) {
 		String code;
 		if (action.containsKey("code")) {
-			code = action.getString("code").trim();
-			code = Pattern.compile("^", Pattern.MULTILINE).matcher(code).replaceAll("\t");
+			code = action.getString("code");
+			code = Utils.indent(code);
 			
 			try {
-			    shell.parse(code);            
+			    Utils.shell.parse(code);            
 			} catch(CompilationFailedException cfe) {
 				System.out.println("Failed to parse action '" + name + "'");
 			    System.out.println(cfe.getMessage());
@@ -37,7 +32,7 @@ public class Action {
 		}
 		else {
 			code = "";
-			System.out.println("Action'" + name + "' contained no code");
+			System.out.println("Action '" + name + "' contained no code");
 		}
 
 		String[] args;
@@ -73,7 +68,7 @@ public class Action {
 		if (definition == null) {
 			StringBuilder buffer = new StringBuilder();
 
-			buffer.append("def ");
+			buffer.append("static ");
 			buffer.append(name);
 			buffer.append("(");
 			for (int i = 0; i < args.length; i++) {

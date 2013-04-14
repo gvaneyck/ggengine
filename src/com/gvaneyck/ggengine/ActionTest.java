@@ -1,46 +1,56 @@
 package com.gvaneyck.ggengine;
 
-import groovy.lang.Binding;
-import groovy.lang.GroovyShell;
-import groovy.lang.Script;
+import groovy.lang.GroovyClassLoader;
+import groovy.lang.GroovyObject;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class ActionTest {
+	public static final Map<String, Object> gs = new HashMap<String, Object>();
+	
 	public static void main(String[] args) {
-		ResourceLoader resources = new ResourceLoader();
-		resources.loadResources();
-		Map<String, Action> actions = resources.getActions();
-		
-		StringBuilder scriptText = new StringBuilder();
-		for (Action action : actions.values()) {
-			scriptText.append(action.getDefinition());
-			scriptText.append("\n");
+		try {
+			ResourceLoader resources = new ResourceLoader();
+			resources.loadResources();
+			resources.compileResources();
+			
+			Map<String, Map<String, Action>> actions = resources.getActions();
+			ClassLoader parent = (new ActionTest()).getClass().getClassLoader();
+			GroovyClassLoader loader = new GroovyClassLoader(parent);
+			loader.addClasspath("classes");
+			
+			for (String clazz : actions.keySet()) {
+				Class groovyClass = loader.loadClass(clazz);
+				
+				GroovyObject obj = (GroovyObject)groovyClass.newInstance();
+				obj.setProperty("gs", gs);
+				
+				for (Action action : actions.get(clazz).values()) {
+					String[] args2 = null;
+					if (action.getArgs().length > 0)
+						args2 = action.getArgs();
+					
+					System.out.println("--------");
+					System.out.println("gs = " + gs);
+					System.out.println("Invoking " + clazz + "." + action.getName() + ":");
+					
+					obj.invokeMethod(action.getName(), args2);
+					
+					// Check if the gamestate was reassigned
+					if (gs != obj.getProperty("gs")) {
+						System.out.println(clazz + "." + action.getName() + " changed the gamestate reference!");
+						obj.setProperty("gs", gs);
+					}
+					System.out.println("gs = " + gs);
+				}
+			}
+			
+			loader.close();
 		}
-		
-		System.out.println(scriptText.toString());
-
-		Map<String, Object> gs = new HashMap<String, Object>();
-		Binding binding = new Binding();
-		binding.setVariable("gs", gs);
-		
-		GroovyShell shell = new GroovyShell(binding);
-		Script executor = shell.parse(scriptText.toString());
-		
-		// Test run all the functions
-		for (Action action : actions.values()) {
-			System.out.println("--------");
-			System.out.println(action.getName() + ":");
-			String[] args2 = null;
-			if (action.getArgs().length > 0)
-				args2 = action.getArgs();
-			executor.invokeMethod(action.getName(), args2);
+		catch (Exception e) {
+			System.out.println("Error during test");
+			e.printStackTrace();
 		}
-		
-		// Test the game state
-		System.out.println(gs);
 	}
-	
-	
 }
