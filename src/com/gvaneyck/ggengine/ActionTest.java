@@ -12,8 +12,8 @@ public class ActionTest {
 	public static void main(String[] args) {
 		try {
 			ResourceLoader resources = new ResourceLoader();
-			resources.loadResources();
-			resources.compileResources();
+			resources.loadActions("actions");
+			resources.compileResources("classes");
 			
 			Map<String, Map<String, Action>> actions = resources.getActions();
 			ClassLoader parent = (new ActionTest()).getClass().getClassLoader();

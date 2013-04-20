@@ -1,0 +1,6 @@
+{
+"code":"
+println 'testPkgCall'
+test1.Pkg.pkgPrint()
+"
+}

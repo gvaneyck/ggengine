@@ -8,6 +8,6 @@ public class Utils {
 	public static final GroovyShell shell = new GroovyShell();
 	
 	public static String indent(String data) {
-		return Pattern.compile("^", Pattern.MULTILINE).matcher(data.trim()).replaceAll("\t");
+		return Pattern.compile("^", Pattern.MULTILINE).matcher(data.trim()).replaceAll("    ");
 	}
 }

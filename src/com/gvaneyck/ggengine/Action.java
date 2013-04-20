@@ -88,4 +88,8 @@ public class Action {
 
 		return definition;
 	}
+	
+	public String toString() {
+		return name + ":\n" + code;
+	}
 }

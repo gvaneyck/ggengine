@@ -1,0 +1,6 @@
+{
+"code":"
+println 'testDynamicCall'
+Util.call(Test1, 'testPrint')
+"
+}
