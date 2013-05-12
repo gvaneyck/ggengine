@@ -20,9 +20,20 @@ public class ActionTest {
 			GroovyClassLoader loader = new GroovyClassLoader(parent);
 			loader.addClasspath("classes");
 			
+			// Set up Util class
+			Class utilClass = loader.loadClass("Util");
+			GroovyObject utilObj = (GroovyObject)utilClass.newInstance();
+			utilObj.setProperty("gs", gs);
+
+			Map<String, Class> classMap = new HashMap<String, Class>();
 			for (String clazz : actions.keySet()) {
 				Class groovyClass = loader.loadClass(clazz);
-				
+				classMap.put(clazz, groovyClass);
+			}
+			gs.put("classes", classMap);
+			
+			for (String clazz : actions.keySet()) {
+				Class groovyClass = classMap.get(clazz);
 				GroovyObject obj = (GroovyObject)groovyClass.newInstance();
 				obj.setProperty("gs", gs);
 				
@@ -30,7 +41,7 @@ public class ActionTest {
 					String[] args2 = null;
 					if (action.getArgs().length > 0)
 						args2 = action.getArgs();
-					
+
 					System.out.println("--------");
 					System.out.println("gs = " + gs);
 					System.out.println("Invoking " + clazz + "." + action.getName() + ":");
@@ -42,7 +53,15 @@ public class ActionTest {
 						System.out.println(clazz + "." + action.getName() + " changed the gamestate reference!");
 						obj.setProperty("gs", gs);
 					}
+
+					// Check if the class map was clobbered
+					if (gs.get("classes") != classMap) {
+						System.out.println(clazz + "." + action.getName() + " clobbered the class map!");
+						gs.put("classes", classMap);
+					}
 					System.out.println("gs = " + gs);
+					
+					gs.remove("foo");
 				}
 			}
 			

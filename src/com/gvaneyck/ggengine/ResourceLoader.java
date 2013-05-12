@@ -17,7 +17,47 @@ public class ResourceLoader {
 	
 	private Map<String, Map<String, Action>> actions;
 	
-	private static final String UTIL_CLASS = "class Util {\n    static call(clazz, method) {\n        clazz.\"$method\"()\n    }\n}\n";
+	private static final String UTIL_CLASS = "" + 
+"class Util {\n" +
+"    static Map gs\n" +
+"    static call(String method) {\n" +
+"        def idx = method.lastIndexOf('.')\n" +
+"        call(method.substring(0, idx), method.substring(idx + 1))\n" +
+"    }\n" +
+"    static call(String method, List args) {\n" +
+"        def idx = method.lastIndexOf('.')\n" +
+"        call(method.substring(0, idx), method.substring(idx + 1), args)\n" +
+"    }\n" +
+"    static call(String clazz, String method) {\n" +
+"        call(clazz, method, null)" +
+"    }\n" +
+"    static call(String clazz, String method, List args) {\n" +
+"        if (!args)\n" +
+"            gs.classes[clazz].\"$method\"()\n" +
+"        else\n" +
+"            gs.classes[clazz].\"$method\"(*args)\n" +
+"    }\n" +
+"    static resolveRule(method, player) {\n" +
+"        gs.activePlayers = player\n" +
+"        gs.choices = call(method)\n" +
+"        resolve()\n" + 
+"    }\n" +
+"    static resolveRule(clazz, method, player) {\n" +
+"        gs.activePlayers = player\n" +
+"        gs.choices = call(clazz, method)\n" +
+"        resolve()\n" +
+"    }\n" +
+"    static resolve() {\n" +
+"        while (!gs.choice)\n" +
+"            Thread.sleep(10)\n" +
+"        if (gs.choice instanceof String)\n" +
+"            call(gs.choice)\n" +
+"        else if (gs.choice.args)\n" + 
+"            call(gs.choice.method, gs.choice.args)\n" +
+"        else\n" +
+"            call(gs.choice.method)\n" +
+"    }\n" +
+"}";
 	
 	public ResourceLoader() {
 		
@@ -127,8 +167,6 @@ public class ResourceLoader {
 	}
 	
 	private void loadActions(File dir, String pkg) {
-		Map<String, Action> actions = new HashMap<String, Action>();
-		
 		String className = dir.getName();
 		className = Character.toUpperCase(className.charAt(0)) + className.substring(1);
 		String pkgName = Character.toLowerCase(className.charAt(0)) + className.substring(1);
