@@ -53,9 +53,9 @@ public class ResourceLoader {
 "        if (gs.choice instanceof String)\n" +
 "            call(gs.choice)\n" +
 "        else if (gs.choice.args)\n" + 
-"            call(gs.choice.method, gs.choice.args)\n" +
+"            call(gs.choice.action, gs.choice.args)\n" +
 "        else\n" +
-"            call(gs.choice.method)\n" +
+"            call(gs.choice.action)\n" +
 "    }\n" +
 "}";
 	
@@ -91,16 +91,16 @@ public class ResourceLoader {
 			clazzData.append(clazz.substring(0, clazz.lastIndexOf('.')));
 			clazzData.append("\n");
 			
-			if (staticCompile)
-				clazzData.append("@groovy.transform.CompileStatic\n");
+			//if (staticCompile)
+			//	clazzData.append("@groovy.transform.CompileStatic\n");
 
 			clazzData.append("class ");
 			clazzData.append(clazz.substring(clazz.lastIndexOf('.') + 1));
 			clazzData.append(" {\n");
 		}
 		else {	
-			if (staticCompile)
-				clazzData.append("@groovy.transform.CompileStatic\n");
+			//if (staticCompile)
+			//	clazzData.append("@groovy.transform.CompileStatic\n");
 
 			clazzData.append("class ");
 			clazzData.append(clazz);

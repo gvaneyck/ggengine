@@ -1,0 +1,10 @@
+{
+"code":"
+def result = []
+for (def x = 0; x < 3; x++)
+    for (def y = 0; y < 3; y++)
+        if (!gs.board[x][y])
+            result << [action: 'Actions.playPiece', args: [x, y]]
+result
+"
+}

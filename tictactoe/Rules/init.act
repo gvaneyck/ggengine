@@ -1,0 +1,6 @@
+{
+"code":"
+gs.activePlayer = 'X'
+gs.board = new String[3][3]
+"
+}
