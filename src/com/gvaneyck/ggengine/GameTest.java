@@ -12,6 +12,8 @@ import java.util.Scanner;
 public class GameTest {
 	public static Map<String, Object> gs = new HashMap<String, Object>();
 	public static Map<String, Class> classMap = new HashMap<String, Class>();
+	public static Map<String, GroovyObject> objectMap = new HashMap<String, GroovyObject>();
+	
 
 	public static void main(String[] args) {
 		try {
@@ -52,46 +54,65 @@ public class GameTest {
 			printGameState();
 			checkEnd();
 			
-			List<Map<String, Object>> options = new ArrayList<Map<String, Object>>();
+			List<Choice> choices = getChoices();
+			printChoices(choices);
 			
-			Object result = obj.invokeMethod("getActions", null);
-			if (result instanceof List) {
-				options.addAll((List)result);
-			}
-			else if (result instanceof String) {
-				Map<String, Object> option = new HashMap<String, Object>();
-				option.put("action", result);
-				options.add(option);
-			}
-			else {
-				System.out.println("Invalid actions returned from rule:");
-				System.out.println(result);
-				continue;
-			}
-			
-			for (int i = 0; i < options.size(); i++) {
-				Map<String, Object> option = options.get(i);
-				System.out.print(i + ") " + option.get("action"));
-				if (option.containsKey("args")) {
-					System.out.print(", " + option.get("args"));
-				}
-				System.out.println();
-			}
-			
-			Map<String, Object> choice = options.get(in.nextInt());  
-			String action = (String)choice.get("action");
-			Object args = choice.get("args");
-			int idx = action.indexOf('.');
-			
-			GroovyObject obj2 = (GroovyObject)classMap.get(action.substring(0, idx)).newInstance();
-			obj2.setProperty("gs", gs);
-			obj2.invokeMethod(action.substring(idx + 1), args);
+			Choice choice = choices.get(in.nextInt());  
+			invokeAction(choice.action, choice.args);
 
 			if (gs.get("activePlayer").equals("X"))
 				gs.put("activePlayer", "O");
 			else
 				gs.put("activePlayer", "X");
 		}
+	}
+	
+	public static void printChoices(List<Choice> choices) {
+		for (int i = 0; i < choices.size(); i++) {
+			Choice choice = choices.get(i);
+			System.out.print(i + ") " + choice.action);
+			if (choice.args != null) {
+				System.out.print(", " + choice.args);
+			}
+			System.out.println();
+		}
+	}
+	
+	public static List<Choice> getChoices() throws InstantiationException, IllegalAccessException {
+		List<Choice> choices = new ArrayList<Choice>();
+		
+		GroovyObject obj = getObject("Rules");
+		Object result = obj.invokeMethod("getActions", null);
+
+		if (result instanceof List) {
+			List<?> resultList = (List<?>)result;
+			for (Object item : resultList)
+				choices.add(Choice.getChoice(item));
+		}
+		else {
+			choices.add(Choice.getChoice(result));
+		}
+		
+		return choices;
+	}
+	
+	public static void invokeAction(String action, Object args) throws InstantiationException, IllegalAccessException {
+		int idx = action.indexOf('.');
+		String clazzName = action.substring(0, idx);
+		String methodName = action.substring(idx + 1);
+		
+		GroovyObject obj = getObject(clazzName);
+		obj.invokeMethod(methodName, args);
+	}
+	
+	public static GroovyObject getObject(String clazzName) throws InstantiationException, IllegalAccessException {
+		if (!objectMap.containsKey(clazzName)) {
+			GroovyObject obj = (GroovyObject)classMap.get(clazzName).newInstance();
+			obj.setProperty("gs", gs);
+			objectMap.put(clazzName, obj);
+		}
+		
+		return objectMap.get(clazzName);
 	}
 	
 	public static void printGameState() {
