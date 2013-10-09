@@ -1,6 +1,0 @@
-{
-"code":"
-println 'testDynamicGS'
-Util.call('Test1', 'testGS')
-"
-}

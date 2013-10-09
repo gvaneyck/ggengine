@@ -1,6 +1,0 @@
-{
-"code":"
-println 'testGS'
-gs.foo = 'bar'
-"
-}

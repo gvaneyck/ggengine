@@ -1,6 +1,0 @@
-{
-"code":"
-println 'testOverwriteClassMap'
-gs.classes = 1
-"
-}

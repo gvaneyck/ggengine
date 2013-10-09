@@ -1,6 +1,0 @@
-{
-"code":"
-println 'testDynamicCallOtherClass'
-Util.call('Test1', 'testPrint')
-"
-}

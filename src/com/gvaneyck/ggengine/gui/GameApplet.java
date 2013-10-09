@@ -4,20 +4,20 @@ import java.applet.Applet;
 import java.awt.BorderLayout;
 
 public class GameApplet extends Applet {
-	private static final long serialVersionUID = -3544802690382500633L;
-	
-	GGEngine engine = new GGEngine();
+    private static final long serialVersionUID = -3544802690382500633L;
 
-	public void init() {
-		setLayout(new BorderLayout());
-		add(engine);
-	}
+    GGEngine engine = new GGEngine();
 
-	public void start() {
-		engine.start();
-	}
+    public void init() {
+        setLayout(new BorderLayout());
+        add(engine);
+    }
 
-	public void stop() {
-		engine.stop();
-	}
+    public void start() {
+        engine.start();
+    }
+
+    public void stop() {
+        engine.stop();
+    }
 }

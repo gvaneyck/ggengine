@@ -7,69 +7,69 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ActionTest {
-	public static final Map<String, Object> gs = new HashMap<String, Object>();
-	
-	public static void main(String[] args) {
-		try {
-			ResourceLoader resources = new ResourceLoader();
-			resources.loadActions("actions");
-			resources.compileResources("classes");
-			
-			Map<String, Map<String, Action>> actions = resources.getActions();
-			ClassLoader parent = (new ActionTest()).getClass().getClassLoader();
-			GroovyClassLoader loader = new GroovyClassLoader(parent);
-			loader.addClasspath("classes");
-			
-			// Set up Util class
-			Class utilClass = loader.loadClass("Util");
-			GroovyObject utilObj = (GroovyObject)utilClass.newInstance();
-			utilObj.setProperty("gs", gs);
+    public static final Map<String, Object> gs = new HashMap<String, Object>();
 
-			Map<String, Class> classMap = new HashMap<String, Class>();
-			for (String clazz : actions.keySet()) {
-				Class groovyClass = loader.loadClass(clazz);
-				classMap.put(clazz, groovyClass);
-			}
-			gs.put("classes", classMap);
-			
-			for (String clazz : actions.keySet()) {
-				Class groovyClass = classMap.get(clazz);
-				GroovyObject obj = (GroovyObject)groovyClass.newInstance();
-				obj.setProperty("gs", gs);
-				
-				for (Action action : actions.get(clazz).values()) {
-					String[] args2 = null;
-					if (action.getArgs().length > 0)
-						args2 = action.getArgs();
+    public static void main(String[] args) {
+        try {
+            ResourceLoader resources = new ResourceLoader();
+            resources.loadActions("actions");
+            resources.compileResources("classes");
 
-					System.out.println("--------");
-					System.out.println("gs = " + gs);
-					System.out.println("Invoking " + clazz + "." + action.getName() + ":");
-					
-					obj.invokeMethod(action.getName(), args2);
-					
-					// Check if the gamestate was reassigned
-					if (gs != obj.getProperty("gs")) {
-						System.out.println(clazz + "." + action.getName() + " changed the gamestate reference!");
-						obj.setProperty("gs", gs);
-					}
+            Map<String, Map<String, Action>> actions = resources.getActions();
+            ClassLoader parent = (new ActionTest()).getClass().getClassLoader();
+            GroovyClassLoader loader = new GroovyClassLoader(parent);
+            loader.addClasspath("classes");
 
-					// Check if the class map was clobbered
-					if (gs.get("classes") != classMap) {
-						System.out.println(clazz + "." + action.getName() + " clobbered the class map!");
-						gs.put("classes", classMap);
-					}
-					System.out.println("gs = " + gs);
-					
-					gs.remove("foo");
-				}
-			}
-			
-			loader.close();
-		}
-		catch (Exception e) {
-			System.out.println("Error during test");
-			e.printStackTrace();
-		}
-	}
+            // Set up Util class
+            Class utilClass = loader.loadClass("Util");
+            GroovyObject utilObj = (GroovyObject)utilClass.newInstance();
+            utilObj.setProperty("gs", gs);
+
+            Map<String, Class> classMap = new HashMap<String, Class>();
+            for (String clazz : actions.keySet()) {
+                Class groovyClass = loader.loadClass(clazz);
+                classMap.put(clazz, groovyClass);
+            }
+            gs.put("classes", classMap);
+
+            for (String clazz : actions.keySet()) {
+                Class groovyClass = classMap.get(clazz);
+                GroovyObject obj = (GroovyObject)groovyClass.newInstance();
+                obj.setProperty("gs", gs);
+
+                for (Action action : actions.get(clazz).values()) {
+                    String[] args2 = null;
+                    if (action.getArgs().length > 0)
+                        args2 = action.getArgs();
+
+                    System.out.println("--------");
+                    System.out.println("gs = " + gs);
+                    System.out.println("Invoking " + clazz + "." + action.getName() + ":");
+
+                    obj.invokeMethod(action.getName(), args2);
+
+                    // Check if the gamestate was reassigned
+                    if (gs != obj.getProperty("gs")) {
+                        System.out.println(clazz + "." + action.getName() + " changed the gamestate reference!");
+                        obj.setProperty("gs", gs);
+                    }
+
+                    // Check if the class map was clobbered
+                    if (gs.get("classes") != classMap) {
+                        System.out.println(clazz + "." + action.getName() + " clobbered the class map!");
+                        gs.put("classes", classMap);
+                    }
+                    System.out.println("gs = " + gs);
+
+                    gs.remove("foo");
+                }
+            }
+
+            loader.close();
+        }
+        catch (Exception e) {
+            System.out.println("Error during test");
+            e.printStackTrace();
+        }
+    }
 }

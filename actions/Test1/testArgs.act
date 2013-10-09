@@ -1,6 +1,0 @@
-{
-"args":["one", "two"],
-"code":"
-println \"testArgs(${one}, ${two})\"
-"
-}

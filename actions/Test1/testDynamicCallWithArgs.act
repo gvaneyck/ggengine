@@ -1,6 +1,0 @@
-{
-"code":"
-println 'testDynamicCallWithArgs'
-Util.call('Test1.testArgs', ['hi', 'there'])
-"
-}

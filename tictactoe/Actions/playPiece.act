@@ -1,6 +1,0 @@
-{
-"args":["x", "y"],
-"code":"
-gs.board[x][y] = gs.activePlayer
-"
-}
