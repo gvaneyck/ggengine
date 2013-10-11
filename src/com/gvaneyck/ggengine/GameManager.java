@@ -7,10 +7,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 public class GameManager {
     private Map<String, Object> gs = new HashMap<String, Object>();
@@ -32,7 +33,28 @@ public class GameManager {
     }
     
     public void start() {
-        instances.get("TicTacToe").invokeMethod("print", null);
+        Scanner in = new Scanner(System.in);
+        
+        instances.get("TicTacToeRules").invokeMethod("initGame", null);
+        while (!(Boolean)instances.get("TicTacToeRules").invokeMethod("isGameEnd", null)) {
+            List<Action> actions = (List<Action>)instances.get("TicTacToeRules").invokeMethod("getMoves", null);
+            for (int i = 0; i < actions.size(); i++)
+                System.out.println(i + ") " + actions.get(i));
+            
+            int choice = in.nextInt();
+            Action a = actions.get(choice);
+            int idx = a.clazz.lastIndexOf('.');
+            String clazz = a.clazz.substring(0, idx);
+            String method = a.clazz.substring(idx + 1);
+            instances.get(clazz).invokeMethod(method, a.args);
+            instances.get("TicTacToeActions").invokeMethod("changeTurn", null);
+        }
+        
+        System.out.println("Winner: " + instances.get("TicTacToeRules").invokeMethod("getWinner", null));
+        
+        instances.get("Test").invokeMethod("printGs", null);
+        
+        in.close();
     }
     
     private void loadClasses() {
