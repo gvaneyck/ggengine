@@ -20,13 +20,14 @@ public class GGEngine extends Canvas implements Runnable {
     public final long FPS_INTERVAL = 1000000000;
     public final long UPDATE_INTERVAL = 1000000000 / UPDATE_RATE;
 
-    private JFrame frame;
+    public JFrame frame;
 
     private Thread thread;
     private boolean running = false;
     private boolean paused = false;
     private BufferedImage image;
     private int[] pixels;
+    private Screen screen;
 
     public GGEngine() {
         image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -67,10 +68,10 @@ public class GGEngine extends Canvas implements Runnable {
             if (now - lastUpdate >= UPDATE_INTERVAL) {
                 updates++;
                 lastUpdate += UPDATE_INTERVAL;
-            }
 
-            render();
-            frames++;
+                render();
+                frames++;
+            }
 
             if (now - lastFPS > FPS_INTERVAL) {
                 frame.setTitle(String.format("%s | %d ups, %s fps", TITLE, updates, frames));
@@ -88,16 +89,31 @@ public class GGEngine extends Canvas implements Runnable {
             return;
         }
         
+        for (int i = 0; i < WIDTH * HEIGHT; i++)
+            pixels[i] = 0;
+        
         Graphics g = bs.getDrawGraphics();
-        // screen.graphics(g);
-        // screen.clear();
-        for (int i = 0; i < WIDTH * HEIGHT; i++) {
-            // pixels[i] = screen.pixels[i];
+        
+        if (screen != null) {
+            int[] drawPixels = screen.render();
+            if (drawPixels != null && drawPixels.length == WIDTH * HEIGHT) {
+                for (int i = 0; i < WIDTH * HEIGHT; i++)
+                    pixels[i] = drawPixels[i];
+            }
         }
+         
         g.drawImage(image, 0, 0, getWidth(), getHeight(), null);
 
+        if (screen != null)
+            screen.doGraphics(g);
+        
         g.dispose();
         bs.show();
+    }
+    
+    public void setScreen(Screen screen) {
+        this.screen = screen;
+        screen.setSize(getWidth(), getHeight());
     }
 
     public static void main(String[] args) {

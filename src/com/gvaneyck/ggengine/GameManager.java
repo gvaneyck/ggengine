@@ -13,6 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import javax.swing.JFrame;
+
+import com.gvaneyck.ggengine.gui.GGEngine;
+import com.gvaneyck.ggengine.gui.Screen;
+
 public class GameManager {
     private Map<String, Object> gs = new HashMap<String, Object>();
     private Map<String, Class> clazzes = new HashMap<String, Class>();
@@ -20,6 +25,7 @@ public class GameManager {
     private GroovyClassLoader loader = null;
     
     private String source;
+    private GGEngine engine;
     
     public static void main(String[] args) {
         GameManager gm = new GameManager("tictactoe");
@@ -27,12 +33,29 @@ public class GameManager {
     }
     
     public GameManager(String source) {
+        buildWindow();
+        
         this.source = source;
         loadClasses();
         injectMembers();
     }
     
+    public void buildWindow() {
+        engine = new GGEngine();
+        engine.frame = new JFrame();
+        engine.frame.setResizable(false);
+        engine.frame.setTitle(engine.TITLE);
+        engine.frame.add(engine);
+        engine.frame.pack();
+        engine.frame.setLocationRelativeTo(null);
+        engine.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        engine.frame.setVisible(true);
+
+        engine.start();
+    }
+    
     public void start() {
+        engine.setScreen((Screen)instances.get("TicTacToeView"));
         Scanner in = new Scanner(System.in);
         
         instances.get("TicTacToeRules").invokeMethod("initGame", null);
@@ -42,11 +65,7 @@ public class GameManager {
                 System.out.println(i + ") " + actions.get(i));
             
             int choice = in.nextInt();
-            Action a = actions.get(choice);
-            int idx = a.clazz.lastIndexOf('.');
-            String clazz = a.clazz.substring(0, idx);
-            String method = a.clazz.substring(idx + 1);
-            instances.get(clazz).invokeMethod(method, a.args);
+            executeAction(actions.get(choice));
             instances.get("TicTacToeActions").invokeMethod("changeTurn", null);
         }
         
@@ -116,6 +135,13 @@ public class GameManager {
                     instance.invokeMethod(method, instance);
             }
         }
+    }
+    
+    private void executeAction(Action a) {
+        int idx = a.clazz.lastIndexOf('.');
+        String clazz = a.clazz.substring(0, idx);
+        String method = a.clazz.substring(idx + 1);
+        instances.get(clazz).invokeMethod(method, a.args);
     }
     
     private String readFile(String file) throws Exception {
