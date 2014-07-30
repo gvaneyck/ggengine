@@ -6,7 +6,7 @@ public abstract class Screen {
     protected int[] pixels;
     protected int width;
     protected int height;
-    
+
     public void setSize(int width, int height) {
         this.width = width;
         this.height = height;
@@ -16,6 +16,7 @@ public abstract class Screen {
     public int[] render() {
         return null;
     }
-    
-    public void doGraphics(Graphics g) { }
+
+    public void doGraphics(Graphics g) {
+    }
 }

@@ -13,7 +13,7 @@ public class FileUtils {
         StringBuilder buff = new StringBuilder();
         int c;
         while ((c = in.read()) != -1)
-            buff.append((char)c);
+            buff.append((char) c);
         in.close();
 
         return buff.toString();

@@ -4,12 +4,12 @@ import com.gvaneyck.ggengine.Action
 class TicTacToeGame extends Game {
     def gs
     
-	public void init() {
+    public void init() {
         gs.currentPlayer = 1
         gs.board = new int[3][3]
-	}
-	
-	public void turn() {
+    }
+    
+    public void turn() {
         def board = gs.board
         def actions = []
         for (int i = 0; i < 3; i++) {
@@ -19,14 +19,14 @@ class TicTacToeGame extends Game {
             }
         }
         presentActions(actions)
-	}
-	
-	public boolean isFinished() {
+    }
+    
+    public boolean isFinished() {
         return (getWinner() != 0)
-	}
+    }
 
     public void end() {
-    	System.out.println(getWinner())
+        System.out.println(getWinner())
     }
 
     def getWinner() {

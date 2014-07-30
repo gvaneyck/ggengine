@@ -31,8 +31,8 @@ public class GGEngine extends Canvas implements Runnable {
 
     public GGEngine() {
         image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
-        pixels = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
-        
+        pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+
         Dimension size = new Dimension(WIDTH, HEIGHT);
         setPreferredSize(size);
         setMinimumSize(size);
@@ -49,8 +49,7 @@ public class GGEngine extends Canvas implements Runnable {
         running = false;
         try {
             thread.join();
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -88,12 +87,12 @@ public class GGEngine extends Canvas implements Runnable {
             createBufferStrategy(3);
             return;
         }
-        
+
         for (int i = 0; i < WIDTH * HEIGHT; i++)
             pixels[i] = 0;
-        
+
         Graphics g = bs.getDrawGraphics();
-        
+
         if (screen != null) {
             int[] drawPixels = screen.render();
             if (drawPixels != null && drawPixels.length == WIDTH * HEIGHT) {
@@ -101,16 +100,16 @@ public class GGEngine extends Canvas implements Runnable {
                     pixels[i] = drawPixels[i];
             }
         }
-         
+
         g.drawImage(image, 0, 0, getWidth(), getHeight(), null);
 
         if (screen != null)
             screen.doGraphics(g);
-        
+
         g.dispose();
         bs.show();
     }
-    
+
     public void setScreen(Screen screen) {
         this.screen = screen;
         screen.setSize(getWidth(), getHeight());
