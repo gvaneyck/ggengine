@@ -8,7 +8,7 @@ public class ConsoleUI {
     List<Action> currentActions;
     
     public Action getChoice() {
-        int choice = 0;
+        int choice = -1;
         while (choice < 0 || choice >= currentActions.size()) {
             choice = in.nextInt();
         }
@@ -18,7 +18,9 @@ public class ConsoleUI {
     public void showChoices(List<Action> actions) {
         currentActions = actions;
         for (int i = 0; i < actions.size(); i++) {
-            System.out.println(i);
+        	Action a = actions.get(i);
+        	System.out.print(i + ") ");
+    		System.out.println(a.toString());
         }
     }
 }
