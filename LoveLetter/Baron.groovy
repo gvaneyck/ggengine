@@ -26,12 +26,12 @@ class Baron extends Card {
             return
         }
             
-        if (me.hand > them.hand) {
+        if (me.hand.value > them.hand.value) {
             them.eliminated = true
             gs.remainingPlayers--
             gm.announce("Player ${cur} asked the baron to compare himself with player ${target} and came out on top! (${them.hand})")
         }
-        else if (me.hand < them.hand) {
+        else if (me.hand.value < them.hand.value) {
             me.eliminated = true
             gs.remainingPlayers--
             gm.announce("Player ${cur} asked the baron to compare himself with player ${target}, but it backfired! (${me.hand})")

@@ -33,13 +33,13 @@ class Guard extends Card {
             return
         }
             
-        if (them.hand == card) {
+        if (them.hand.value == card) {
             them.eliminated = true
             gs.remainingPlayers--
-            gm.announce("Player ${cur} told a guard about a consipracy between player ${target} and ${card}, and they were caught!")
+            gm.announce("Player ${cur} told a guard about a consipracy between player ${target} and ${them.hand}, and they were caught!")
         }
         else {
-            gm.announce("Player ${cur} asked a guard to watch out for player ${target} and ${card}, but he didn't find them")
+            gm.announce("Player ${cur} asked a guard to watch out for player ${target} and ${them.hand}, but he didn't find them")
         }
     }
 }

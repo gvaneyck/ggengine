@@ -1,9 +1,16 @@
+import com.gvaneyck.ggengine.Action
+
 abstract class Card {
 
     def gm
     def gs
     
     def value
+    def name
+    
+    def Card() {
+    	this.name = this.class.name
+    }
         
     def play() {
         preTurn()
@@ -19,7 +26,7 @@ abstract class Card {
         def opt1 = player.hand
         def opt2 = player.hand2
         
-        player.hand = (value == opt1 ? opt2 : opt1)
+        player.hand = (value == opt1.value ? opt2 : opt1)
         player.remove('hand2')
         player.table << value
         player.immune = false
@@ -41,5 +48,12 @@ abstract class Card {
         
         gs.currentPlayer = nextPlayer
     }
-
+    
+    public String toString() {
+    	return "${name} (${value})"
+	}
+	
+	def getAction() {
+		return new Action("${name}.play")
+	}
 }

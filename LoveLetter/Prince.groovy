@@ -25,7 +25,7 @@ class Prince extends Card {
             return
         }
 
-        if (them.hand) {
+        if (them.hand.value == 8) {
             them.eliminated = true
             gs.remainingPlayers--
             gm.announce("Player ${cur} starts a rumor about player ${target} and the Princess, and the Prince finds out that it is actually true!")

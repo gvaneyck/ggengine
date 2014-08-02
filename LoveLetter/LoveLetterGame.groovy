@@ -6,24 +6,24 @@ class LoveLetterGame extends Game {
     def gs
     
     public void init() {
-        gs.maxPlayers = 2
-        gs.remainingPlayers = 2
+        gs.remainingPlayers = gs.maxPlayers
         
         gs.deck = []
-        (1..1).each { gs.deck << 8 }
-        (1..1).each { gs.deck << 7 }
-        (1..1).each { gs.deck << 6 }
-        (1..2).each { gs.deck << 5 }
-        (1..2).each { gs.deck << 4 }
-        (1..2).each { gs.deck << 3 }
-        (1..2).each { gs.deck << 2 }
-        (1..5).each { gs.deck << 1 }
+        (1..1).each { gs.deck << new Princess() }
+        (1..1).each { gs.deck << new Countess() }
+        (1..1).each { gs.deck << new King() }
+        (1..2).each { gs.deck << new Prince() }
+        (1..2).each { gs.deck << new Handmaid() }
+        (1..2).each { gs.deck << new Baron() }
+        (1..2).each { gs.deck << new Priest() }
+        (1..5).each { gs.deck << new Guard() }
         Collections.shuffle(gs.deck)
         
         gs.removedCard = gs.deck.remove(0)
         
         (1..gs.maxPlayers).each {
             gs[it] = [ hand: gs.deck.remove(0), table: [], eliminated: false, immune: false ]
+            gm.announce(it, "Your starting hand is ${gs[it].hand}")
         }
 
         gs.currentPlayer = 1
@@ -39,28 +39,16 @@ class LoveLetterGame extends Game {
         gm.announce(cur, "Your hand is ${card1} and you drew ${card2}")
 
         def actions = []
-        if ((card1 == 7 || card2 == 7) && (card1 == 6 || card1 == 5 || card2 == 6 || card2 == 5)) {
-            actions << buildAction(7)
+        if ((card1.value == 7 || card2.value == 7)
+        	&& (card1.value == 6 || card1.value == 5 || card2.value == 6 || card2.value == 5)) {
+            actions << buildAction(new Action('Countess.play'))
         }
         else {
-            actions << buildAction(card1)
-            actions << buildAction(card2)
+            actions << card1.getAction()
+            actions << card2.getAction()
         }
 
         gm.presentActions(actions)
-    }
-    
-    def buildAction(int card) {
-        switch (card) {
-            case 8: return new Action('Princess.play')
-            case 7: return new Action('Countess.play')
-            case 6: return new Action('King.play')
-            case 5: return new Action('Prince.play')
-            case 4: return new Action('Handmaid.play')
-            case 3: return new Action('Baron.play')
-            case 2: return new Action('Priest.play')
-            case 1:    return new Action('Guard.play')
-        }
     }
     
     public boolean isFinished() {
@@ -73,14 +61,14 @@ class LoveLetterGame extends Game {
         def tiebreaker = 0
         (1..gs.maxPlayers).each {
             def tb = 0
-            gs[it].table.each { it2 -> tb += it2 }
-            if (!gs[it].eliminated && (gs[it].hand > highest || gs[it].hand == highest && tb > tiebreaker)) {
+            gs[it].table.each { it2 -> tb += it2.value }
+            if (!gs[it].eliminated && (gs[it].hand.value > highest || gs[it].hand.value == highest && tb > tiebreaker)) {
                 winner = it
-                highest = gs[it].hand
+                highest = gs[it].hand.value
                 tiebreaker = tb
             }
         }
 
-        gm.announce("Winner is ${winner}")
+        gm.announce("Winner is ${winner} with ${highest}")
     }
 }

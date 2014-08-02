@@ -13,28 +13,33 @@ import java.util.Map;
 import com.gvaneyck.ggengine.gui.GGEngine;
 
 public class GameManager2 {
-    private Map<String, Object> gs = new HashMap<String, Object>();
+    private Map<String, Object> gs;
     private Map<String, Class> clazzes = new HashMap<String, Class>();
     private Map<String, GroovyObject> instances = new HashMap<String, GroovyObject>();
     private GroovyClassLoader loader = null;
 
-    private String source;
-    private GGEngine engine;
     private Game game;
 
     private ConsoleUI ui = new ConsoleUI();
 
     public static void main(String[] args) {
         // GameManager2 gm = new GameManager2("tictactoe");
-        GameManager2 gm = new GameManager2("LoveLetter");
+    	Map<String, Object> gs = new HashMap<String, Object>();
+        gs.put("maxPlayers", 2);
+        GameManager2 gm = new GameManager2(gs);
+        gm.loadClasses("LoveLetter");
+        gm.gameLoop();
+    }
+    
+    public GameManager2() {
+    	gs = new HashMap<String, Object>();
+    }
+    
+    public GameManager2(Map<String, Object> gs) {
+    	this.gs = gs;
     }
 
-    public GameManager2(String source) {
-        loadClasses(source);
-        gameLoop();
-    }
-
-    private void loadClasses(String source) {
+    public void loadClasses(String source) {
         if (loader == null) {
             ClassLoader parentLoader = this.getClass().getClassLoader();
             loader = new GroovyClassLoader(parentLoader);
@@ -74,15 +79,23 @@ public class GameManager2 {
             }
 
             GroovyObject instance = (GroovyObject) groovyClass.newInstance();
-            clazzes.put(clazz, groovyClass);
-            instances.put(clazz, instance);
+
+            if (!instance.getClass().getName().equals(clazz)) {
+            	throw new Exception("File not named appropriately for class: "
+            			+ instance.getClass().getName() + " (class name) vs " + clazz + " (file name)");
+            }
 
             if (instance instanceof Game) {
                 if (game != null) {
-                    throw new Exception("Found two Game classes aborting");
+                    throw new Exception("Found two Game classes aborting: "
+                    		+ game.getClass().getName() + " " + instance.getClass().getName());
                 }
                 game = (Game) instance;
             }
+
+            clazzes.put(clazz, groovyClass);
+            instances.put(clazz, instance);
+            
         } catch (ClassNotFoundException e) {
             System.err.println("Found file named " + clazz + ".groovy, but it wasn't a class");
         } catch (InstantiationException e) {

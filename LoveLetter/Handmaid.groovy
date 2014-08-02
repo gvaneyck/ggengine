@@ -1,6 +1,6 @@
-class Handmain extends Card {
+class Handmaid extends Card {
 
-    def Handmain() {
+    def Handmaid() {
         value = 4
     }
     
