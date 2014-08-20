@@ -21,15 +21,6 @@ public class GameManager2 {
     private Game game;
 
     private ConsoleUI ui = new ConsoleUI();
-
-    public static void main(String[] args) {
-        // GameManager2 gm = new GameManager2("tictactoe");
-    	Map<String, Object> gs = new HashMap<String, Object>();
-        gs.put("maxPlayers", 2);
-        GameManager2 gm = new GameManager2(gs);
-        gm.loadClasses("LoveLetter");
-        gm.gameLoop();
-    }
     
     public GameManager2() {
     	gs = new HashMap<String, Object>();
@@ -43,7 +34,7 @@ public class GameManager2 {
         if (loader == null) {
             ClassLoader parentLoader = this.getClass().getClassLoader();
             loader = new GroovyClassLoader(parentLoader);
-            loader.addClasspath(source);
+            loader.addClasspath(".");
         }
 
         File sourceDir = new File(source);
@@ -51,15 +42,8 @@ public class GameManager2 {
             System.err.println("Source directory does not exist: " + source);
             return;
         }
-
-        File[] sourceFiles = sourceDir.listFiles();
-        for (File f : sourceFiles) {
-            String fileName = f.getName();
-            if (fileName.endsWith(".groovy")) {
-                String clazz = fileName.substring(0, fileName.length() - 7);
-                loadClass(clazz);
-            }
-        }
+        
+        loadClasses(sourceDir.getName() + ".", sourceDir);
 
         if (game == null) {
             System.err.println("No Game class found, aborting");
@@ -68,9 +52,26 @@ public class GameManager2 {
         injectMembers();
     }
 
-    private void loadClass(String clazz) {
+    private void loadClasses(String pkg, File dir) {
+        File[] sourceFiles = dir.listFiles();
+        for (File f : sourceFiles) {
+            String fileName = f.getName();
+            if (f.isDirectory()) {
+                loadClasses(pkg + fileName + ".", f);
+            }
+            else {
+                if (fileName.endsWith(".groovy")) {
+                    String clazz = fileName.substring(0, fileName.length() - 7);
+                    loadClass(pkg, clazz);
+                }
+            }
+        }
+    }
+
+    private void loadClass(String pkg, String clazz) {
         try {
-            Class groovyClass = loader.loadClass(clazz);
+            String fullName = pkg + clazz;
+            Class groovyClass = loader.loadClass(fullName);
 
             // Bail out if it's abstract or an interface
             int mods = groovyClass.getModifiers();
@@ -80,9 +81,9 @@ public class GameManager2 {
 
             GroovyObject instance = (GroovyObject) groovyClass.newInstance();
 
-            if (!instance.getClass().getName().equals(clazz)) {
+            if (!instance.getClass().getName().equals(fullName)) {
             	throw new Exception("File not named appropriately for class: "
-            			+ instance.getClass().getName() + " (class name) vs " + clazz + " (file name)");
+            			+ instance.getClass().getName() + " (class name) vs " + fullName + " (file name)");
             }
 
             if (instance instanceof Game) {
@@ -90,10 +91,11 @@ public class GameManager2 {
                     throw new Exception("Found two Game classes aborting: "
                     		+ game.getClass().getName() + " " + instance.getClass().getName());
                 }
-                game = (Game) instance;
+                game = (Game)instance;
             }
 
             clazzes.put(clazz, groovyClass);
+            //clazzes.put(fullName, groovyClass);
             instances.put(clazz, instance);
             
         } catch (ClassNotFoundException e) {
@@ -142,7 +144,7 @@ public class GameManager2 {
         instance.invokeMethod(method, a.args);
     }
 
-    private void gameLoop() {
+    public void gameLoop() {
         game.init();
         while (!game.isFinished()) {
             game.turn();
