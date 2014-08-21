@@ -10,4 +10,8 @@ class InstalledIce {
     public InstalledIce(Card card) {
         this.card = card
     }
+    
+    public String toString() {
+        return "${rezzed ? '^^^' : 'vvv'} ${card} ${rezzed ? '^^^' : 'vvv'}"
+    }
 }

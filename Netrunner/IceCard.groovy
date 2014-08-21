@@ -11,8 +11,9 @@ abstract class IceCard extends Card {
         
         def actions = []
         for (int i = 0; i <= servers; i++) {
-            actions << new Action("IceCard.preInstall", [card, i])
+            actions << new Action("${name}.preInstall", [card, i])
         }
+        gm.presentActions(actions)
     }
     
     public preInstall(Card card, int serverIdx) {
@@ -28,22 +29,25 @@ abstract class IceCard extends Card {
         
         def actions = []
         for (int i = 0; i < server.size(); i++) {
-            actions << new Action("IceCard.trashPreInstall", [card, serverIdx, server[i]])
+            actions << new Action("${name}.trashPreInstall", [card, serverIdx, server[i]])
         }
         
         if (gs.corp.credits >= server.size()) {
-            actions << new Action("IceCard.install", [card, serverIdx])
-        } 
+            actions << new Action("${name}.install", [card, serverIdx])
+        }
+        
+        gm.presentActions(actions) 
     }
     
     public trashPreInstall(Card card, int serverIdx, InstalledIce toTrash) {
-        gs.corp.servers[server].remove(toTrash)
+        gs.corp.servers[serverIdx].remove(toTrash)
+        gs.corp.discard << toTrash.card
         preInstall(card, serverIdx)
     }
     
     public install(Card card, int serverIdx) {
         def server = gs.corp.servers[serverIdx]
-        gs.corp.credts -= server.size()
+        gs.corp.credits -= server.size()
         server << new InstalledIce(card)
     }
     
