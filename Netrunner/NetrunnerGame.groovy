@@ -3,8 +3,8 @@ package Netrunner
 import com.gvaneyck.ggengine.Game
 import com.gvaneyck.ggengine.Action
 
-import Netrunner.cards.core.corporation.HedgeFund
-import Netrunner.cards.core.runner.SureGamble
+import Netrunner.cards.core.corporation.*
+import Netrunner.cards.core.runner.*
 
 class NetrunnerGame extends Game {
     static gm
@@ -12,35 +12,50 @@ class NetrunnerGame extends Game {
     
     public void init() {
     	gs.corp = [:]
-    	gs.runner = [:]
-    	
         gs.corp.credits = 5
-        gs.corp.deck = []
-        (1..49).each { gs.corp.deck << new HedgeFund() }
-        Collections.shuffle(gs.corp.deck)
-        
-        gs.corp.hand = []
-		(1..5).each { gs.corp.hand << gs.corp.deck.remove(0) }
+        gs.corp.maxHandSize = 5
+        gs.corp.discard = []
 
+        gs.corp.servers = []
+        (1..3).each { gs.corp.servers << [] }
+
+    	gs.runner = [:]
         gs.runner.credits = 5
-        gs.runner.deck = []
-        (1..45).each { gs.runner.deck << new SureGamble() }
-        Collections.shuffle(gs.runner.deck)
-        
-        gs.runner.hand = []
-		(1..5).each { gs.runner.hand << gs.runner.deck.remove(0) }
+        gs.runner.maxHandSize = 5
+		gs.runner.discard = []		
 
 		gm.presentActions([ new Action("NetrunnerGame.mulliganCorp", [true]), new Action("NetrunnerGame.mulliganCorp", [false]) ])
 		gm.presentActions([ new Action("NetrunnerGame.mulliganRunner", [true]), new Action("NetrunnerGame.mulliganRunner", [false]) ])
     }
     
+    public void initCorpDeck() {
+        gs.corp.deck = []
+        (1..29).each { gs.corp.deck << new HedgeFund() }
+        (1..20).each { gs.corp.deck << new WallOfStatic() }
+        Collections.shuffle(gs.corp.deck)
+        
+        gs.corp.hand = []
+        (1..5).each { gs.corp.hand << gs.corp.deck.remove(0) }
+    }
+    
+    public void initRunnerDeck() {
+        gs.runner.deck = []
+        (1..45).each { gs.runner.deck << new SureGamble() }
+        Collections.shuffle(gs.runner.deck)
+        
+        gs.runner.hand = []
+        (1..5).each { gs.runner.hand << gs.runner.deck.remove(0) }
+    }
+    
     public void turn() {
+        def actions
+
         gs.cur = gs.corp
     	gs.clicks = 3
     	corpDraw()
     	
     	while (gs.clicks > 0) {
-    		def actions = []
+    		actions = []
     		actions << new Action("NetrunnerGame.corpDraw")
     		actions << new Action("NetrunnerGame.corpCredit")
     		if (gs.runner.tags > 0) {
@@ -58,12 +73,20 @@ class NetrunnerGame extends Game {
     		gm.presentActions(actions)
     		gs.clicks--
     	}
+    	
+    	while (gs.corp.hand.size() > gs.corp.maxHandSize) {
+    	   actions = []
+    	   gs.corp.hand.each {
+    	       actions << new Action("NetrunnerGame.corpDiscardCard", [it])
+	       }
+	       gm.presentActions(actions)
+    	}
 
         gs.cur = gs.runner
     	gs.clicks = 4
     	
     	while (gs.clicks > 0) {
-    		def actions = []
+    		actions = []
     		actions << new Action("NetrunnerGame.runnerDraw")
     		actions << new Action("NetrunnerGame.runnerCredit")
     		if (gs.runner.tags > 0 && gs.runner.credits >= 2) {
@@ -79,27 +102,25 @@ class NetrunnerGame extends Game {
     		gm.presentActions(actions)
     		gs.clicks--
     	}
+
+        while (gs.runner.hand.size() > gs.runner.maxHandSize) {
+           actions = []
+           gs.runner.hand.each {
+               actions << new Action("NetrunnerGame.runnerDiscardCard", [it])
+           }
+           gm.presentActions(actions)
+        }
     }
     
     public void mulliganCorp(doMulligan) {
     	if (doMulligan) {
-	        gs.corp.deck = []
-	        (1..49).each { gs.corp.deck << new HedgeFund() }
-	        Collections.shuffle(gs.corp.deck)
-	        
-	        gs.corp.hand = []
-			(1..5).each { gs.corp.hand << gs.corp.deck.remove(0) }
+	        initCorpDeck()
 		}
     }
 
     public void mulliganRunner(doMulligan) {
     	if (doMulligan) {
-	        gs.runner.deck = []
-	        (1..45).each { gs.runner.deck << new SureGamble() }
-	        Collections.shuffle(gs.runner.deck)
-	        
-	        gs.runner.hand = []
-			(1..5).each { gs.runner.hand << gs.runner.deck.remove(0) }
+	        initRunnerDeck()
 		}
     }
     
@@ -111,9 +132,13 @@ class NetrunnerGame extends Game {
     	gs.corp.credits++
     }
     
-    public void corpTrash(target) {
+    public void corpTrashResource(target) {
     	gs.runner.heap << target
     	gs.corp.credits -= 2
+    }
+    
+    public void corpDiscardCard(Card c) {
+        gs.corp.hand.remove(c)
     }
     
     public void runnerDraw() {
@@ -127,6 +152,10 @@ class NetrunnerGame extends Game {
     public void runnerRemoveTag() {
     	gs.runner.credits -= 2
     	gs.runner.tags--
+    }
+    
+    public void runnerDiscardCard(Card c) {
+        gs.runner.hand.remove(c)
     }
     
     public boolean isFinished() {

@@ -2,7 +2,7 @@ package Netrunner.cards.core.runner
 
 import Netrunner.*
 
-class SureGamble extends RunnerCard {
+class SureGamble extends EventCard {
 
     def playCard() {
     	gs.runner.credits -= 5

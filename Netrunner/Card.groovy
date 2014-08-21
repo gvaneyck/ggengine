@@ -10,12 +10,10 @@ abstract class Card {
     def name
     
     def Card() {
-    	this.name = this.class.name
+    	this.name = this.class.simpleName
     }
     
-    abstract play()
-    
-    abstract playCard()
+    abstract play(Card card)
     
     abstract canPlay()
     
@@ -23,7 +21,7 @@ abstract class Card {
     	return "${name}"
 	}
 	
-	def getAction() {
-		return new Action("${name}.play")
+	public Action getAction() {
+	   return new Action("${name}.play", [this])
 	}
 }

@@ -101,7 +101,7 @@ public class GameManager2 {
         } catch (ClassNotFoundException e) {
             System.err.println("Found file named " + clazz + ".groovy, but it wasn't a class");
         } catch (InstantiationException e) {
-            System.err.println("Failed to instantiate " + clazz);
+            System.err.println("Failed to instantiate " + clazz + ".  Is it missing a constructor?");
             e.printStackTrace();
         } catch (IllegalAccessException e) {
             System.err.println("Illegal access exception for " + clazz);

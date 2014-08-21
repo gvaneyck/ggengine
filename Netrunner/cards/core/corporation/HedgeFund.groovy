@@ -2,7 +2,7 @@ package Netrunner.cards.core.corporation
 
 import Netrunner.*
 
-class HedgeFund extends CorpCard {
+class HedgeFund extends OperationCard {
 
     def playCard() {
     	gs.corp.credits -= 5
