@@ -1,6 +1,6 @@
 package com.gvaneyck.ggengine.gui;
 
-import java.awt.Graphics;
+import java.awt.*;
 
 public abstract class Screen {
     protected int[] pixels;

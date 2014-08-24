@@ -1,3 +1,5 @@
+package tictactoe
+
 class TicTacToeActions {
     def gs
     

@@ -1,146 +1,142 @@
 package com.gvaneyck.ggengine;
 
+import com.gvaneyck.ggengine.gamestate.UndoStep;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyObject;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
-
-import javax.swing.JFrame;
-
-import com.gvaneyck.ggengine.gui.GGEngine;
-import com.gvaneyck.ggengine.gui.Screen;
 
 public class GameManager {
-    private Map<String, Object> gs = new HashMap<String, Object>();
+    private List<UndoStep> undoSteps = new ArrayList<UndoStep>();
+    private Map<String, Object> gs;
     private Map<String, Class> clazzes = new HashMap<String, Class>();
-    private Map<String, GroovyObject> instances = new HashMap<String, GroovyObject>();
     private GroovyClassLoader loader = null;
 
-    private String source;
-    private GGEngine engine;
+    private Game game;
 
-    public static void main(String[] args) {
-        GameManager gm = new GameManager("tictactoe");
-        gm.start();
+    private ConsoleUI ui = new ConsoleUI();
+
+    public GameManager() {
+        gs = new HashMap<String, Object>();
     }
 
-    public GameManager(String source) {
-        buildWindow();
-
-        this.source = source;
-        loadClasses();
-        injectMembers();
+    public GameManager(Map<String, Object> gs) {
+        this.gs = gs;
     }
 
-    public void buildWindow() {
-        engine = new GGEngine();
-        engine.frame = new JFrame();
-        engine.frame.setResizable(false);
-        engine.frame.setTitle(engine.TITLE);
-        engine.frame.add(engine);
-        engine.frame.pack();
-        engine.frame.setLocationRelativeTo(null);
-        engine.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        engine.frame.setVisible(true);
-
-        engine.start();
+    public void loadGame(String baseDir, String game) {
+        loadClasses(baseDir + "/" + game, game);
     }
 
-    public void start() {
-        engine.setScreen((Screen) instances.get("TicTacToeView"));
-        Scanner in = new Scanner(System.in);
-
-        instances.get("TicTacToeRules").invokeMethod("initGame", null);
-        while (!(Boolean) instances.get("TicTacToeRules").invokeMethod(
-                "isGameEnd", null)) {
-            List<Action> actions = (List<Action>) instances.get("TicTacToeRules").invokeMethod("getMoves", null);
-            for (int i = 0; i < actions.size(); i++)
-                System.out.println(i + ") " + actions.get(i));
-
-            int choice = in.nextInt();
-            executeAction(actions.get(choice));
-            instances.get("TicTacToeActions").invokeMethod("changeTurn", null);
-        }
-
-        System.out.println("Winner: "
-                + instances.get("TicTacToeRules").invokeMethod("getWinner",
-                        null));
-
-        instances.get("Test").invokeMethod("printGs", null);
-
-        in.close();
-    }
-
-    private void loadClasses() {
+    public void loadClasses(String dir, String pkg) {
         if (loader == null) {
             ClassLoader parentLoader = this.getClass().getClassLoader();
             loader = new GroovyClassLoader(parentLoader);
-            loader.addClasspath(source);
+            loader.addClasspath(dir);
         }
 
-        File sourceDir = new File(source);
+        File sourceDir = new File(dir);
         if (!sourceDir.exists() || !sourceDir.isDirectory()) {
-            System.err.println("Source directory does not exist: " + source);
+            System.err.println("Source directory does not exist: " + dir);
             return;
         }
 
-        File[] sourceFiles = sourceDir.listFiles();
+        loadClasses(pkg + ".", sourceDir);
+
+        if (game == null) {
+            System.err.println("No Game class found, aborting");
+            System.exit(0);
+        }
+
+        injectMembers();
+    }
+
+    private void loadClasses(String pkg, File dir) {
+        File[] sourceFiles = dir.listFiles();
         for (File f : sourceFiles) {
             String fileName = f.getName();
-            if (fileName.endsWith(".groovy")) {
-                String clazz = fileName.substring(0, fileName.length() - 7);
-                loadClass(clazz);
+            if (f.isDirectory()) {
+                loadClasses(pkg + fileName + ".", f);
+            }
+            else {
+                if (fileName.endsWith(".groovy")) {
+                    String clazz = fileName.substring(0, fileName.length() - 7);
+                    loadClass(pkg, clazz);
+                }
             }
         }
     }
 
-    private void loadClass(String clazz) {
+    private void loadClass(String pkg, String clazz) {
         try {
-            Class groovyClass = loader.loadClass(clazz);
-            GroovyObject instance = (GroovyObject) groovyClass.newInstance();
+            String fullName = pkg + clazz;
+            Class groovyClass = loader.loadClass(fullName);
+
+            if (!groovyClass.getName().equals(fullName)) {
+                throw new Exception("File not named appropriately for class: " + groovyClass.getName() + " (class name) vs " + fullName + " (file name)");
+            }
+
+            if (Game.class.isAssignableFrom(groovyClass)) {
+                if (game != null) {
+                    throw new Exception("Found two Game classes aborting: " + game.getClass().getName() + " " + groovyClass.getName());
+                }
+                game = (Game)groovyClass.newInstance();
+            }
+
             clazzes.put(clazz, groovyClass);
-            instances.put(clazz, instance);
-        } catch (ClassNotFoundException e) {
+        }
+        catch (ClassNotFoundException e) {
             System.err.println("Found file named " + clazz + ".groovy, but it wasn't a class");
-        } catch (InstantiationException e) {
-            System.err.println("Failed to instantiate " + clazz);
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            System.err.println("Illegal access exception for " + clazz);
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private void injectMembers() {
-        for (String name : instances.keySet()) {
-            GroovyObject instance = instances.get(name);
+        for (String name : clazzes.keySet()) {
             Class clazz = clazzes.get(name);
-            for (Method m : clazz.getMethods()) {
-                String method = m.getName();
-                if (!method.startsWith("set"))
-                    continue;
+            try {
+                for (Method m : clazz.getMethods()) {
+                    String method = m.getName();
+                    if (!method.startsWith("set") || !Modifier.isStatic(m.getModifiers())) {
+                        continue;
+                    }
 
-                String member = method.substring(3);
-                if (member.equals("Gs"))
-                    instance.invokeMethod("setGs", gs);
-                if (clazzes.containsKey(member))
-                    instance.invokeMethod(method, instance);
+                    String member = method.substring(3);
+                    if (member.equals("Gs")) {
+                        m.invoke(null, gs);
+                    }
+                    if (member.equals("Gm")) {
+                        m.invoke(null, this);
+                    }
+                }
+            }
+            catch (Exception e) {
+                System.err.println("Error when injecting for " + clazz.getName());
+                e.printStackTrace();
             }
         }
     }
 
-    private void executeAction(Action a) {
-        int idx = a.clazz.lastIndexOf('.');
-        String clazz = a.clazz.substring(0, idx);
-        String method = a.clazz.substring(idx + 1);
-        instances.get(clazz).invokeMethod(method, a.args);
+    public void gameLoop() {
+        game.init();
+        while (!game.isFinished()) {
+            game.turn();
+        }
+        game.end();
+    }
+
+    public void presentActions(List<Action> actions) {
+        ui.showChoices(actions);
+        Action action = ui.getChoice();
+        action.invoke();
     }
 }

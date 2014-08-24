@@ -1,11 +1,20 @@
 package com.gvaneyck.ggengine.fe;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 public class IRCConnector {
-    
+
     // State variables
     private boolean running;
     private boolean reconnect;
@@ -39,20 +48,25 @@ public class IRCConnector {
 
     public IRCConnector(String[] servers, int port) {
         this.servers = new ArrayList<String>();
-        for (String s : servers)
+        for (String s : servers) {
             this.servers.add(s);
+        }
         this.serverIdx = 0;
 
         this.port = port;
     }
-    
+
     public void setUser(String userName, String password) {
         this.userName = userName;
         this.password = password;
     }
-    
+
     private void sleep(long ms) {
-        try { Thread.sleep(ms); } catch (Exception e) { }
+        try {
+            Thread.sleep(ms);
+        }
+        catch (Exception e) {
+        }
     }
 
     public void run() {
@@ -60,8 +74,9 @@ public class IRCConnector {
         while (running) {
             try {
                 // Need to open ourself?
-                if (socket == null)
+                if (socket == null) {
                     open();
+                }
 
                 String line;
                 boolean finished;
@@ -76,8 +91,7 @@ public class IRCConnector {
                     line = "";
                     while (true) {
                         // Ping server if necessary
-                        if (System.currentTimeMillis() - lastPing > PING_RATE)
-                        {
+                        if (System.currentTimeMillis() - lastPing > PING_RATE) {
                             // Check if we're still waiting for a PONG (i.e. we timed out)
                             if (wait_for_pong == 2) {
                                 // Easy way to break
@@ -90,24 +104,24 @@ public class IRCConnector {
                         }
 
                         // Grab input if any
-                        while (in.ready())
-                        {
+                        while (in.ready()) {
                             char c = (char) in.read();
 
                             // break if newline
-                            if (c == '\n')
-                            {
+                            if (c == '\n') {
                                 finished = true;
                                 break;
                             }
 
                             // Don't add carriage returns
-                            if (c != '\r')
+                            if (c != '\r') {
                                 line += c;
+                            }
                         }
 
-                        if (finished)
+                        if (finished) {
                             break;
+                        }
 
                         sleep(100);
                     }
@@ -144,8 +158,9 @@ public class IRCConnector {
                     }
 
                     // (Re)Identify if needed
-                    if (line.startsWith(":NickServ") && line.contains("NOTICE " + userName + " :This nickname is registered and protected."))
+                    if (line.startsWith(":NickServ") && line.contains("NOTICE " + userName + " :This nickname is registered and protected.")) {
                         sendMessage("NickServ", "IDENTIFY " + password);
+                    }
 
                     // Get nick back if needed
                     if (line.contains("433") && line.contains(":Nickname is already in use.")) {
@@ -191,16 +206,18 @@ public class IRCConnector {
     }
 
     public void quit(String msg) {
-        for (String channel : channels.keySet())
+        for (String channel : channels.keySet()) {
             write("PART " + channel + " :" + msg);
+        }
         write("QUIT");
     }
 
     private void open() throws IOException {
         server = servers.get(serverIdx);
         serverIdx++;
-        if (serverIdx == servers.size())
+        if (serverIdx == servers.size()) {
             serverIdx = 0;
+        }
         System.out.println("Connecting to " + server);
 
         socket = new Socket(server, port);
@@ -217,9 +234,21 @@ public class IRCConnector {
     }
 
     private void close() {
-        try { in.close(); } catch (Exception e) {}
-        try { out.close(); } catch (Exception e) {}
-        try { socket.close(); } catch (Exception e) {}
+        try {
+            in.close();
+        }
+        catch (Exception e) {
+        }
+        try {
+            out.close();
+        }
+        catch (Exception e) {
+        }
+        try {
+            socket.close();
+        }
+        catch (Exception e) {
+        }
 
         in = null;
         out = null;
@@ -237,10 +266,8 @@ public class IRCConnector {
         }
     }
 
-    public void write(String data)
-    {
-        try
-        {
+    public void write(String data) {
+        try {
             out.write(data + "\n");
             out.flush();
         }
@@ -249,8 +276,7 @@ public class IRCConnector {
         }
     }
 
-    public void broadcast(String msg)
-    {
+    public void broadcast(String msg) {
         for (String channel : channels.keySet()) {
             sendMessage(channel, msg);
         }
@@ -278,21 +304,23 @@ public class IRCConnector {
 
             // Send a message for every line
             for (String line : msgLines) {
-                if (line.length() == 0)
+                if (line.length() == 0) {
                     continue;
+                }
 
                 // Split messages that are too long into multiple lines
                 int i = 0;
                 line += " ";
-                do
-                {
+                do {
                     int idx = line.lastIndexOf(" ", i + 435);
 
                     StringBuffer ret = new StringBuffer();
-                    if (isNotice)
+                    if (isNotice) {
                         ret.append("NOTICE ");
-                    else
+                    }
+                    else {
                         ret.append("PRIVMSG ");
+                    }
 
                     ret.append(target);
                     ret.append(" :");

@@ -1,3 +1,5 @@
+package tictactoe
+
 import com.gvaneyck.ggengine.Game
 import com.gvaneyck.ggengine.Action
 

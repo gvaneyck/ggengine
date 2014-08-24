@@ -4,9 +4,9 @@ abstract class EventCard extends Card {
 
     abstract playCard()
 
-    public play(Card card) {
-        gs.runner.hand.remove(card)
+    public play() {
+        gs.runner.hand.remove(this)
         playCard()
-        gs.runner.discard << card
+        gs.runner.discard << this
     }
 }

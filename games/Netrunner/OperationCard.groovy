@@ -4,9 +4,9 @@ abstract class OperationCard extends Card {
 
     abstract playCard()
 
-    public play(Card card) {
-        gs.corp.hand.remove(card)
+    public play() {
+        gs.corp.hand.remove(this)
         playCard()
-        gs.corp.discard << card
+        gs.corp.discard << this
     }
 }

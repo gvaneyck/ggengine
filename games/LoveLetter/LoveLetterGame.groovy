@@ -1,3 +1,13 @@
+package LoveLetter
+
+import LoveLetter.Baron
+import LoveLetter.Countess
+import LoveLetter.Guard
+import LoveLetter.Handmaid
+import LoveLetter.King
+import LoveLetter.Priest
+import LoveLetter.Prince
+import LoveLetter.Princess
 import com.gvaneyck.ggengine.Game
 import com.gvaneyck.ggengine.Action
 

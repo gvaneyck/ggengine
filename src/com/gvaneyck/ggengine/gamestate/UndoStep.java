@@ -1,4 +1,4 @@
-package com.gvaneyck.ggengine;
+package com.gvaneyck.ggengine.gamestate;
 
 import java.util.List;
 import java.util.Map;
@@ -9,9 +9,11 @@ public class UndoStep {
     private String key;
     private Object value;
     private int idx;
-    
-    private UndoStep() { }
-    
+    public boolean mark = false;
+
+    private UndoStep() {
+    }
+
     private UndoStep(UndoType type, Object parent, String key, Object value, int idx) {
         this.type = type;
         this.parent = parent;
@@ -19,34 +21,34 @@ public class UndoStep {
         this.value = value;
         this.idx = idx;
     }
-    
+
     public static UndoStep makeAdd(Object parent, String key, int val) {
         return new UndoStep(UndoType.ADD, parent, key, val, 0);
     }
-    
+
     public static UndoStep makeInsert(Object parent, Object val, int idx) {
         return new UndoStep(UndoType.INSERT, parent, null, val, idx);
     }
-    
+
     public static UndoStep makeRemove(Object parent, int idx) {
         return new UndoStep(UndoType.REMOVE, parent, null, null, idx);
     }
-    
+
     public void apply() {
         switch (type) {
             case ADD:
-                Map<String, Object> map = (Map<String, Object>)parent;
-                double newVal = ((Number)map.get(key)).doubleValue() + ((Number)value).doubleValue();
+                Map<String, Object> map = (Map<String, Object>) parent;
+                double newVal = ((Number) map.get(key)).doubleValue() + ((Number) value).doubleValue();
                 map.put(key, newVal);
                 break;
 
             case INSERT:
-                List list1 = (List)parent;
+                List list1 = (List) parent;
                 list1.add(idx, value);
                 break;
-            
+
             case REMOVE:
-                List list2 = (List)parent;
+                List list2 = (List) parent;
                 list2.remove(idx);
                 break;
         }

@@ -1,13 +1,10 @@
 package com.gvaneyck.ggengine.gui;
 
-import java.awt.Canvas;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-
-import javax.swing.JFrame;
 
 public class GGEngine extends Canvas implements Runnable {
     private static final long serialVersionUID = -3534599314003483547L;
@@ -49,7 +46,8 @@ public class GGEngine extends Canvas implements Runnable {
         running = false;
         try {
             thread.join();
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -88,23 +86,26 @@ public class GGEngine extends Canvas implements Runnable {
             return;
         }
 
-        for (int i = 0; i < WIDTH * HEIGHT; i++)
+        for (int i = 0; i < WIDTH * HEIGHT; i++) {
             pixels[i] = 0;
+        }
 
         Graphics g = bs.getDrawGraphics();
 
         if (screen != null) {
             int[] drawPixels = screen.render();
             if (drawPixels != null && drawPixels.length == WIDTH * HEIGHT) {
-                for (int i = 0; i < WIDTH * HEIGHT; i++)
+                for (int i = 0; i < WIDTH * HEIGHT; i++) {
                     pixels[i] = drawPixels[i];
+                }
             }
         }
 
         g.drawImage(image, 0, 0, getWidth(), getHeight(), null);
 
-        if (screen != null)
+        if (screen != null) {
             screen.doGraphics(g);
+        }
 
         g.dispose();
         bs.show();

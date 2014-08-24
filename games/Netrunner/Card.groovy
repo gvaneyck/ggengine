@@ -13,15 +13,11 @@ abstract class Card {
     	this.name = this.class.simpleName
     }
     
-    abstract play(Card card)
+    abstract play()
     
     abstract canPlay()
     
     public String toString() {
     	return "${name}"
-	}
-	
-	public Action getAction() {
-	   return new Action("${name}.play", [this])
 	}
 }

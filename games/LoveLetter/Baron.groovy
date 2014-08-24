@@ -1,3 +1,6 @@
+package LoveLetter
+
+import LoveLetter.Card
 import com.gvaneyck.ggengine.Action
 
 class Baron extends Card {

@@ -1,3 +1,7 @@
+package LoveLetter
+
+import LoveLetter.Card
+
 class Princess extends Card {
 
     def Princess() {

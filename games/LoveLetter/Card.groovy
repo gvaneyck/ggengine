@@ -1,3 +1,5 @@
+package LoveLetter
+
 import com.gvaneyck.ggengine.Action
 
 abstract class Card {

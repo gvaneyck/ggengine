@@ -11,10 +11,13 @@ class NetrunnerGame extends Game {
     static gs
     
     public void init() {
+        gs.events = []
+
     	gs.corp = [:]
         gs.corp.credits = 5
         gs.corp.maxHandSize = 5
         gs.corp.discard = []
+        gs.corp.recurring = []
 
         gs.corp.servers = []
         (1..3).each { gs.corp.servers << [] }
@@ -22,10 +25,11 @@ class NetrunnerGame extends Game {
     	gs.runner = [:]
         gs.runner.credits = 5
         gs.runner.maxHandSize = 5
-		gs.runner.discard = []		
+		gs.runner.discard = []
+        gs.runner.recurring = []
 
-		gm.presentActions([ new Action("NetrunnerGame.mulliganCorp", [true]), new Action("NetrunnerGame.mulliganCorp", [false]) ])
-		gm.presentActions([ new Action("NetrunnerGame.mulliganRunner", [true]), new Action("NetrunnerGame.mulliganRunner", [false]) ])
+		gm.presentActions([ new Action(this, "mulliganCorp", [true]), new Action(this, "mulliganCorp", [false]) ])
+		gm.presentActions([ new Action(this, "mulliganRunner", [true]), new Action(this, "mulliganRunner", [false]) ])
     }
     
     public void initCorpDeck() {
@@ -56,17 +60,17 @@ class NetrunnerGame extends Game {
     	
     	while (gs.clicks > 0) {
     		actions = []
-    		actions << new Action("NetrunnerGame.corpDraw")
-    		actions << new Action("NetrunnerGame.corpCredit")
+    		actions << new Action(this, "corpDraw")
+    		actions << new Action(this, "corpCredit")
     		if (gs.runner.tags > 0) {
     			gs.runner.resources.each {
-    				actions << new Action("NetrunnerGame.corpTrash", [it])
+    				actions << new Action(this, "corpTrash", [it])
     			}
     		}
     		
     		gs.corp.hand.each {
     			if (it.canPlay()) {
-    				actions << it.getAction()
+    				actions << new Action(it, "play")
     			}
     		}
     		
@@ -77,7 +81,7 @@ class NetrunnerGame extends Game {
     	while (gs.corp.hand.size() > gs.corp.maxHandSize) {
     	   actions = []
     	   gs.corp.hand.each {
-    	       actions << new Action("NetrunnerGame.corpDiscardCard", [it])
+    	       actions << new Action(this, "corpDiscardCard", [it])
 	       }
 	       gm.presentActions(actions)
     	}
@@ -87,15 +91,15 @@ class NetrunnerGame extends Game {
     	
     	while (gs.clicks > 0) {
     		actions = []
-    		actions << new Action("NetrunnerGame.runnerDraw")
-    		actions << new Action("NetrunnerGame.runnerCredit")
+    		actions << new Action(this, "runnerDraw")
+    		actions << new Action(this, "runnerCredit")
     		if (gs.runner.tags > 0 && gs.runner.credits >= 2) {
-    			actions << new Action("NetrunnerGame.runnerRemoveTag")
+    			actions << new Action(this, "runnerRemoveTag")
     		}
     		
     		gs.runner.hand.each {
     			if (it.canPlay()) {
-    				actions << it.getAction()
+    				actions << new Action(it, "play")
     			}
     		}
     		
@@ -106,19 +110,19 @@ class NetrunnerGame extends Game {
         while (gs.runner.hand.size() > gs.runner.maxHandSize) {
            actions = []
            gs.runner.hand.each {
-               actions << new Action("NetrunnerGame.runnerDiscardCard", [it])
+               actions << new Action(this, "runnerDiscardCard", [it])
            }
            gm.presentActions(actions)
         }
     }
-    
-    public void mulliganCorp(doMulligan) {
+
+    public void mulliganCorp(Boolean doMulligan) {
     	if (doMulligan) {
 	        initCorpDeck()
 		}
     }
 
-    public void mulliganRunner(doMulligan) {
+    public void mulliganRunner(Boolean doMulligan) {
     	if (doMulligan) {
 	        initRunnerDeck()
 		}
@@ -132,7 +136,7 @@ class NetrunnerGame extends Game {
     	gs.corp.credits++
     }
     
-    public void corpTrashResource(target) {
+    public void corpTrashResource(Card target) {
     	gs.runner.heap << target
     	gs.corp.credits -= 2
     }

@@ -1,3 +1,5 @@
+package tictactoe
+
 class Test {
     def gs
     
