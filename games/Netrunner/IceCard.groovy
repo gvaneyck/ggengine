@@ -4,6 +4,8 @@ import com.gvaneyck.ggengine.Action
 
 abstract class IceCard extends Card {
 
+    def rezzed = false
+
     public play() {
         gs.corp.hand.remove(this)
         
@@ -39,19 +41,23 @@ abstract class IceCard extends Card {
         gm.presentActions(actions) 
     }
     
-    public trashPreInstall(int serverIdx, InstalledIce toTrash) {
+    public trashPreInstall(int serverIdx, Card toTrash) {
         gs.corp.servers[serverIdx].remove(toTrash)
-        gs.corp.discard << toTrash.card
+        gs.corp.discard << toTrash
         preInstall(serverIdx)
     }
     
     public install(int serverIdx) {
         def server = gs.corp.servers[serverIdx]
         gs.corp.credits -= server.size()
-        server << new InstalledIce(this)
+        server << this
     }
     
     public canPlay() {
         return true
+    }
+
+    public String toString() {
+        return "${rezzed ? '^^^' : 'vvv'} ${super.toString()} ${rezzed ? '^^^' : 'vvv'}"
     }
 }
