@@ -1,7 +1,7 @@
 package TicTacToe
 
-import com.gvaneyck.ggengine.Game
 import com.gvaneyck.ggengine.Action
+import com.gvaneyck.ggengine.Game
 
 class TicTacToeGame extends Game {
     static gm

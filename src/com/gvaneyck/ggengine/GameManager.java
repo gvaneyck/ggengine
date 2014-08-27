@@ -2,10 +2,8 @@ package com.gvaneyck.ggengine;
 
 import com.gvaneyck.ggengine.gamestate.UndoStep;
 import groovy.lang.GroovyClassLoader;
-import groovy.lang.GroovyObject;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
