@@ -1,4 +1,6 @@
-package com.gvaneyck.ggengine;
+package com.gvaneyck.ggengine.gametests;
+
+import com.gvaneyck.ggengine.GameManager;
 
 import java.util.HashMap;
 import java.util.Map;

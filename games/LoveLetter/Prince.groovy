@@ -8,21 +8,21 @@ class Prince extends Card {
     def Prince() {
         value = 5
     }
-    
+
     def playCard() {
         def actions = []
         (1..gs.maxPlayers).each {
             if (!gs[it].eliminated) {
-                actions << new Action('Prince.princeEffect', [it])
+                actions << new Action(this, 'princeEffect', [it])
             }
         }
         gm.presentActions(actions)
     }
-    
+
     def princeEffect(int target) {
         def cur = gs.currentPlayer
         def them = gs[target]
-        
+
         if (them.immune) {
             gm.announce("Player ${cur} tries to find the prince, but he is nowhere to be found")
             return
@@ -42,7 +42,7 @@ class Prince extends Card {
         else {
             them.hand = gs.deck.remove(0)
         }
-        
+
         gm.announce("Player ${cur} starts a rumor about player ${target}, but it is quickly found out to be false")
     }
 }
