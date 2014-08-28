@@ -1,6 +1,5 @@
 package LostCities
 
-import LoveLetter.cards.*
 import com.gvaneyck.ggengine.Action
 import com.gvaneyck.ggengine.Game
 
