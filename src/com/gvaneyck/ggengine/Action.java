@@ -44,7 +44,15 @@ public class Action {
     }
 
     public String toString() {
-        String clazz = instance.getClass().getSimpleName();
+        Class iClass = instance.getClass();
+        String clazz = iClass.getSimpleName();
+        try {
+            if (iClass.getMethod("toString", null).getDeclaringClass().equals(iClass)) {
+                clazz = instance.toString();
+            }
+        }
+        catch (Exception e) { }
+
         if (args == null) {
             return clazz + "." + method + "()";
         }
