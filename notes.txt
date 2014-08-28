@@ -1,10 +1,20 @@
 ===
+Announces
+===
+Does every game state update need to be announced?  (for maintaining client game state)
+If announces are automatic, how does imperfect information work? (cards have an owner?)
+Revealing is a manual announce.  No game state has changed, but someone has gained information
+
+
+
+===
 Undos
 ===
-turn() marks positions
+turn() marks positions and needs to be able to gracefully resume from a mark by continuing wherever it is.
+- Alternatively, auto-mark at the beginning of every turn
 Undo rolls back to a mark and then replays all but one action.  Removes the need to record incremental game state
 Need to rollback random as well.  Need one rand per game instance (thread).  To get current seed, need reflection.  To set, setSeed
-
+Clients will also need to mark?  Otherwise restoring client game state seems challenging.
 
 
 ===
