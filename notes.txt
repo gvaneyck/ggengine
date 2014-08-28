@@ -1,4 +1,13 @@
 ===
+Undos
+===
+turn() marks positions
+Undo rolls back to a mark and then replays all but one action.  Removes the need to record incremental game state
+Need to rollback random as well.  Need one rand per game instance (thread).  To get current seed, need reflection.  To set, setSeed
+
+
+
+===
 Times you might not want to use recurring credits
 ===
 Vamp
