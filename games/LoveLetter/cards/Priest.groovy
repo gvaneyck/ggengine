@@ -11,8 +11,8 @@ class Priest extends Card {
 
     def playCard() {
         def actions = []
-        (1..Card.gs.maxPlayers).each {
-            if (!Card.gs[it].eliminated && it != Card.gs.currentPlayer) {
+        (1..gs.maxPlayers).each {
+            if (!gs[it].eliminated && it != gs.currentPlayer) {
                 actions << new Action(this, 'priestEffect', [it])
             }
         }
@@ -20,15 +20,11 @@ class Priest extends Card {
     }
 
     def priestEffect(int target) {
-        def cur = Card.gs.currentPlayer
-        def them = Card.gs[target]
+        def cur = gs.currentPlayer
+        def them = gs[target]
 
         if (them.immune) {
-            Card.gm.announce("Player ${cur} tried to get the priest to tell him about player ${target}, but he refused")
             return
         }
-
-        Card.gm.announce("Player ${cur} convinced the priest to tell him about what player ${target} was doing")
-        Card.gm.announce(cur, "Player ${target} has ${them.hand}")
     }
 }

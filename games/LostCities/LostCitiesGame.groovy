@@ -2,6 +2,7 @@ package LostCities
 
 import com.gvaneyck.ggengine.Action
 import com.gvaneyck.ggengine.Game
+import groovy.json.JsonBuilder
 
 class LostCitiesGame extends Game {
     static gm
@@ -37,8 +38,6 @@ class LostCitiesGame extends Game {
             colors.each { color ->
                 gs[it].table[color] = []
             }
-
-            gm.announce(it, "Your starting hand is ${gs[it].hand}")
         }
 
         gs.currentPlayer = 1
@@ -47,7 +46,6 @@ class LostCitiesGame extends Game {
     public void turn() {
         def cur = gs.currentPlayer
         def curp = gs[cur]
-        gm.announce("Player ${cur}'s turn")
 
         curp.hand.sort { a, b ->
             def result = a.color.compareTo(b.color)
@@ -56,9 +54,6 @@ class LostCitiesGame extends Game {
             }
             return result
         }
-
-        gm.announce(cur, "Your hand is ${curp.hand}")
-        gm.announce(cur, "Your board is ${curp.table}")
 
         def actions = []
         curp.hand.each { card ->
@@ -124,16 +119,14 @@ class LostCitiesGame extends Game {
             scores << total
         }
 
-        gm.announce("Scores: ${scores[0]} vs ${scores[1]}")
-
         if (scores[0] > scores[1]) {
-            gm.announce("Winner is player 1")
+            println "Winner is player 1"
         }
         else if (scores[0] < scores[1]) {
-            gm.announce("Winner is player 2")
+            println "Winner is player 2"
         }
         else {
-            gm.announce("It's a tie!")
+            println "It's a tie!"
         }
     }
 }

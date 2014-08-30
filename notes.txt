@@ -4,7 +4,7 @@ Announces
 Does every game state update need to be announced?  (for maintaining client game state)
 If announces are automatic, how does imperfect information work? (cards have an owner?)
 Revealing is a manual announce.  No game state has changed, but someone has gained information
-
+Localization?
 
 
 ===

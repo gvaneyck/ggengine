@@ -137,12 +137,4 @@ public class GameManager {
         Action action = ui.getChoice();
         action.invoke();
     }
-
-    public void announce(String msg) {
-        System.out.println(msg);
-    }
-
-    public void announce(int player, String msg) {
-        System.out.println(player + ": " + msg);
-    }
 }

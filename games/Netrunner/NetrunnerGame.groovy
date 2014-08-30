@@ -167,6 +167,6 @@ class NetrunnerGame extends Game {
     }
 
     public void end() {
-        gm.announce("WTF")
+        println "WTF"
     }
 }

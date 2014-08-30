@@ -26,7 +26,6 @@ class LoveLetterGame extends Game {
 
         (1..gs.maxPlayers).each {
             gs[it] = [ hand: gs.deck.remove(0), table: [], eliminated: false, immune: false ]
-            gm.announce(it, "Your starting hand is ${gs[it].hand}")
         }
 
         gs.currentPlayer = 1
@@ -34,12 +33,10 @@ class LoveLetterGame extends Game {
 
     public void turn() {
         def cur = gs.currentPlayer
-        gm.announce("Player ${cur}'s turn")
 
         def card1 = gs[cur].hand
         def card2 = gs.deck.remove(0)
         gs[cur].hand2 = card2
-        gm.announce(cur, "Your hand is ${card1} and you drew ${card2}")
 
         def actions = []
         if ((card1.value == 7 || card2.value == 7)
@@ -86,7 +83,5 @@ class LoveLetterGame extends Game {
                 tiebreaker = tb
             }
         }
-
-        gm.announce("Winner is ${winner} with ${highest}")
     }
 }

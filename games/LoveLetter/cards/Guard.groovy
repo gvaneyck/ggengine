@@ -11,8 +11,8 @@ class Guard extends Card {
 
     def playCard() {
         def actions = []
-        (1..Card.gs.maxPlayers).each {
-            if (!Card.gs[it].eliminated && it != Card.gs.currentPlayer) {
+        (1..gs.maxPlayers).each {
+            if (!gs[it].eliminated && it != gs.currentPlayer) {
                 actions << new Action(this, 'makeGuess', [it])
             }
         }
@@ -28,21 +28,16 @@ class Guard extends Card {
     }
 
     def guardEffect(int target, int card) {
-        def cur = Card.gs.currentPlayer
-        def them = Card.gs[target]
+        def cur = gs.currentPlayer
+        def them = gs[target]
 
         if (them.immune) {
-            Card.gm.announce("Player ${cur} told a guard to watch out for player ${target}, but the guard got distracted by a handmaid")
             return
         }
 
         if (them.hand.value == card) {
             them.eliminated = true
-            Card.gs.remainingPlayers--
-            Card.gm.announce("Player ${cur} told a guard about a consipracy between player ${target} and ${them.hand}, and they were caught!")
-        }
-        else {
-            Card.gm.announce("Player ${cur} asked a guard to watch out for player ${target} and ${card}, but he didn't find them")
+            gs.remainingPlayers--
         }
     }
 }

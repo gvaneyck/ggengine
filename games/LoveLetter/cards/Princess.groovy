@@ -9,9 +9,8 @@ class Princess extends Card {
     }
 
     def playCard() {
-        def cur = Card.gs.currentPlayer
-        Card.gs[cur].eliminated = true
-        Card.gs.remainingPlayers--
-        Card.gm.announce("Player ${cur} is accidentally seen with the Princess and expelled!")
+        def cur = gs.currentPlayer
+        gs[cur].eliminated = true
+        gs.remainingPlayers--
     }
 }
