@@ -1,5 +1,6 @@
 package com.gvaneyck.ggengine;
 
+import com.gvaneyck.ggengine.gamestate.GameStateSerializer;
 import com.gvaneyck.ggengine.gamestate.UndoStep;
 import groovy.lang.GroovyClassLoader;
 
@@ -16,6 +17,7 @@ public class GameManager {
     private Map<String, Object> gs;
     private Map<String, Class> clazzes = new HashMap<String, Class>();
     private GroovyClassLoader loader = null;
+    private GameStateSerializer gss = new GameStateSerializer();
 
     private Game game;
 
@@ -88,6 +90,10 @@ public class GameManager {
                 game = (Game)groovyClass.newInstance();
             }
 
+            if (GameStateSerializer.class.isAssignableFrom(groovyClass)) {
+                gss = (GameStateSerializer)groovyClass.newInstance();
+            }
+
             clazzes.put(clazz, groovyClass);
         }
         catch (ClassNotFoundException e) {
@@ -126,6 +132,8 @@ public class GameManager {
 
     public void gameLoop() {
         game.init();
+        System.out.println(gss.serializeGameState(gs, 1));
+        System.out.println(gss.serializeGameState(gs, 2));
         while (!game.isFinished()) {
             game.turn();
         }

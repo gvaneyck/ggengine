@@ -2,7 +2,6 @@ package LostCities
 
 import com.gvaneyck.ggengine.Action
 import com.gvaneyck.ggengine.Game
-import groovy.json.JsonBuilder
 
 class LostCitiesGame extends Game {
     static gm
