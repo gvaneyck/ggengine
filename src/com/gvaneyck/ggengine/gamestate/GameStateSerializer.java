@@ -6,11 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 public class GameStateSerializer {
-    public String serializeGameState(Map gs, int player) {
-        return serialize(gs, player);
-    }
-
-    protected String serialize(Object value, int player) {
+    public String serialize(Object value) {
         if (value instanceof Number) {
             return value.toString();
         }
@@ -18,17 +14,17 @@ public class GameStateSerializer {
             return "\"" + value.toString() + "\"";
         }
         else if (value instanceof Map) {
-            return serialize((Map)value, player);
+            return serialize((Map)value);
         }
         else if (value instanceof List) {
-            return serialize((List)value, player);
+            return serialize((List)value);
         }
         else {
-            return serializeObject(value, player);
+            return serializeObject(value);
         }
     }
 
-    protected String serialize(Map m, int player) {
+    protected String serialize(Map m) {
         StringBuilder buffer = new StringBuilder();
         buffer.append('{');
 
@@ -41,7 +37,7 @@ public class GameStateSerializer {
             buffer.append("\":");
 
             Object value = e.getValue();
-            buffer.append(serialize(value, player));
+            buffer.append(serialize(value));
 
             if (i < entries.length - 1) {
                 buffer.append(',');
@@ -53,13 +49,13 @@ public class GameStateSerializer {
         return buffer.toString();
     }
 
-    protected String serialize(List l, int player) {
+    protected String serialize(List l) {
         StringBuilder buffer = new StringBuilder();
 
         buffer.append('[');
 
         for (int i = 0; i < l.size(); i++) {
-            buffer.append(serialize(l.get(i), player));
+            buffer.append(serialize(l.get(i)));
             if (i < l.size() - 1) {
                 buffer.append(',');
             }
@@ -70,13 +66,13 @@ public class GameStateSerializer {
         return buffer.toString();
     }
 
-    protected String serializeObject(Object value, int player) {
+    protected String serializeObject(Object value) {
         Map properties = DefaultGroovyMethods.getProperties(value);
         properties.remove("class");
         properties.remove("declaringClass");
         properties.remove("metaClass");
         properties.remove("gm");
         properties.remove("gs");
-        return serialize(properties, player);
+        return serialize(properties);
     }
 }

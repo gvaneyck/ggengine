@@ -1,11 +1,9 @@
 package LostCities
 
-import com.gvaneyck.ggengine.gamestate.GameStateSerializer
+import com.gvaneyck.ggengine.gamestate.GameStateFilter
 
-// TODO make filter instead
-// Serializer just for passing full map & changes over
-class GSS extends GameStateSerializer{
-    public String serializeGameState(Map gs, int player) {
+class GSF extends GameStateFilter {
+    public Map filterGameState(Map gs, int player) {
         def temp = [:]
         temp[1] = [table: gs[1].table]
         temp[2] = [table: gs[2].table]
@@ -21,6 +19,7 @@ class GSS extends GameStateSerializer{
         temp.deck = gs.deck.size()
         temp.currentPlayer = gs.currentPlayer
 
-        return serialize(temp, player)
+        println player + " " + temp
+        return temp
     }
 }

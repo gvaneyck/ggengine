@@ -1,34 +1,35 @@
 package com.gvaneyck.ggengine;
 
-import com.gvaneyck.ggengine.gamestate.GameStateSerializer;
-import com.gvaneyck.ggengine.gamestate.UndoStep;
+import com.gvaneyck.ggengine.gamestate.GameStateFilter;
+import com.gvaneyck.ggengine.ui.ConsoleUI;
+import com.gvaneyck.ggengine.ui.GGui;
 import groovy.lang.GroovyClassLoader;
 
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class GameManager {
-    private List<UndoStep> undoSteps = new ArrayList<UndoStep>();
     private Map<String, Object> gs;
     private Map<String, Class> clazzes = new HashMap<String, Class>();
     private GroovyClassLoader loader = null;
-    private GameStateSerializer gss = new GameStateSerializer();
+    private GameStateFilter gsf = new GameStateFilter();
 
     private Game game;
 
-    private ConsoleUI ui = new ConsoleUI();
+    private GGui ui;
 
     public GameManager() {
         gs = new HashMap<String, Object>();
+        ui = new ConsoleUI();
     }
 
-    public GameManager(Map<String, Object> gs) {
+    public GameManager(Map<String, Object> gs, GGui ui) {
         this.gs = gs;
+        this.ui = ui;
     }
 
     public void loadGame(String baseDir, String game) {
@@ -90,8 +91,8 @@ public class GameManager {
                 game = (Game)groovyClass.newInstance();
             }
 
-            if (GameStateSerializer.class.isAssignableFrom(groovyClass)) {
-                gss = (GameStateSerializer)groovyClass.newInstance();
+            if (GameStateFilter.class.isAssignableFrom(groovyClass)) {
+                gsf = (GameStateFilter)groovyClass.newInstance();
             }
 
             clazzes.put(clazz, groovyClass);
@@ -132,8 +133,8 @@ public class GameManager {
 
     public void gameLoop() {
         game.init();
-        System.out.println(gss.serializeGameState(gs, 1));
-        System.out.println(gss.serializeGameState(gs, 2));
+        ui.showGS(1, gsf.filterGameState(gs, 1));
+        ui.showGS(2, gsf.filterGameState(gs, 2));
         while (!game.isFinished()) {
             game.turn();
         }
@@ -144,5 +145,7 @@ public class GameManager {
         ui.showChoices(actions);
         Action action = ui.getChoice();
         action.invoke();
+        ui.showGS(1, gsf.filterGameState(gs, 1));
+        ui.showGS(2, gsf.filterGameState(gs, 2));
     }
 }

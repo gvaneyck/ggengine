@@ -1,9 +1,12 @@
-package com.gvaneyck.ggengine;
+package com.gvaneyck.ggengine.ui;
+
+import com.gvaneyck.ggengine.Action;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
-public class ConsoleUI {
+public class ConsoleUI implements GGui {
     Scanner in = new Scanner(System.in);
     List<Action> currentActions;
 
@@ -22,5 +25,9 @@ public class ConsoleUI {
             System.out.print(i + ") ");
             System.out.println(a.toString());
         }
+    }
+
+    public void showGS(int player, Map gs) {
+        // Swallowed
     }
 }
