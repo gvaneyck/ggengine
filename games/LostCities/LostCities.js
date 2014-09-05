@@ -202,15 +202,25 @@ function endGame() {
     gGameInProgress = false;
 }
 
+function sizeWindow() {
+    gCanvasElement.width = window.innerWidth;
+    gCanvasElement.height = window.innerHeight;
+}
+
 function initGame(canvasElement) {
     gCanvasElement = canvasElement;
-    gCanvasElement.width = kPixelWidth;
-    gCanvasElement.height = kPixelHeight;
     gCanvasElement.addEventListener("click", halmaOnClick, false);
     gDrawingContext = gCanvasElement.getContext("2d");
+    sizeWindow();
+
     if (!resumeGame()) {
 	    newGame();
     }
+
+    window.onresize = function(event) {
+        sizeWindow();
+    };
+
     openWebSocket();
 }
 
@@ -227,8 +237,11 @@ function openWebSocket()
 
 function onOpen(evt)
 {
-    alert("CONNECTED");
-    websocket.send("WebSocket rocks")
+    websocket.send("setName,Jabe");
+    websocket.send("makeLobby,LostCities,Jabe's Lobby");
+    websocket.send("msg,Jabe,Hi1");
+    websocket.send("msg,General,Hi2");
+    websocket.send("msg,Jabe's Lobby,Hi3");
 }
 
 function onClose(evt)
@@ -239,7 +252,6 @@ function onClose(evt)
 function onMessage(evt)
 {
     alert(evt.data);
-    //websocket.close();
 }
 
 function onError(evt)

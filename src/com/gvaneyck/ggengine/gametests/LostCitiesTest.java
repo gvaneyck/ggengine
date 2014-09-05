@@ -19,17 +19,18 @@ public class LostCitiesTest {
 
     public static void webTest() {
         try {
-            final GGServer ggs = new GGServer(9003, new Draft_76());
-            Thread t = new Thread() {
-                public void run() {
-                    try { ggs.start(); } catch (Exception e) { e.printStackTrace(); }
-                }
-            };
-            t.start();
-
-            GameManager gm = new GameManager(new HashMap<String, Object>(), ggs);
-            gm.loadGame("games", "LostCities");
-            gm.gameLoop();
+            final GGServer ggs = new GGServer("games", "LostCities");
+            ggs.start();
+//            Thread t = new Thread() {
+//                public void run() {
+//                    try { ggs.start(); } catch (Exception e) { e.printStackTrace(); }
+//                }
+//            };
+//            t.start();
+//
+//            GameManager gm = new GameManager(new HashMap<String, Object>(), ggs);
+//            gm.loadGame("games", "LostCities");
+//            gm.gameLoop();
         }
         catch (Exception e) {
             e.printStackTrace();

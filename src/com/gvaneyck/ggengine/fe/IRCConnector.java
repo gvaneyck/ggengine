@@ -162,11 +162,11 @@ public class IRCConnector {
                         sendMessage("NickServ", "IDENTIFY " + password);
                     }
 
-                    // Get nick back if needed
+                    // Get name back if needed
                     if (line.contains("433") && line.contains(":Nickname is already in use.")) {
                         write("NICK " + userName + rand.nextInt(100));
 
-                        // Don't use NickServ on quakenet and instead hope that the nick times out
+                        // Don't use NickServ on quakenet and instead hope that the name times out
                         if (server.contains("quakenet")) {
                             retrievenick = true;
                         }
