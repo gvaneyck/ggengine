@@ -141,8 +141,8 @@ public class GameManager {
         game.end();
     }
 
-    public void presentActions(List<Action> actions) {
-        ui.showChoices(actions);
+    public void presentActions(int player, List<Action> actions) {
+        ui.showChoices(player, actions);
         Action action = ui.getChoice();
         action.invoke();
         ui.showGS(1, gsf.filterGameState(gs, 1));

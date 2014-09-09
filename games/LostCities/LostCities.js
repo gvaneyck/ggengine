@@ -239,9 +239,10 @@ function onOpen(evt)
 {
     websocket.send("setName,Jabe");
     websocket.send("makeLobby,LostCities,Jabe's Lobby");
-    websocket.send("msg,Jabe,Hi1");
-    websocket.send("msg,General,Hi2");
-    websocket.send("msg,Jabe's Lobby,Hi3");
+//    websocket.send("msg,Jabe,Hi1");
+//    websocket.send("msg,General,Hi2");
+//    websocket.send("msg,Jabe's Lobby,Hi3");
+    websocket.send()
 }
 
 function onClose(evt)

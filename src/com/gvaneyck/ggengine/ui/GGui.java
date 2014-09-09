@@ -7,6 +7,6 @@ import java.util.Map;
 
 public interface GGui {
     public Action getChoice();
-    public void showChoices(List<Action> actions);
+    public void showChoices(int player, List<Action> actions);
     public void showGS(int player, Map gs);
 }

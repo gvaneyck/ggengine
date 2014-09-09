@@ -154,7 +154,7 @@ public class GGServer extends WebSocketServer implements GGui {
     }
 
     @Override
-    public void showChoices(List<Action> actions) {
+    public void showChoices(int player, List<Action> actions) {
         List<String> acts = new ArrayList<String>();
         for (Action a : actions)
             acts.add(a.toString());
