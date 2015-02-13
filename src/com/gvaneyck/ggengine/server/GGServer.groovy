@@ -31,8 +31,7 @@ public class GGServer extends WebSocketServer implements GGui {
         this.gameDir = gameDir
         this.game = game
 
-        Lobby lobby = new Lobby(name: 'General')
-        lobbies.put(lobby.name, lobby)
+        lobbies['General'] = new Lobby(name: 'General')
     }
 
     @Override
@@ -60,11 +59,18 @@ public class GGServer extends WebSocketServer implements GGui {
         def cmd = new JsonSlurper().parseText(s)
         switch (cmd.cmd) {
             case 'setName':
-                if (player.name == null) {
-                    player.name = cmd.name
-                    players.put(player.name, player)
-                    player.send([cmd: 'lobbyCreate', name: 'General'])
+                def name = cmd.name
+                name = name.trim()
+                name = name.replaceAll('[^a-zA-Z0-9 ]', '')
+                if (player.name == null && !players.containsKey(name)) {
+                    player.name = name
+                    players.put(name, player)
+                    player.send([cmd: 'nameSelect', success: true, name: name])
+                    player.send([cmd: 'lobbyList', names: lobbies.keySet()])
                     lobbies['General'].addPlayer(player)
+                }
+                else {
+                    player.send([cmd: 'nameSelect', success: false])
                 }
                 break
 

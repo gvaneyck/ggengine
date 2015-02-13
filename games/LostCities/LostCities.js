@@ -126,8 +126,7 @@ Textbox.prototype.draw = function() {
 /// Code begins
 
 var state = 'NAME';
-
-var uiElements = [ ];
+var name;
 
 var lobbies = {};
 var chats = [];
@@ -138,6 +137,13 @@ var fullHeight = 480;
 var gCanvasElement;
 var gContext;
 
+var uiElements = [ ];
+
+var errLabel;
+var nameLabel;
+var nameBox;
+var chatBox;
+
 function initGame(canvasElement) {
     gCanvasElement = canvasElement;
     gCanvasElement.addEventListener("click", clickHandler, false);
@@ -145,19 +151,21 @@ function initGame(canvasElement) {
     gContext = gCanvasElement.getContext("2d");
     sizeWindow();
 
-    var nameLabel = new Label(gContext, 10, 13, 'Enter nickname: ');
-    var nameBox = new Textbox(gContext, nameLabel.width + 10, 10, 200, 20);
+    errLabel = new Label(gContext, 10, 33, '');
+
+    nameLabel = new Label(gContext, 10, 13, 'Enter nickname: ');
+    nameBox = new Textbox(gContext, nameLabel.width + 10, 10, 200, 20);
     nameBox.submitHandler = function(msg) {
         sendCmd({cmd: 'setName', name: msg});
     };
 
-    var chatBox = new Textbox(gContext, 10, 10, 200, 20);
+    chatBox = new Textbox(gContext, 10, 10, 200, 20);
     chatBox.visible = false;
     chatBox.submitHandler = function(msg) {
         sendCmd({cmd: 'msg', msg: msg, target: 'General'});
     };
 
-    uiElements.push(nameLabel, nameBox, chatBox);
+    uiElements.push(errLabel, nameLabel, nameBox, chatBox);
 
     draw();
 
@@ -262,17 +270,23 @@ function onClose(evt) {
 }
 
 function onMessage(evt) {
+    console.log("MSG: " + evt.data);
     var cmd = JSON.parse(evt.data);
-    if (cmd.cmd == 'nameSelected') {
+    if (cmd.cmd == 'nameSelect') {
         if (cmd.success) {
-
+            name = cmd.name;
+            errLabel.visible = false;
+            nameBox.visible = false;
+            nameLabel.visible = false;
+            chatBox.visible = true;
         }
         else {
-
+            errLabel.text = 'Invalid name';
         }
     }
     else if (cmd.cmd == 'lobbyList') {
-        for (var name in cmd.data) {
+        for (var i = 0; i < cmd.names.length; i++) {
+            var name = cmd.names[i];
             lobbies[name] = {name: name, members: []};
         }
     }
@@ -292,14 +306,13 @@ function onMessage(evt) {
             lobby.members = [];
         }
         else {
-            lobby.members.remove(cmd.member);
+            lobby.members.splice(lobby.members.indexOf(cmd.member), 1);
         }
     }
     else if (cmd.cmd == 'chat') {
         chats.push(cmd);
-        draw();
     }
-    console.log("MSG: " + evt.data);
+    draw();
 }
 
 function onError(evt) {
