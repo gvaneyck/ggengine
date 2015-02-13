@@ -18,6 +18,11 @@ public class ConsoleUI implements GGui {
         return currentActions.get(choice);
     }
 
+    @Override
+    public void showChoices(int player, List<Action> actions) {
+
+    }
+
     public void showChoices(List<Action> actions) {
         currentActions = actions;
         for (int i = 0; i < actions.size(); i++) {

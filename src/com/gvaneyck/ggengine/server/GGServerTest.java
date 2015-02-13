@@ -1,11 +1,9 @@
 package com.gvaneyck.ggengine.server;
 
-import org.java_websocket.drafts.Draft_76;
-
 public class GGServerTest {
     public static void main(String[] args) {
         try {
-            //new GGServer(9003, new Draft_76()).start();
+            new GGServer("games", "LostCities").start();
         }
         catch (Exception e) {
             e.printStackTrace();

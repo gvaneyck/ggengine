@@ -1,205 +1,241 @@
-var kBoardWidth = 9;
-var kBoardHeight = 9;
-var kPieceWidth = 50;
-var kPieceHeight = 50;
-var kPixelWidth = 1 + (kBoardWidth * kPieceWidth);
-var kPixelHeight = 1 + (kBoardHeight * kPieceHeight);
+/// UI classes
+
+// Base class
+
+function UIElement(context, x, y, width, height) {
+    this.context = context;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.focus = false;
+    this.visible = true;
+}
+
+UIElement.prototype.draw = function() { };
+UIElement.prototype.handleKey = function(e) { return false; };
+
+UIElement.prototype.handleClick = function(xy) {
+    this.focus = this.isClicked(xy);
+    return this.focus
+};
+
+UIElement.prototype.isClicked = function(xy) {
+    return (this.x <= xy.x
+        && this.y <= xy.y
+        && this.x + this.width >= xy.x
+        && this.y + this.height >= xy.y);
+};
+
+// Label
+
+function Label(context, x, y, text) {
+    context.font = '12pt Calibri';
+    var measure = context.measureText(text);
+    UIElement.call(this, context, x, y, measure.width, 12);
+    this.text = text;
+}
+
+Label.prototype = Object.create(UIElement.prototype);
+Label.prototype.constructor = Label;
+
+Label.prototype.draw = function() {
+    this.context.font = '12pt Calibri';
+    this.context.fillText(this.text, this.x, this.y + 12);
+};
+
+// Textbox
+
+function Textbox(context, x, y, width, height) {
+    UIElement.call(this, context, x, y, width, height);
+    this.text = '';
+    this.cursorPos = 0;
+    this.submitHandler = new function(msg) {};
+}
+
+Textbox.prototype = Object.create(UIElement.prototype);
+Textbox.prototype.constructor = Textbox;
+
+Textbox.prototype.handleKey = function(e) {
+    var handled = false;
+    if (e.charCode != 0) {
+        handled = true;
+        var keyPressed = String.fromCharCode(e.charCode);
+        this.text = this.text.substring(0, this.cursorPos) + keyPressed + this.text.substring(this.cursorPos);
+        this.cursorPos++;
+    }
+    else {
+        // TODO e.ctrlKey
+        if (e.keyCode == 8) { // Backspace
+            handled = true;
+            if (this.cursorPos > 0) {
+                this.text = this.text.substring(0, this.cursorPos - 1) + this.text.substring(this.cursorPos);
+                this.cursorPos--;
+            }
+        }
+        else if (e.keyCode == 46) { // Delete
+            handled = true;
+            if (this.cursorPos < this.text.length) {
+                this.text = this.text.substring(0, this.cursorPos) + this.text.substring(this.cursorPos + 1);
+            }
+        }
+        else if (e.keyCode == 37) { // Left
+            handled = true;
+            if (this.cursorPos > 0) {
+                this.cursorPos--;
+            }
+        }
+        else if (e.keyCode == 39) { // Right
+            handled = true;
+            if (this.cursorPos < this.text.length) {
+                this.cursorPos++;
+            }
+        }
+        else if (e.keyCode == 13) { // Enter
+            handled = true;
+            this.submitHandler(this.text);
+            this.cursorPos = 0;
+            this.text = '';
+        }
+    }
+
+    if (handled) {
+        e.preventDefault();
+    }
+    return handled;
+};
+
+Textbox.prototype.draw = function() {
+    this.context.beginPath();
+
+    this.context.rect(this.x, this.y, this.width, this.height);
+
+    this.context.font = '12pt Calibri';
+    this.context.fillText(this.text, this.x + 3, this.y + this.height - 3);
+
+    if (this.focus) {
+        var cursorXpos = this.x + this.context.measureText(this.text.substring(0, this.cursorPos)).width + 3;
+        this.context.moveTo(cursorXpos, this.y + 3);
+        this.context.lineTo(cursorXpos, this.y + this.height - 3);
+    }
+
+    this.context.strokeStyle = 'black';
+    this.context.stroke();
+};
+
+/// Code begins
+
+var state = 'NAME';
+
+var uiElements = [ ];
+
+var lobbies = {};
+var chats = [];
+
+var fullWidth = 640;
+var fullHeight = 480;
 
 var gCanvasElement;
-var gDrawingContext;
-var gPattern;
+var gContext;
 
-var gPieces;
-var gNumPieces;
-var gSelectedPieceIndex;
-var gSelectedPieceHasMoved;
-var gMoveCount;
-var gGameInProgress;
+function initGame(canvasElement) {
+    gCanvasElement = canvasElement;
+    gCanvasElement.addEventListener("click", clickHandler, false);
+    document.addEventListener("keypress", typingHandler, false);
+    gContext = gCanvasElement.getContext("2d");
+    sizeWindow();
 
-function Cell(row, column) {
-    this.row = row;
-    this.column = column;
+    var nameLabel = new Label(gContext, 10, 13, 'Enter nickname: ');
+    var nameBox = new Textbox(gContext, nameLabel.width + 10, 10, 200, 20);
+    nameBox.submitHandler = function(msg) {
+        sendCmd({cmd: 'setName', name: msg});
+    };
+
+    var chatBox = new Textbox(gContext, 10, 10, 200, 20);
+    chatBox.visible = false;
+    chatBox.submitHandler = function(msg) {
+        sendCmd({cmd: 'msg', msg: msg, target: 'General'});
+    };
+
+    uiElements.push(nameLabel, nameBox, chatBox);
+
+    draw();
+
+    window.onresize = function (event) {
+        sizeWindow();
+    };
+
+    openWebSocket();
+}
+
+function clickHandler(e) {
+    var xy = getCursorPosition(e);
+    for (var i = 0; i < uiElements.length; i++) {
+        var element = uiElements[i];
+        if (element.visible) {
+            var handled = element.handleClick(xy);
+            if (handled) {
+                break;
+            }
+        }
+    }
+    draw();
+}
+
+function typingHandler(e) {
+    for (var i = 0; i < uiElements.length; i++) {
+        var element = uiElements[i];
+        if (element.visible && element.focus) {
+            var handled = element.handleKey(e);
+            if (handled) {
+                break;
+            }
+        }
+    }
+    draw();
 }
 
 function getCursorPosition(e) {
-    /* returns Cell with .row and .column properties */
-    var x;
-    var y;
+    var data = {};
     if (e.pageX != undefined && e.pageY != undefined) {
-        x = e.pageX;
-        y = e.pageY;
+        data.x = e.pageX;
+        data.y = e.pageY;
     }
     else {
-        x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-        y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+        data.x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+        data.y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
     }
-    x -= gCanvasElement.offsetLeft;
-    y -= gCanvasElement.offsetTop;
-    x = Math.min(x, kBoardWidth * kPieceWidth);
-    y = Math.min(y, kBoardHeight * kPieceHeight);
-    var cell = new Cell(Math.floor(y/kPieceHeight), Math.floor(x/kPieceWidth));
-    return cell;
+    data.x -= gCanvasElement.offsetLeft;
+    data.y -= gCanvasElement.offsetTop;
+    data.x = Math.min(data.x, fullWidth);
+    data.y = Math.min(data.y, fullHeight);
+    return data;
 }
 
-function halmaOnClick(e) {
-    var cell = getCursorPosition(e);
-    for (var i = 0; i < gNumPieces; i++) {
-        if ((gPieces[i].row == cell.row) &&
-            (gPieces[i].column == cell.column)) {
-            clickOnPiece(i);
-            return;
+function draw() {
+    gContext.clearRect(0, 0, fullWidth, fullHeight);
+
+    for (var i = 0; i < uiElements.length; i++) {
+        var element = uiElements[i];
+        if (element.visible) {
+            element.draw();
         }
     }
-    clickOnEmptyCell(cell);
-}
 
-function clickOnEmptyCell(cell) {
-    if (gSelectedPieceIndex == -1) { return; }
-    var rowDiff = Math.abs(cell.row - gPieces[gSelectedPieceIndex].row);
-    var columnDiff = Math.abs(cell.column - gPieces[gSelectedPieceIndex].column);
-    if ((rowDiff <= 1) &&
-        (columnDiff <= 1)) {
-        /* we already know that this click was on an empty square,
-           so that must mean this was a valid single-square move */
-        gPieces[gSelectedPieceIndex].row = cell.row;
-        gPieces[gSelectedPieceIndex].column = cell.column;
-        gMoveCount += 1;
-        gSelectedPieceIndex = -1;
-        gSelectedPieceHasMoved = false;
-        drawBoard();
-        return;
+    gContext.font = '12pt Calibri';
+    var yPos = 50;
+    for (var i = 0; i < chats.length; i++) {
+        var chat = chats[i];
+        var date = new Date(chat.time);
+        var dateString = date.getHours()
+            + ':'
+            + (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes())
+            + ':'
+            + (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());
+        var message = dateString + ' ' + chat.from + ' (to ' + chat.to + '): ' + chat.msg;
+        gContext.fillText(message, 10, yPos);
+        yPos += 20;
     }
-    if ((((rowDiff == 2) && (columnDiff == 0)) ||
-        ((rowDiff == 0) && (columnDiff == 2)) ||
-        ((rowDiff == 2) && (columnDiff == 2))) &&
-        isThereAPieceBetween(gPieces[gSelectedPieceIndex], cell)) {
-        /* this was a valid jump */
-        if (!gSelectedPieceHasMoved) {
-            gMoveCount += 1;
-        }
-        gSelectedPieceHasMoved = true;
-        gPieces[gSelectedPieceIndex].row = cell.row;
-        gPieces[gSelectedPieceIndex].column = cell.column;
-        drawBoard();
-        return;
-    }
-    gSelectedPieceIndex = -1;
-    gSelectedPieceHasMoved = false;
-    drawBoard();
-}
-
-function clickOnPiece(pieceIndex) {
-    if (gSelectedPieceIndex == pieceIndex) { return; }
-    gSelectedPieceIndex = pieceIndex;
-    gSelectedPieceHasMoved = false;
-    drawBoard();
-}
-
-function isThereAPieceBetween(cell1, cell2) {
-    /* note: assumes cell1 and cell2 are 2 squares away
-       either vertically, horizontally, or diagonally */
-    var rowBetween = (cell1.row + cell2.row) / 2;
-    var columnBetween = (cell1.column + cell2.column) / 2;
-    for (var i = 0; i < gNumPieces; i++) {
-        if ((gPieces[i].row == rowBetween) &&
-            (gPieces[i].column == columnBetween)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function isTheGameOver() {
-    for (var i = 0; i < gNumPieces; i++) {
-        if (gPieces[i].row > 2) {
-            return false;
-        }
-        if (gPieces[i].column < (kBoardWidth - 3)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-function drawBoard() {
-    if (gGameInProgress && isTheGameOver()) {
-	    endGame();
-    }
-
-    gDrawingContext.clearRect(0, 0, kPixelWidth, kPixelHeight);
-
-    gDrawingContext.beginPath();
-
-    /* vertical lines */
-    for (var x = 0; x <= kPixelWidth; x += kPieceWidth) {
-	gDrawingContext.moveTo(0.5 + x, 0);
-	gDrawingContext.lineTo(0.5 + x, kPixelHeight);
-    }
-
-    /* horizontal lines */
-    for (var y = 0; y <= kPixelHeight; y += kPieceHeight) {
-	gDrawingContext.moveTo(0, 0.5 + y);
-	gDrawingContext.lineTo(kPixelWidth, 0.5 +  y);
-    }
-
-    /* draw it! */
-    gDrawingContext.strokeStyle = "#ccc";
-    gDrawingContext.stroke();
-
-    for (var i = 0; i < 9; i++) {
-	    drawPiece(gPieces[i], i == gSelectedPieceIndex);
-    }
-
-    saveGameState();
-}
-
-function drawPiece(p, selected) {
-    var column = p.column;
-    var row = p.row;
-    var x = (column * kPieceWidth) + (kPieceWidth/2);
-    var y = (row * kPieceHeight) + (kPieceHeight/2);
-    var radius = (kPieceWidth/2) - (kPieceWidth/10);
-    gDrawingContext.beginPath();
-    gDrawingContext.arc(x, y, radius, 0, Math.PI*2, false);
-    gDrawingContext.closePath();
-    gDrawingContext.strokeStyle = "#000";
-    gDrawingContext.stroke();
-    if (selected) {
-        gDrawingContext.fillStyle = "#000";
-        gDrawingContext.fill();
-    }
-}
-
-if (typeof resumeGame != "function") {
-    saveGameState = function() {
-	    return false;
-    }
-    resumeGame = function() {
-	    return false;
-    }
-}
-
-function newGame() {
-    gPieces = [new Cell(kBoardHeight - 3, 0),
-	       new Cell(kBoardHeight - 2, 0),
-	       new Cell(kBoardHeight - 1, 0),
-	       new Cell(kBoardHeight - 3, 1),
-	       new Cell(kBoardHeight - 2, 1),
-	       new Cell(kBoardHeight - 1, 1),
-	       new Cell(kBoardHeight - 3, 2),
-	       new Cell(kBoardHeight - 2, 2),
-	       new Cell(kBoardHeight - 1, 2)];
-    gNumPieces = gPieces.length;
-    gSelectedPieceIndex = -1;
-    gSelectedPieceHasMoved = false;
-    gMoveCount = 0;
-    gGameInProgress = true;
-    drawBoard();
-}
-
-function endGame() {
-    gSelectedPieceIndex = -1;
-    gGameInProgress = false;
 }
 
 function sizeWindow() {
@@ -207,55 +243,69 @@ function sizeWindow() {
     gCanvasElement.height = window.innerHeight;
 }
 
-function initGame(canvasElement) {
-    gCanvasElement = canvasElement;
-    gCanvasElement.addEventListener("click", halmaOnClick, false);
-    gDrawingContext = gCanvasElement.getContext("2d");
-    sizeWindow();
-
-    if (!resumeGame()) {
-	    newGame();
-    }
-
-    window.onresize = function(event) {
-        sizeWindow();
-    };
-
-    openWebSocket();
-}
-
 /// Web sockets ///
 
-function openWebSocket()
-{
+function openWebSocket() {
     websocket = new WebSocket('ws://127.0.0.1:9003/');
-    websocket.onopen = function(evt) { onOpen(evt) };
-    websocket.onclose = function(evt) { onClose(evt) };
-    websocket.onmessage = function(evt) { onMessage(evt) };
-    websocket.onerror = function(evt) { onError(evt) };
+    websocket.onopen = function (evt) { onOpen(evt); };
+    websocket.onclose = function (evt) { onClose(evt); };
+    websocket.onmessage = function (evt) { onMessage(evt); };
+    websocket.onerror = function (evt) { onError(evt); };
 }
 
-function onOpen(evt)
-{
-    websocket.send("setName,Jabe");
-    websocket.send("makeLobby,LostCities,Jabe's Lobby");
-//    websocket.send("msg,Jabe,Hi1");
-//    websocket.send("msg,General,Hi2");
-//    websocket.send("msg,Jabe's Lobby,Hi3");
-    websocket.send()
+function onOpen(evt) {
+    console.log("CONNECTED");
 }
 
-function onClose(evt)
-{
-    alert("DISCONNECTED");
+function onClose(evt) {
+    console.log("DISCONNECTED");
 }
 
-function onMessage(evt)
-{
-    alert(evt.data);
+function onMessage(evt) {
+    var cmd = JSON.parse(evt.data);
+    if (cmd.cmd == 'nameSelected') {
+        if (cmd.success) {
+
+        }
+        else {
+
+        }
+    }
+    else if (cmd.cmd == 'lobbyList') {
+        for (var name in cmd.data) {
+            lobbies[name] = {name: name, members: []};
+        }
+    }
+    else if (cmd.cmd == 'lobbyCreate') {
+        lobbies[cmd.name] = {name: cmd.name, members: []};
+    }
+    else if (cmd.cmd == 'lobbyDestroy') {
+        lobbies.remove(cmd.name);
+    }
+    else if (cmd.cmd == 'lobbyJoin') {
+        var lobby = lobbies[cmd.name];
+        lobby.members = lobby.members.concat(cmd.members);
+    }
+    else if (cmd.cmd == 'lobbyLeave') {
+        var lobby = lobbies[cmd.name];
+        if (cmd.member == name) {
+            lobby.members = [];
+        }
+        else {
+            lobby.members.remove(cmd.member);
+        }
+    }
+    else if (cmd.cmd == 'chat') {
+        chats.push(cmd);
+        draw();
+    }
+    console.log("MSG: " + evt.data);
 }
 
-function onError(evt)
-{
-    alert('ERROR: ' + evt.data);
+function onError(evt) {
+    console.log('ERROR: ' + evt.data);
+}
+
+function sendCmd(cmd) {
+    websocket.send(JSON.stringify(cmd));
 }
