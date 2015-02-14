@@ -50,6 +50,7 @@ function Textbox(context, x, y, width, height) {
     UIElement.call(this, context, x, y, width, height);
     this.text = '';
     this.cursorPos = 0;
+    this.xScroll = 0;
     this.submitHandler = new function(msg) {};
 }
 
@@ -106,19 +107,48 @@ Textbox.prototype.handleKey = function(e) {
 };
 
 Textbox.prototype.draw = function() {
+    // Set clip area
+    this.context.save();
+    this.context.beginPath();
+    this.context.rect(this.x + 3, this.y, this.width - 6, this.height);
+    this.context.clip();
+
     this.context.beginPath();
 
-    this.context.rect(this.x, this.y, this.width, this.height);
-
-    this.context.font = '12pt Calibri';
-    this.context.fillText(this.text, this.x + 3, this.y + this.height - 3);
-
     if (this.focus) {
-        var cursorXpos = this.x + this.context.measureText(this.text.substring(0, this.cursorPos)).width + 3;
+        var cursorXpos = this.x + this.context.measureText(this.text.substring(0, this.cursorPos)).width + 3 + this.xScroll;
+
+        // Adjust cursor if it's out of the box
+        if (cursorXpos > this.x + this.width - 3) {
+            this.xScroll -= cursorXpos - (this.x + this.width - 3);
+            cursorXpos = this.x + this.width - 3;
+        }
+        else if (cursorXpos < this.x + 3) {
+            this.xScroll -= cursorXpos - (this.x + 3);
+            cursorXpos = this.x + 3;
+        }
+
+        // Adjust again if there's extra text and the cursor isn't at the end
+        if (cursorXpos < this.x + this.width - 3) {
+            var availSpace = Math.min(-this.xScroll, (this.x + this.width - 3) - cursorXpos);
+            this.xScroll += availSpace;
+            cursorXpos += availSpace;
+        }
         this.context.moveTo(cursorXpos, this.y + 3);
         this.context.lineTo(cursorXpos, this.y + this.height - 3);
     }
 
+    this.context.strokeStyle = 'black';
+    this.context.stroke();
+
+    this.context.font = '12pt Calibri';
+    this.context.fillText(this.text, this.x + 3 + this.xScroll, this.y + this.height - 3);
+
+    this.context.restore();
+
+    // Draw border
+    this.context.beginPath();
+    this.context.rect(this.x, this.y, this.width, this.height);
     this.context.strokeStyle = 'black';
     this.context.stroke();
 };
