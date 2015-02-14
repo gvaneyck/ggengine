@@ -30,18 +30,40 @@ UIElement.prototype.isClicked = function(xy) {
 // Label
 
 function Label(context, x, y, text) {
-    context.font = '12pt Calibri';
-    var measure = context.measureText(text);
-    UIElement.call(this, context, x, y, measure.width, 12);
-    this.text = text;
+    UIElement.call(this, context, x, y, 0, 0);
+    this.setText(text);
 }
 
 Label.prototype = Object.create(UIElement.prototype);
 Label.prototype.constructor = Label;
 
+Label.prototype.setText = function(text) {
+    this.context.font = '12pt Calibri';
+    var maxWidth = 0;
+    var height = 0;
+    var lines = text.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var measure = this.context.measureText(line);
+        maxWidth = Math.max(maxWidth, measure.width);
+        height += 20;
+    }
+
+    this.width = maxWidth;
+    this.height = height;
+
+    this.text = text;
+};
+
 Label.prototype.draw = function() {
     this.context.font = '12pt Calibri';
-    this.context.fillText(this.text, this.x, this.y + 12);
+    var lines = this.text.split("\n");
+    var yPos = this.y + 12;
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        this.context.fillText(line, this.x, yPos);
+        yPos += 20;
+    }
 };
 
 // Textbox
@@ -159,7 +181,6 @@ var state = 'NAME';
 var name;
 
 var lobbies = {};
-var chats = [];
 
 var fullWidth = 640;
 var fullHeight = 480;
@@ -173,6 +194,7 @@ var errLabel;
 var nameLabel;
 var nameBox;
 var chatBox;
+var chatArea;
 
 function initGame(canvasElement) {
     gCanvasElement = canvasElement;
@@ -194,8 +216,9 @@ function initGame(canvasElement) {
     chatBox.submitHandler = function(msg) {
         sendCmd({cmd: 'msg', msg: msg, target: 'General'});
     };
+    chatArea = new Label(gContext, 10, 38, '');
 
-    uiElements.push(errLabel, nameLabel, nameBox, chatBox);
+    uiElements.push(errLabel, nameLabel, nameBox, chatBox, chatArea);
 
     draw();
 
@@ -259,26 +282,11 @@ function draw() {
             element.draw();
         }
     }
-
-    gContext.font = '12pt Calibri';
-    var yPos = 50;
-    for (var i = 0; i < chats.length; i++) {
-        var chat = chats[i];
-        var date = new Date(chat.time);
-        var dateString = date.getHours()
-            + ':'
-            + (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes())
-            + ':'
-            + (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());
-        var message = dateString + ' ' + chat.from + ' (to ' + chat.to + '): ' + chat.msg;
-        gContext.fillText(message, 10, yPos);
-        yPos += 20;
-    }
 }
 
 function sizeWindow() {
-    gCanvasElement.width = window.innerWidth;
-    gCanvasElement.height = window.innerHeight;
+    fullWidth = gCanvasElement.width = window.innerWidth;
+    fullHeight = gCanvasElement.height = window.innerHeight;
 }
 
 /// Web sockets ///
@@ -311,7 +319,7 @@ function onMessage(evt) {
             chatBox.visible = true;
         }
         else {
-            errLabel.text = 'Invalid name';
+            errLabel.setText('Invalid\n name');
         }
     }
     else if (cmd.cmd == 'lobbyList') {
@@ -340,9 +348,26 @@ function onMessage(evt) {
         }
     }
     else if (cmd.cmd == 'chat') {
-        chats.push(cmd);
+        var text = chatArea.text;
+        if (text.length != 0) {
+            text += '\n';
+        }
+        text += formatChatLine(cmd);
+        chatArea.setText(text);
     }
     draw();
+}
+
+function formatChatLine(chat) {
+    var date = new Date(chat.time);
+    var dateString = date.getHours()
+        + ':'
+        + (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes())
+        + ':'
+        + (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());
+    var message = dateString + ' [' + chat.to + '] ' + chat.from + ': ' + chat.msg;
+
+    return message;
 }
 
 function onError(evt) {
