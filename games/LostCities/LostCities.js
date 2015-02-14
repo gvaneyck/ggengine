@@ -175,6 +175,31 @@ Textbox.prototype.draw = function() {
     this.context.stroke();
 };
 
+// ScrollArea (only works for labels for now)
+function ScrollArea(context, x, y, width, height, element) {
+    UIElement.call(this, context, x, y, width, height);
+    this.element = element;
+}
+
+ScrollArea.prototype = Object.create(UIElement.prototype);
+ScrollArea.prototype.constructor = Label;
+
+ScrollArea.prototype.draw = function() {
+    // Clip
+    // Draw child
+    // Restore
+    // Draw border + scrollbar
+};
+
+ScrollArea.prototype.handleClick = function(xy) {
+    this.focus = this.isClicked(xy);
+    this.element.focus = this.focus;
+    // Pass call through to child
+    return this.focus
+};
+
+// Add scrolling functionality
+
 /// Code begins
 
 var state = 'NAME';
