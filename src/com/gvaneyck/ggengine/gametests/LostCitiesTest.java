@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 public class LostCitiesTest {
     public static void main(String[] args) {
-        webTest();
+        basicTest();
     }
 
     public static void basicTest() {
