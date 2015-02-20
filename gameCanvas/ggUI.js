@@ -1,6 +1,27 @@
-/// UI classes
+// Big TODOs
+// - Clean up focus/click/etc. (see below)
+// - Deal with half pixels
+// - Scroll Area - Scroll wheel, copy text?
+// - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
 
-// Base class
+// handleMouseDown - Mouse down bequeaths focus to one thing only (scroll area needs to check bar)
+// handleMouseDrag - Mouse move while mouse is down
+// handleMouseClick - Mouse up if the element hit has focus
+// handleMouseDoubleClick - 2x mouse click within interval
+// handleKey - Element with focus gets key
+
+
+/// Helper functions ///
+
+function isClicked(xy, element) {
+    return (element.x <= xy.x
+        && element.y <= xy.y
+        && element.x + element.width >= xy.x
+        && element.y + element.height >= xy.y);
+}
+
+
+/// Base class ///
 
 function UIElement(context, x, y, width, height) {
     this.context = context;
@@ -14,23 +35,18 @@ function UIElement(context, x, y, width, height) {
 
 UIElement.prototype.draw = function() { };
 UIElement.prototype.handleKey = function(e) { return false; };
+UIElement.prototype.handleDrag = function(xDelta, yDelta) { return false; };
 
 UIElement.prototype.handleClick = function(xy) {
-    this.focus = this.isClicked(xy);
-    return this.focus
+    this.focus = isClicked(xy, this);
+    return this.focus;
 };
 
-UIElement.prototype.isClicked = function(xy) {
-    return (this.x <= xy.x
-        && this.y <= xy.y
-        && this.x + this.width >= xy.x
-        && this.y + this.height >= xy.y);
-};
-
-// Label
+/// Label ///
 
 function Label(context, x, y, text) {
     UIElement.call(this, context, x, y, 0, 0);
+    this.onSizeChange = function() { };
     this.setText(text);
 }
 
@@ -40,7 +56,7 @@ Label.prototype.constructor = Label;
 Label.prototype.setText = function(text) {
     this.context.font = '12pt Calibri';
     var maxWidth = 0;
-    var height = 0;
+    var height = -6; // Remove padding
     var lines = text.split("\n");
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
@@ -53,6 +69,8 @@ Label.prototype.setText = function(text) {
     this.height = height;
 
     this.text = text;
+
+    this.onSizeChange();
 };
 
 Label.prototype.draw = function() {
@@ -66,14 +84,15 @@ Label.prototype.draw = function() {
     }
 };
 
-// Textbox
+
+/// Textbox ///
 
 function Textbox(context, x, y, width, height) {
     UIElement.call(this, context, x, y, width, height);
     this.text = '';
     this.cursorPos = 0;
     this.xScroll = 0;
-    this.submitHandler = new function(msg) {};
+    this.submitHandler = function(msg) { };
 }
 
 Textbox.prototype = Object.create(UIElement.prototype);
@@ -175,28 +194,120 @@ Textbox.prototype.draw = function() {
     this.context.stroke();
 };
 
-// ScrollArea (only works for labels for now)
+/// ScrollArea ///
+
 function ScrollArea(context, x, y, width, height, element) {
     UIElement.call(this, context, x, y, width, height);
     this.element = element;
+    this.scrollBar = {
+        focus: false,
+        visible: false,
+        yScroll: 0,
+        x: x + width - 10,
+        y: y,
+        width: 10,
+        height: height
+    };
+
+    var self = this;
+    element.onSizeChange = function () { self.updateScrollBar(self) };
+
+    this.updateScrollBar(this);
 }
 
 ScrollArea.prototype = Object.create(UIElement.prototype);
-ScrollArea.prototype.constructor = Label;
+ScrollArea.prototype.constructor = ScrollArea;
+
+ScrollArea.prototype.updateScrollBar = function(scrollArea) {
+    // Called by label changing text and scroll wheel
+    var areaHeight = scrollArea.height;
+    var eleHeight = scrollArea.element.height;
+    var yScroll = scrollArea.scrollBar.yScroll;
+
+    // If we were at the bottom, auto-scroll
+    if (yScroll + areaHeight - 6 == eleHeight - 20 // 20 is one line of text
+        || !scrollArea.scrollBar.visible && areaHeight - 6 < eleHeight) {
+        yScroll = eleHeight - (areaHeight - 6);
+    }
+
+    var barHeight = areaHeight * areaHeight / eleHeight;
+    barHeight = Math.max(10, Math.min(areaHeight, barHeight));
+    var barOffset = yScroll / (eleHeight - (areaHeight - 6)) * (areaHeight - barHeight);
+    barOffset = Math.max(0, barOffset);
+
+    scrollArea.scrollBar.height = barHeight;
+    scrollArea.scrollBar.visible = (barHeight != scrollArea.height);
+    if (!scrollArea.scrollBar.visible) {
+        scrollArea.scrollBar.yScroll = 0;
+        scrollArea.scrollBar.y = scrollArea.y;
+    }
+    else {
+        scrollArea.scrollBar.yScroll = yScroll;
+        scrollArea.scrollBar.y = scrollArea.y + barOffset;
+    }
+};
 
 ScrollArea.prototype.draw = function() {
     // Clip
+    this.context.save();
+    this.context.beginPath();
+    this.context.rect(this.x + 3, this.y + 3, this.width - 6 - (this.scrollBar.visible ? 10 : 0), this.height - 6);
+    this.context.clip();
+
     // Draw child
+    this.element.x = this.x + 3;
+    this.element.y = this.y + 3 - this.scrollBar.yScroll;
+    this.element.draw();
+
     // Restore
+    this.context.restore();
+
     // Draw border + scrollbar
+    this.context.beginPath();
+    this.context.rect(this.x, this.y, this.width, this.height);
+    this.context.strokeStyle = '#000000';
+    this.context.stroke();
+
+    if (this.scrollBar.visible) {
+        this.context.beginPath();
+        this.context.rect(this.x + this.width - 10, this.y, 10, this.height);
+        this.context.fillStyle = '#cccccc';
+        this.context.fill();
+        this.context.stroke();
+
+        this.context.beginPath();
+        this.context.rect(this.scrollBar.x, this.scrollBar.y, this.scrollBar.width, this.scrollBar.height);
+        this.context.fillStyle = '#000000';
+        this.context.fill();
+        this.context.stroke();
+    }
 };
 
 ScrollArea.prototype.handleClick = function(xy) {
-    this.focus = this.isClicked(xy);
+    this.focus = isClicked(xy, this);
     this.element.focus = this.focus;
-    // Pass call through to child
+
+    if (this.focus) {
+        // Check for scrollbar
+        if (this.scrollBar.visible && isClicked(xy, this.scrollBar)) {
+            this.scrollBar.focus = true;
+        }
+        // Pass call through to child
+        else {
+
+        }
+    }
     return this.focus
 };
 
-// Add scrolling functionality
-
+ScrollArea.prototype.handleDrag = function(xDelta, yDelta) {
+//    if (this.scrollBar.focus) {
+        var barOffset = this.scrollBar.y - this.y;
+        barOffset += yDelta;
+        barOffset = Math.max(0, Math.min(this.height - this.scrollBar.height, barOffset));
+        this.scrollBar.y = barOffset + this.y;
+        this.scrollBar.yScroll = barOffset * (this.element.height - (this.height - 6)) / (this.height - this.scrollBar.height);
+        return true;
+//    }
+//    return false;
+};

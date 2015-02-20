@@ -1,5 +1,8 @@
 /// Code begins
 
+var isMouseDown = false;
+var lastMousePos = { };
+
 var state = 'NAME';
 var name;
 
@@ -18,10 +21,16 @@ var nameLabel;
 var nameBox;
 var chatBox;
 var chatArea;
+var chatArea2;
 
 function initGame(canvasElement) {
+    window.onresize = function (event) { sizeWindow(); };
+
     gCanvasElement = canvasElement;
-    gCanvasElement.addEventListener("click", clickHandler, false);
+    //gCanvasElement.addEventListener("click", clickHandler, false);
+    document.addEventListener('mousedown', mouseDownHandler);
+    document.addEventListener('mouseup', mouseUpHandler);
+    document.addEventListener('mousemove', mouseMoveHandler);
     document.addEventListener("keypress", typingHandler, false);
     gContext = gCanvasElement.getContext("2d");
     sizeWindow();
@@ -40,16 +49,43 @@ function initGame(canvasElement) {
         sendCmd({cmd: 'msg', msg: msg, target: 'General'});
     };
     chatArea = new Label(gContext, 10, 38, '');
+    chatArea2 = new ScrollArea(gContext, 10, 38, 400, 100, chatArea);
+    chatArea2.visible = false;
 
-    uiElements.push(errLabel, nameLabel, nameBox, chatBox, chatArea);
+    uiElements.push(errLabel, nameLabel, nameBox, chatBox, chatArea2);
 
     draw();
 
-    window.onresize = function (event) {
-        sizeWindow();
-    };
-
     openWebSocket();
+}
+
+function mouseDownHandler(e) {
+    isMouseDown = true;
+    lastMousePos = getCursorPosition(e);
+    clickHandler(e);
+}
+
+function mouseMoveHandler(e) {
+    if (isMouseDown) {
+        var xy = getCursorPosition(e);
+        var xDelta = xy.x - lastMousePos.x;
+        var yDelta = xy.y - lastMousePos.y;
+        for (var i = 0; i < uiElements.length; i++) {
+            var element = uiElements[i];
+            if (element.visible && element.focus) {
+                var handled = element.handleDrag(xDelta, yDelta);
+                if (handled) {
+                    break;
+                }
+            }
+        }
+        lastMousePos = xy;
+        draw();
+    }
+}
+
+function mouseUpHandler(e) {
+    isMouseDown = false;
 }
 
 function clickHandler(e) {
@@ -140,6 +176,7 @@ function onMessage(evt) {
             nameBox.visible = false;
             nameLabel.visible = false;
             chatBox.visible = true;
+            chatArea2.visible = true;
         }
         else {
             errLabel.setText('Invalid name');
