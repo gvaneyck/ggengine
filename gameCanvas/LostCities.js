@@ -2,6 +2,7 @@
 
 var isMouseDown = false;
 var lastMousePos = { };
+var lastClick = { element: null, time: 0 };
 
 var state = 'NAME';
 var name;
@@ -24,15 +25,15 @@ var chatArea;
 var chatArea2;
 
 function initGame(canvasElement) {
-    window.onresize = function (event) { sizeWindow(); };
+    window.onresize = function (e) { sizeWindow(); };
 
     gCanvasElement = canvasElement;
-    //gCanvasElement.addEventListener("click", clickHandler, false);
     document.addEventListener('mousedown', mouseDownHandler);
-    document.addEventListener('mouseup', mouseUpHandler);
     document.addEventListener('mousemove', mouseMoveHandler);
-    document.addEventListener("keypress", typingHandler, false);
-    gContext = gCanvasElement.getContext("2d");
+    document.addEventListener('mouseup', mouseUpHandler);
+    document.addEventListener('wheel', mouseWheelHandler, false);
+    document.addEventListener('keypress', typingHandler);
+    gContext = gCanvasElement.getContext('2d');
     sizeWindow();
 
     errLabel = new Label(gContext, 10, 33, '');
@@ -60,59 +61,103 @@ function initGame(canvasElement) {
 }
 
 function mouseDownHandler(e) {
+    e.preventDefault();
+    var xy = getCursorPosition(e);
+
     isMouseDown = true;
-    lastMousePos = getCursorPosition(e);
-    clickHandler(e);
+    lastMousePos = xy;
+
+    var dirty = false;
+    for (var i = 0; i < uiElements.length; i++) {
+        var element = uiElements[i];
+        if (element.visible && isClicked(xy, element)) {
+            if (element.setFocus(true)) { dirty = true; }
+            if (element.handleMouseDown(xy)) { dirty = true; }
+        }
+        else {
+            if (element.setFocus(false)) { dirty = true; }
+        }
+    }
+
+    if (dirty) {
+        draw();
+    }
 }
 
 function mouseMoveHandler(e) {
     if (isMouseDown) {
         var xy = getCursorPosition(e);
-        var xDelta = xy.x - lastMousePos.x;
-        var yDelta = xy.y - lastMousePos.y;
         for (var i = 0; i < uiElements.length; i++) {
             var element = uiElements[i];
             if (element.visible && element.focus) {
-                var handled = element.handleDrag(xDelta, yDelta);
-                if (handled) {
-                    break;
+                e.preventDefault();
+                var xDelta = xy.x - lastMousePos.x;
+                var yDelta = xy.y - lastMousePos.y;
+                var dirty = element.handleMouseDrag(xDelta, yDelta);
+                if (dirty) {
+                    draw();
                 }
+                break;
             }
         }
         lastMousePos = xy;
-        draw();
     }
 }
 
 function mouseUpHandler(e) {
     isMouseDown = false;
-}
-
-function clickHandler(e) {
     var xy = getCursorPosition(e);
     for (var i = 0; i < uiElements.length; i++) {
         var element = uiElements[i];
-        if (element.visible) {
-            var handled = element.handleClick(xy);
-            if (handled) {
-                break;
+        if (element.visible && element.focus && isClicked(xy, element)) {
+            e.preventDefault();
+            var now = new Date().getTime();
+            var dirty = false;
+            if (lastClick.element == element && now - lastClick.time < 500) {
+                dirty = element.handleMouseDoubleClick(xy);
+                lastClick.element = null;
             }
+            else {
+                dirty = element.handleMouseClick(xy);
+                lastClick.element = element;
+                lastClick.time = now;
+            }
+
+            if (dirty) {
+                draw();
+            }
+
+            break;
         }
     }
-    draw();
+}
+
+function mouseWheelHandler(e) {
+    for (var i = 0; i < uiElements.length; i++) {
+        var element = uiElements[i];
+        if (element.visible && element.focus) {
+            e.preventDefault();
+            var dirty = element.handleMouseWheel(e.deltaY);
+            if (dirty) {
+                draw();
+            }
+            break;
+        }
+    }
 }
 
 function typingHandler(e) {
     for (var i = 0; i < uiElements.length; i++) {
         var element = uiElements[i];
         if (element.visible && element.focus) {
-            var handled = element.handleKey(e);
-            if (handled) {
-                break;
+            var dirty = element.handleKey(e);
+            if (dirty) {
+                e.preventDefault();
+                draw();
             }
+            break;
         }
     }
-    draw();
 }
 
 function getCursorPosition(e) {
@@ -159,15 +204,15 @@ function openWebSocket() {
 }
 
 function onOpen(evt) {
-    console.log("CONNECTED");
+    console.log('CONNECTED');
 }
 
 function onClose(evt) {
-    console.log("DISCONNECTED");
+    console.log('DISCONNECTED');
 }
 
 function onMessage(evt) {
-    console.log("MSG: " + evt.data);
+    console.log('MSG: ' + evt.data);
     var cmd = JSON.parse(evt.data);
     if (cmd.cmd == 'nameSelect') {
         if (cmd.success) {

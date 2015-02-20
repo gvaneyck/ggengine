@@ -1,14 +1,19 @@
 // Big TODOs
-// - Clean up focus/click/etc. (see below)
-// - Deal with half pixels
-// - Scroll Area - Scroll wheel, copy text?
+// - Throttle draw calls
+// - Scroll Area - Line breaks due to width
+// - Label - Copy text, links, emoji, onHover card images
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
+// - Deal with half pixels
+// - Linking in game elements -> via drag or shift/ctrl click
+// - Voice chat?
 
-// handleMouseDown - Mouse down bequeaths focus to one thing only (scroll area needs to check bar)
-// handleMouseDrag - Mouse move while mouse is down
-// handleMouseClick - Mouse up if the element hit has focus
-// handleMouseDoubleClick - 2x mouse click within interval
-// handleKey - Element with focus gets key
+// Event handlers:
+// handleMouseDown = Hit element + Mouse down (automatically gain focus)
+// handleMouseDrag = Focused element + Mouse move while mouse is down
+// handleMouseClick - Hit element + Focused element + Mouse up
+// handleMouseDoubleClick - Hit element + Focused element + 2x Mouse up within interval
+// handleMouseWheel - Focused element + Mouse scroll
+// handleKey - Focused element + Key press
 
 
 /// Helper functions ///
@@ -34,13 +39,14 @@ function UIElement(context, x, y, width, height) {
 }
 
 UIElement.prototype.draw = function() { };
+UIElement.prototype.setFocus = function(focus) { this.focus = focus; return false; };
+UIElement.prototype.handleMouseDown = function(xy) { return false; };
+UIElement.prototype.handleMouseDrag = function(xDelta, yDelta) { return false; };
+UIElement.prototype.handleMouseClick = function(xy) { return false; };
+UIElement.prototype.handleMouseDoubleClick = function(xy) { return false; };
+UIElement.prototype.handleMouseWheel = function(yDelta) { return false; };
 UIElement.prototype.handleKey = function(e) { return false; };
-UIElement.prototype.handleDrag = function(xDelta, yDelta) { return false; };
 
-UIElement.prototype.handleClick = function(xy) {
-    this.focus = isClicked(xy, this);
-    return this.focus;
-};
 
 /// Label ///
 
@@ -98,10 +104,19 @@ function Textbox(context, x, y, width, height) {
 Textbox.prototype = Object.create(UIElement.prototype);
 Textbox.prototype.constructor = Textbox;
 
+Textbox.prototype.setFocus = function(focus) {
+    if (this.focus != focus) {
+        this.focus = focus;
+        return true;
+    }
+    return false;
+};
+
 Textbox.prototype.handleKey = function(e) {
-    var handled = false;
+    var oldText = this.text;
+    var oldCursorPos = this.cursorPos;
+
     if (e.charCode != 0) {
-        handled = true;
         var keyPressed = String.fromCharCode(e.charCode);
         this.text = this.text.substring(0, this.cursorPos) + keyPressed + this.text.substring(this.cursorPos);
         this.cursorPos++;
@@ -109,42 +124,34 @@ Textbox.prototype.handleKey = function(e) {
     else {
         // TODO e.ctrlKey
         if (e.keyCode == 8) { // Backspace
-            handled = true;
             if (this.cursorPos > 0) {
                 this.text = this.text.substring(0, this.cursorPos - 1) + this.text.substring(this.cursorPos);
                 this.cursorPos--;
             }
         }
         else if (e.keyCode == 46) { // Delete
-            handled = true;
             if (this.cursorPos < this.text.length) {
                 this.text = this.text.substring(0, this.cursorPos) + this.text.substring(this.cursorPos + 1);
             }
         }
         else if (e.keyCode == 37) { // Left
-            handled = true;
             if (this.cursorPos > 0) {
                 this.cursorPos--;
             }
         }
         else if (e.keyCode == 39) { // Right
-            handled = true;
             if (this.cursorPos < this.text.length) {
                 this.cursorPos++;
             }
         }
         else if (e.keyCode == 13) { // Enter
-            handled = true;
             this.submitHandler(this.text);
             this.cursorPos = 0;
             this.text = '';
         }
     }
 
-    if (handled) {
-        e.preventDefault();
-    }
-    return handled;
+    return (oldText != this.text || oldCursorPos != this.cursorPos);
 };
 
 Textbox.prototype.draw = function() {
@@ -194,6 +201,7 @@ Textbox.prototype.draw = function() {
     this.context.stroke();
 };
 
+
 /// ScrollArea ///
 
 function ScrollArea(context, x, y, width, height, element) {
@@ -210,15 +218,23 @@ function ScrollArea(context, x, y, width, height, element) {
     };
 
     var self = this;
-    element.onSizeChange = function () { self.updateScrollBar(self) };
+    element.onSizeChange = function () { self.updateScrollBarForText(self) };
 
-    this.updateScrollBar(this);
+    this.updateScrollBarForText(this);
 }
 
 ScrollArea.prototype = Object.create(UIElement.prototype);
 ScrollArea.prototype.constructor = ScrollArea;
 
-ScrollArea.prototype.updateScrollBar = function(scrollArea) {
+ScrollArea.prototype.setFocus = function(focus) {
+    if (!focus) {
+        this.scrollBar.focus = false;
+    }
+    this.focus = focus;
+    return false;
+};
+
+ScrollArea.prototype.updateScrollBarForText = function(scrollArea) {
     // Called by label changing text and scroll wheel
     var areaHeight = scrollArea.height;
     var eleHeight = scrollArea.element.height;
@@ -245,6 +261,18 @@ ScrollArea.prototype.updateScrollBar = function(scrollArea) {
         scrollArea.scrollBar.yScroll = yScroll;
         scrollArea.scrollBar.y = scrollArea.y + barOffset;
     }
+};
+
+ScrollArea.prototype.updateScrollBarForScroll = function(yDelta) {
+    var oldYScroll = this.scrollBar.yScroll;
+
+    var barOffset = this.scrollBar.y - this.y;
+    barOffset += yDelta;
+    barOffset = Math.max(0, Math.min(this.height - this.scrollBar.height, barOffset));
+    this.scrollBar.y = barOffset + this.y;
+    this.scrollBar.yScroll = barOffset * (this.element.height - (this.height - 6)) / (this.height - this.scrollBar.height);
+
+    return (oldYScroll != this.scrollBar.yScroll);
 };
 
 ScrollArea.prototype.draw = function() {
@@ -283,31 +311,21 @@ ScrollArea.prototype.draw = function() {
     }
 };
 
-ScrollArea.prototype.handleClick = function(xy) {
-    this.focus = isClicked(xy, this);
-    this.element.focus = this.focus;
-
-    if (this.focus) {
-        // Check for scrollbar
-        if (this.scrollBar.visible && isClicked(xy, this.scrollBar)) {
-            this.scrollBar.focus = true;
-        }
-        // Pass call through to child
-        else {
-
-        }
+ScrollArea.prototype.handleMouseDown = function(xy) {
+    if (this.scrollBar.visible) {
+        this.scrollBar.focus = isClicked(xy, this.scrollBar)
     }
-    return this.focus
+    return false;
 };
 
-ScrollArea.prototype.handleDrag = function(xDelta, yDelta) {
-//    if (this.scrollBar.focus) {
-        var barOffset = this.scrollBar.y - this.y;
-        barOffset += yDelta;
-        barOffset = Math.max(0, Math.min(this.height - this.scrollBar.height, barOffset));
-        this.scrollBar.y = barOffset + this.y;
-        this.scrollBar.yScroll = barOffset * (this.element.height - (this.height - 6)) / (this.height - this.scrollBar.height);
-        return true;
-//    }
-//    return false;
+ScrollArea.prototype.handleMouseDrag = function(xDelta, yDelta) {
+    // Check if scrollbar is focused
+    if (this.scrollBar.focus) {
+        return this.updateScrollBarForScroll(yDelta);
+    }
+    return false;
+};
+
+ScrollArea.prototype.handleMouseWheel = function(yDelta) {
+    return this.updateScrollBarForScroll(yDelta * 2);
 };
