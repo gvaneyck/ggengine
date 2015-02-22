@@ -1,8 +1,9 @@
 // Big TODOs
-// - Throttle draw calls
 // - Scroll Area - Line breaks due to width
 // - Label - Copy text, links, emoji, onHover card images
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
+// - Reconnect websocket
+// - Sessions (cookie + server)
 // - Deal with half pixels
 // - Linking in game elements -> via drag or shift/ctrl click
 // - Voice chat?
@@ -25,11 +26,163 @@ function isClicked(xy, element) {
         && element.y + element.height >= xy.y);
 }
 
+function getCursorPosition(e, bounds) {
+    var data = {};
+    if (e.pageX != undefined && e.pageY != undefined) {
+        data.x = e.pageX;
+        data.y = e.pageY;
+    }
+    else {
+        data.x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+        data.y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+    }
+    data.x = Math.min(data.x, bounds.width);
+    data.y = Math.min(data.y, bounds.height);
+    return data;
+}
+
+
+/// UI Manager ///
+function UIManager(canvas) {
+    this.canvas = canvas;
+    this.elements = [];
+    this.dirty = false;
+    this.sizeWindow();
+
+    // State vars
+    this.isMouseDown = false;
+    this.lastMousePos = { };
+    this.lastClick = { element: null, time: 0 };
+
+    // Attach events
+    var _this = this;
+    document.addEventListener('mousedown', function(e) { _this.mouseDownHandler.call(_this, e); });
+    document.addEventListener('mousemove', function(e) { _this.mouseMoveHandler.call(_this, e); });
+    document.addEventListener('mouseup', function(e) { _this.mouseUpHandler.call(_this, e); });
+    document.addEventListener('wheel', function(e) { _this.mouseWheelHandler.call(_this, e); }, false);
+    document.addEventListener('keypress', function(e) { _this.typingHandler.call(_this, e); });
+    window.onresize = this.sizeWindow;
+
+    // Start draw loop
+    var fps = 30;
+    setInterval(function() {
+        _this.draw.call(_this);
+    }, 1000 / fps);
+}
+
+UIManager.prototype.sizeWindow = function(e) {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+};
+
+UIManager.prototype.draw = function() {
+    if (!this.dirty) { return; }
+
+    var context = this.canvas.getContext('2d');
+    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    for (var i = 0; i < this.elements.length; i++) {
+        var element = this.elements[i];
+        if (element.visible) {
+            element.draw(context);
+        }
+    }
+
+    this.dirty = false;
+};
+
+UIManager.prototype.addElement = function(element) {
+    this.elements.push(element);
+    this.dirty = true;
+};
+
+
+UIManager.prototype.mouseDownHandler = function(e) {
+    e.preventDefault();
+    var xy = getCursorPosition(e, this.canvas);
+
+    this.isMouseDown = true;
+    this.lastMousePos = xy;
+
+    for (var i = 0; i < this.elements.length; i++) {
+        var element = this.elements[i];
+        if (element.visible && isClicked(xy, element)) {
+            if (element.setFocus(true)) { this.dirty = true; }
+            if (element.handleMouseDown(xy)) { this.dirty = true; }
+        }
+        else {
+            if (element.setFocus(false)) { this.dirty = true; }
+        }
+    }
+};
+
+UIManager.prototype.mouseMoveHandler = function(e) {
+    if (this.isMouseDown) {
+        var xy = getCursorPosition(e, this.canvas);
+        for (var i = 0; i < this.elements.length; i++) {
+            var element = this.elements[i];
+            if (element.visible && element.focus) {
+                e.preventDefault();
+                var xDelta = xy.x - this.lastMousePos.x;
+                var yDelta = xy.y - this.lastMousePos.y;
+                if (element.handleMouseDrag(xDelta, yDelta)) { this.dirty = true; }
+                break;
+            }
+        }
+        this.lastMousePos = xy;
+    }
+};
+
+UIManager.prototype.mouseUpHandler = function(e) {
+    this.isMouseDown = false;
+    var xy = getCursorPosition(e, this.canvas);
+    for (var i = 0; i < this.elements.length; i++) {
+        var element = this.elements[i];
+        if (element.visible && element.focus && isClicked(xy, element)) {
+            e.preventDefault();
+            var now = new Date().getTime();
+            if (this.lastClick.element == element && now - this.lastClick.time < 500) {
+                if (element.handleMouseDoubleClick(xy)) { this.dirty = true; }
+                this.lastClick.element = null;
+            }
+            else {
+                if (element.handleMouseClick(xy)) { this.dirty = true; }
+                this.lastClick.element = element;
+                this.lastClick.time = now;
+            }
+            break;
+        }
+    }
+};
+
+UIManager.prototype.mouseWheelHandler = function(e) {
+    for (var i = 0; i < this.elements.length; i++) {
+        var element = this.elements[i];
+        if (element.visible && element.focus) {
+            e.preventDefault();
+            if (element.handleMouseWheel(e.deltaY)) { this.dirty = true; }
+            break;
+        }
+    }
+};
+
+UIManager.prototype.typingHandler = function(e) {
+    for (var i = 0; i < this.elements.length; i++) {
+        var element = this.elements[i];
+        if (element.visible && element.focus) {
+            if (element.handleKey(e)) {
+                e.preventDefault();
+                this.dirty = true;
+            }
+            break;
+        }
+    }
+};
+
 
 /// Base class ///
 
-function UIElement(context, x, y, width, height) {
-    this.context = context;
+function UIElement(x, y, width, height) {
     this.x = x;
     this.y = y;
     this.width = width;
@@ -38,7 +191,7 @@ function UIElement(context, x, y, width, height) {
     this.visible = true;
 }
 
-UIElement.prototype.draw = function() { };
+UIElement.prototype.draw = function(context) { };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; return false; };
 UIElement.prototype.handleMouseDown = function(xy) { return false; };
 UIElement.prototype.handleMouseDrag = function(xDelta, yDelta) { return false; };
@@ -50,8 +203,8 @@ UIElement.prototype.handleKey = function(e) { return false; };
 
 /// Label ///
 
-function Label(context, x, y, text) {
-    UIElement.call(this, context, x, y, 0, 0);
+function Label(x, y, text) {
+    UIElement.call(this, x, y, 0, 0);
     this.onSizeChange = function() { };
     this.setText(text);
 }
@@ -59,14 +212,16 @@ function Label(context, x, y, text) {
 Label.prototype = Object.create(UIElement.prototype);
 Label.prototype.constructor = Label;
 
+Label.prototype.scratchPad = document.createElement('canvas').getContext('2d');
+
 Label.prototype.setText = function(text) {
-    this.context.font = '12pt Calibri';
+    this.scratchPad.font = '12pt Calibri';
     var maxWidth = 0;
     var height = -6; // Remove padding
     var lines = text.split("\n");
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
-        var measure = this.context.measureText(line);
+        var measure = this.scratchPad.measureText(line);
         maxWidth = Math.max(maxWidth, measure.width);
         height += 20;
     }
@@ -79,13 +234,13 @@ Label.prototype.setText = function(text) {
     this.onSizeChange();
 };
 
-Label.prototype.draw = function() {
-    this.context.font = '12pt Calibri';
+Label.prototype.draw = function(context) {
+    context.font = '12pt Calibri';
     var lines = this.text.split("\n");
     var yPos = this.y + 12;
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
-        this.context.fillText(line, this.x, yPos);
+        context.fillText(line, this.x, yPos);
         yPos += 20;
     }
 };
@@ -93,8 +248,8 @@ Label.prototype.draw = function() {
 
 /// Textbox ///
 
-function Textbox(context, x, y, width, height) {
-    UIElement.call(this, context, x, y, width, height);
+function Textbox(x, y, width, height) {
+    UIElement.call(this, x, y, width, height);
     this.text = '';
     this.cursorPos = 0;
     this.xScroll = 0;
@@ -154,17 +309,17 @@ Textbox.prototype.handleKey = function(e) {
     return (oldText != this.text || oldCursorPos != this.cursorPos);
 };
 
-Textbox.prototype.draw = function() {
+Textbox.prototype.draw = function(context) {
     // Set clip area
-    this.context.save();
-    this.context.beginPath();
-    this.context.rect(this.x + 3, this.y, this.width - 6, this.height);
-    this.context.clip();
+    context.save();
+    context.beginPath();
+    context.rect(this.x + 3, this.y, this.width - 6, this.height);
+    context.clip();
 
-    this.context.beginPath();
+    context.beginPath();
 
     if (this.focus) {
-        var cursorXpos = this.x + this.context.measureText(this.text.substring(0, this.cursorPos)).width + 3 + this.xScroll;
+        var cursorXpos = this.x + context.measureText(this.text.substring(0, this.cursorPos)).width + 3 + this.xScroll;
 
         // Adjust cursor if it's out of the box
         if (cursorXpos > this.x + this.width - 3) {
@@ -182,30 +337,30 @@ Textbox.prototype.draw = function() {
             this.xScroll += availSpace;
             cursorXpos += availSpace;
         }
-        this.context.moveTo(cursorXpos, this.y + 3);
-        this.context.lineTo(cursorXpos, this.y + this.height - 3);
+        context.moveTo(cursorXpos, this.y + 3);
+        context.lineTo(cursorXpos, this.y + this.height - 3);
     }
 
-    this.context.strokeStyle = 'black';
-    this.context.stroke();
+    context.strokeStyle = 'black';
+    context.stroke();
 
-    this.context.font = '12pt Calibri';
-    this.context.fillText(this.text, this.x + 3 + this.xScroll, this.y + this.height - 3);
+    context.font = '12pt Calibri';
+    context.fillText(this.text, this.x + 3 + this.xScroll, this.y + this.height - 3);
 
-    this.context.restore();
+    context.restore();
 
     // Draw border
-    this.context.beginPath();
-    this.context.rect(this.x, this.y, this.width, this.height);
-    this.context.strokeStyle = 'black';
-    this.context.stroke();
+    context.beginPath();
+    context.rect(this.x, this.y, this.width, this.height);
+    context.strokeStyle = 'black';
+    context.stroke();
 };
 
 
 /// ScrollArea ///
 
-function ScrollArea(context, x, y, width, height, element) {
-    UIElement.call(this, context, x, y, width, height);
+function ScrollArea(x, y, width, height, element) {
+    UIElement.call(this, x, y, width, height);
     this.element = element;
     this.scrollBar = {
         focus: false,
@@ -275,39 +430,39 @@ ScrollArea.prototype.updateScrollBarForScroll = function(yDelta) {
     return (oldYScroll != this.scrollBar.yScroll);
 };
 
-ScrollArea.prototype.draw = function() {
+ScrollArea.prototype.draw = function(context) {
     // Clip
-    this.context.save();
-    this.context.beginPath();
-    this.context.rect(this.x + 3, this.y + 3, this.width - 6 - (this.scrollBar.visible ? 10 : 0), this.height - 6);
-    this.context.clip();
+    context.save();
+    context.beginPath();
+    context.rect(this.x + 3, this.y + 3, this.width - 6 - (this.scrollBar.visible ? 10 : 0), this.height - 6);
+    context.clip();
 
     // Draw child
     this.element.x = this.x + 3;
     this.element.y = this.y + 3 - this.scrollBar.yScroll;
-    this.element.draw();
+    this.element.draw(context);
 
     // Restore
-    this.context.restore();
+    context.restore();
 
     // Draw border + scrollbar
-    this.context.beginPath();
-    this.context.rect(this.x, this.y, this.width, this.height);
-    this.context.strokeStyle = '#000000';
-    this.context.stroke();
+    context.beginPath();
+    context.rect(this.x, this.y, this.width, this.height);
+    context.strokeStyle = '#000000';
+    context.stroke();
 
     if (this.scrollBar.visible) {
-        this.context.beginPath();
-        this.context.rect(this.x + this.width - 10, this.y, 10, this.height);
-        this.context.fillStyle = '#cccccc';
-        this.context.fill();
-        this.context.stroke();
+        context.beginPath();
+        context.rect(this.x + this.width - 10, this.y, 10, this.height);
+        context.fillStyle = '#cccccc';
+        context.fill();
+        context.stroke();
 
-        this.context.beginPath();
-        this.context.rect(this.scrollBar.x, this.scrollBar.y, this.scrollBar.width, this.scrollBar.height);
-        this.context.fillStyle = '#000000';
-        this.context.fill();
-        this.context.stroke();
+        context.beginPath();
+        context.rect(this.scrollBar.x, this.scrollBar.y, this.scrollBar.width, this.scrollBar.height);
+        context.fillStyle = '#000000';
+        context.fill();
+        context.stroke();
     }
 };
 
