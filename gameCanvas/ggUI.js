@@ -1,20 +1,21 @@
 // Big TODOs
-// - Scroll Area - Line breaks due to width
-// - Label - Copy text, links, emoji, onHover card images
+// - Label - Fixed width, copy text, links, emoji, onHover card images
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
 // - Reconnect websocket
 // - Sessions (cookie + server)
 // - Deal with half pixels
+// - requestAnimationFrame instead of draw loop, http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
+// - Browser compatibility/jQuery handlers
 // - Linking in game elements -> via drag or shift/ctrl click
 // - Voice chat?
 
 // Event handlers:
 // handleMouseDown = Hit element + Mouse down (automatically gain focus)
-// handleMouseDrag = Focused element + Mouse move while mouse is down
-// handleMouseClick - Hit element + Focused element + Mouse up
-// handleMouseDoubleClick - Hit element + Focused element + 2x Mouse up within interval
-// handleMouseWheel - Focused element + Mouse scroll
-// handleKey - Focused element + Key press
+0// handleMouseDrag = Focused element + Mouse move while mouse is down
+// handleMouseClick = Hit element + Focused element + Mouse up
+// handleMouseDoubleClick = Hit element + Focused element + 2x Mouse up within interval
+// handleMouseWheel = Focused element + Mouse scroll
+// handleKey = Focused element + Key press
 
 
 /// Helper functions ///
