@@ -5,13 +5,13 @@
 // - Sessions (cookie + server)
 // - Deal with half pixels
 // - requestAnimationFrame instead of draw loop, http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
-// - Browser compatibility/jQuery handlers
+// - Browser compatibility/jQuery handlers/Mobile
 // - Linking in game elements -> via drag or shift/ctrl click
 // - Voice chat?
 
 // Event handlers:
 // handleMouseDown = Hit element + Mouse down (automatically gain focus)
-0// handleMouseDrag = Focused element + Mouse move while mouse is down
+// handleMouseDrag = Focused element + Mouse move while mouse is down
 // handleMouseClick = Hit element + Focused element + Mouse up
 // handleMouseDoubleClick = Hit element + Focused element + 2x Mouse up within interval
 // handleMouseWheel = Focused element + Mouse scroll
