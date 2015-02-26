@@ -1,5 +1,5 @@
 // Big TODOs
-// - Label - Fixed width, copy text, links, emoji, onHover card images
+// - Label - Copy text, links, emoji, onHover card images
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
 // - Reconnect websocket
 // - Sessions (cookie + server)
@@ -247,6 +247,71 @@ Label.prototype.draw = function(context) {
 };
 
 
+/// FixedWidthLabel ///
+
+function FixedWidthLabel(x, y, width, text) {
+    Label.call(this, x, y, '');
+    this.width = width;
+    this.setText(text);
+}
+
+FixedWidthLabel.prototype = Object.create(Label.prototype);
+FixedWidthLabel.prototype.constructor = FixedWidthLabel;
+
+FixedWidthLabel.prototype.setText = function(text) {
+    var height = -6; // Remove padding
+
+    var lines = text.split("\n");
+    var newLines = [];
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var fittedText = this.fitText(line, this.width);
+        height += 20 * fittedText.length;
+        newLines = newLines.concat(fittedText);
+    }
+
+    this.text = newLines.join("\n");
+    this.height = height;
+    this.onSizeChange();
+};
+
+FixedWidthLabel.prototype.fitText = function(text, width) {
+    this.scratchPad.font = '12pt Calibri';
+    var fittedText = [];
+    var words = text.split(' ');
+
+    var line = '';
+    for (var n = 0; n < words.length; n++) {
+        var testLine = line + words[n];
+        var lineWidth = this.scratchPad.measureText(testLine).width;
+        if (lineWidth > width && n > 0) {
+            fittedText.push(line);
+            line = words[n];
+        }
+        else {
+            line = testLine + ' ';
+        }
+    }
+
+    if (line.length > 0) {
+        fittedText.push(line.trim());
+    }
+
+    return fittedText;
+};
+
+FixedWidthLabel.prototype.draw = function(context) {
+    context.font = '12pt Calibri';
+    var lines = this.text.split("\n");
+    var yPos = this.y + 12;
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        context.fillText(line, this.x, yPos);
+        yPos += 20;
+    }
+};
+
+
 /// Textbox ///
 
 function Textbox(x, y, width, height) {
@@ -373,8 +438,8 @@ function ScrollArea(x, y, width, height, element) {
         height: height
     };
 
-    var self = this;
-    element.onSizeChange = function () { self.updateScrollBarForText(self) };
+    var _this = this;
+    element.onSizeChange = function () { _this.updateScrollBarForText.call(_this) };
 
     this.updateScrollBarForText(this);
 }
@@ -390,15 +455,15 @@ ScrollArea.prototype.setFocus = function(focus) {
     return false;
 };
 
-ScrollArea.prototype.updateScrollBarForText = function(scrollArea) {
+ScrollArea.prototype.updateScrollBarForText = function() {
     // Called by label changing text and scroll wheel
-    var areaHeight = scrollArea.height;
-    var eleHeight = scrollArea.element.height;
-    var yScroll = scrollArea.scrollBar.yScroll;
+    var areaHeight = this.height;
+    var eleHeight = this.element.height;
+    var yScroll = this.scrollBar.yScroll;
 
     // If we were at the bottom, auto-scroll
     if (yScroll + areaHeight - 6 == eleHeight - 20 // 20 is one line of text
-        || !scrollArea.scrollBar.visible && areaHeight - 6 < eleHeight) {
+        || !this.scrollBar.visible && areaHeight - 6 < eleHeight) {
         yScroll = eleHeight - (areaHeight - 6);
     }
 
@@ -407,15 +472,15 @@ ScrollArea.prototype.updateScrollBarForText = function(scrollArea) {
     var barOffset = yScroll / (eleHeight - (areaHeight - 6)) * (areaHeight - barHeight);
     barOffset = Math.max(0, barOffset);
 
-    scrollArea.scrollBar.height = barHeight;
-    scrollArea.scrollBar.visible = (barHeight != scrollArea.height);
-    if (!scrollArea.scrollBar.visible) {
-        scrollArea.scrollBar.yScroll = 0;
-        scrollArea.scrollBar.y = scrollArea.y;
+    this.scrollBar.height = barHeight;
+    this.scrollBar.visible = (barHeight != this.height);
+    if (!this.scrollBar.visible) {
+        this.scrollBar.yScroll = 0;
+        this.scrollBar.y = this.y;
     }
     else {
-        scrollArea.scrollBar.yScroll = yScroll;
-        scrollArea.scrollBar.y = scrollArea.y + barOffset;
+        this.scrollBar.yScroll = yScroll;
+        this.scrollBar.y = this.y + barOffset;
     }
 };
 
@@ -483,5 +548,9 @@ ScrollArea.prototype.handleMouseDrag = function(xDelta, yDelta) {
 };
 
 ScrollArea.prototype.handleMouseWheel = function(yDelta) {
-    return this.updateScrollBarForScroll(yDelta * 2);
+    if (this.scrollBar.visible) {
+        return this.updateScrollBarForScroll(yDelta * 2);
+    }
+    return false;
 };
+

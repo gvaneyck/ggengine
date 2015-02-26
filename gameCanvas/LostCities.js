@@ -29,7 +29,7 @@ function initGame(canvasElement) {
     chatBox.submitHandler = function(msg) {
         sendCmd({cmd: 'msg', msg: msg, target: 'General'});
     };
-    chatArea = new Label(10, 38, '');
+    chatArea = new FixedWidthLabel(10, 38, 384, '');
     chatArea2 = new ScrollArea(10, 38, 400, 100, chatArea);
     chatArea2.visible = false;
 
@@ -108,8 +108,8 @@ function onMessage(evt) {
         }
         text += formatChatLine(cmd);
         chatArea.setText(text);
-        uiManager.dirty = true;
     }
+    uiManager.dirty = true;
 }
 
 function formatChatLine(chat) {
@@ -131,3 +131,72 @@ function onError(evt) {
 function sendCmd(cmd) {
     websocket.send(JSON.stringify(cmd));
 }
+
+function renderTest(canvasElement) {
+    var gameState = JSON.parse('{"1":{"table":{"red":[], "white":[], "blue":[], "green":[], "yellow":[]}, "hand":["red 5", "blue !", "white 10", "blue 3", "red 7", "white 2", "green 5", "blue 7"]}, "2":{"table":{"red":[], "white":[], "blue":[], "green":[], "yellow":[]}}, "discard":{"red":[], "white":[], "blue":[], "green":[], "yellow":[]}, "deck":44, "currentPlayer":1}');
+    uiManager = new UIManager(canvasElement);
+    loadGameState(gameState);
+}
+
+function loadGameState(gameState) {
+    console.log(gameState);
+
+    // Clean old elements from uiManager
+
+
+    // Generate new elements
+    var cw = 100;
+    var ch = 150;
+
+    var yOffset1 = uiManager.canvas.height - ch - 10;
+    var yOffset2 = 10;
+    var xOffset = 10;
+
+    for (var i = 0; i < gameState['1'].hand.length; i++) {
+        var cardData = gameState['1'].hand[i];
+        var card = new Card(xOffset, yOffset1, cw, ch, cardData);
+        uiManager.addElement(card);
+
+        var card2 = new Card(xOffset, yOffset2, cw, ch, '');
+        uiManager.addElement(card2);
+
+        xOffset += cw + 10;
+    }
+
+    // Mark dirty
+    uiManager.dirty = true
+}
+
+/// Card ///
+
+function Card(x, y, width, height, data) {
+    UIElement.call(this, x, y, width, height);
+    var dataParts = data.split(' ');
+    if (dataParts.length == 2) {
+        this.color = dataParts[0];
+        this.text = dataParts[1];
+    }
+    else {
+        this.text = '';
+    }
+}
+
+Card.prototype = Object.create(UIElement.prototype);
+Card.prototype.constructor = Card;
+
+Card.prototype.draw = function(context) {
+    context.beginPath();
+    context.rect(this.x, this.y, this.width, this.height);
+    context.fillStyle = this.color;
+    context.fill();
+    context.strokeStyle = 'black';
+    context.stroke();
+
+    if (this.text.length > 0) {
+        context.font = '32pt Calibri';
+        context.fillStyle = 'white';
+        context.strokeStyle = 'black';
+        context.fillText(this.text, this.x + 3, this.y + 32);
+        context.strokeText(this.text, this.x + 3, this.y + 32);
+    }
+};
