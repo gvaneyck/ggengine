@@ -1,17 +1,51 @@
+/// Card ///
+
+function Card(x, y, width, height, data) {
+    UIElement.call(this, x, y, width, height);
+    this.value = -1;
+    if (data != undefined) {
+        this.value = data.value;
+        this.color = data.color;
+    }
+}
+
+Card.prototype = Object.create(UIElement.prototype);
+Card.prototype.constructor = Card;
+
+Card.prototype.draw = function(context) {
+    context.beginPath();
+    context.rect(this.x, this.y, this.width, this.height);
+    context.fillStyle = this.color;
+    context.fill();
+    context.strokeStyle = 'black';
+    context.stroke();
+
+    if (this.value != -1) {
+        context.font = '32pt Calibri';
+        context.fillStyle = 'white';
+        context.strokeStyle = 'black';
+        context.fillText(this.value, this.x + 3, this.y + 32);
+        context.strokeText(this.value, this.x + 3, this.y + 32);
+    }
+};
+
+
 /// Code begins
 
+var player = '1';
+var opponent = '2';
 var name;
 
 var lobbies = {};
 
 var uiManager;
 
-var errLabel;
-var nameLabel;
-var nameBox;
-var chatBox;
-var chatArea;
-var chatArea2;
+var errLabel = {};
+var nameLabel = {};
+var nameBox = {};
+var chatBox = {};
+var chatArea = {};
+var chatArea2 = {};
 
 function initGame(canvasElement) {
     uiManager = new UIManager(canvasElement);
@@ -54,6 +88,7 @@ function openWebSocket() {
 
 function onOpen(evt) {
     console.log('CONNECTED');
+    connected = true;
 }
 
 function onClose(evt) {
@@ -142,7 +177,11 @@ function loadGameState(gameState) {
     console.log(gameState);
 
     // Clean old elements from uiManager
-
+    for (var i = uiManager.elements.length - 1; i >= 0; i--) {
+        if (uiManager.elements[i] instanceof Card) {
+            uiManager.elements.splice(i, 1);
+        }
+    }
 
     // Generate new elements
     var cw = 100;
@@ -152,8 +191,8 @@ function loadGameState(gameState) {
     var yOffset2 = 10;
     var xOffset = 10;
 
-    for (var i = 0; i < gameState['1'].hand.length; i++) {
-        var cardData = gameState['1'].hand[i];
+    for (var i = 0; i < gameState[player].hand.length; i++) {
+        var cardData = gameState[player].hand[i];
         var card = new Card(xOffset, yOffset1, cw, ch, cardData);
         uiManager.addElement(card);
 
@@ -167,36 +206,27 @@ function loadGameState(gameState) {
     uiManager.dirty = true
 }
 
-/// Card ///
-
-function Card(x, y, width, height, data) {
-    UIElement.call(this, x, y, width, height);
-    var dataParts = data.split(' ');
-    if (dataParts.length == 2) {
-        this.color = dataParts[0];
-        this.text = dataParts[1];
-    }
-    else {
-        this.text = '';
-    }
+function gameTest(canvasElement, p) {
+    player = '' + p;
+    opponent = (p == 1 ? '2' : '1');
+    uiManager = new UIManager(canvasElement);
+    openWebSocket();
+    websocket.onmessage = gameMessage;
+    websocket.onopen = function(e) {
+        sendCmd({cmd: 'setName', name: 'Jabe' + p});
+        sendCmd({cmd: 'setPlayerId', id: p});
+    };
 }
 
-Card.prototype = Object.create(UIElement.prototype);
-Card.prototype.constructor = Card;
-
-Card.prototype.draw = function(context) {
-    context.beginPath();
-    context.rect(this.x, this.y, this.width, this.height);
-    context.fillStyle = this.color;
-    context.fill();
-    context.strokeStyle = 'black';
-    context.stroke();
-
-    if (this.text.length > 0) {
-        context.font = '32pt Calibri';
-        context.fillStyle = 'white';
-        context.strokeStyle = 'black';
-        context.fillText(this.text, this.x + 3, this.y + 32);
-        context.strokeText(this.text, this.x + 3, this.y + 32);
+function gameMessage(evt) {
+    console.log('MSG: ' + evt.data);
+    var cmd = JSON.parse(evt.data);
+    if (cmd.cmd == 'gs') {
+        loadGameState(JSON.parse(cmd.gs));
     }
-};
+    uiManager.dirty = true
+}
+
+function playCard(idx) {
+    sendCmd()
+}

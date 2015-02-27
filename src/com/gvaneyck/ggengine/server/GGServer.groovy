@@ -1,6 +1,7 @@
 package com.gvaneyck.ggengine.server
 
 import com.gvaneyck.ggengine.Action
+import com.gvaneyck.ggengine.GameManager
 import com.gvaneyck.ggengine.gamestate.GameStateSerializer
 import com.gvaneyck.ggengine.ui.GGui
 import groovy.json.JsonBuilder
@@ -22,6 +23,11 @@ public class GGServer extends WebSocketServer implements GGui {
 
     def gss = new GameStateSerializer()
 
+    def gameManager
+
+    def actions
+    volatile actionSelection
+
     public GGServer(String gameDir, String game) throws UnknownHostException {
         this(gameDir, game, 9003, new Draft_76())
     }
@@ -32,6 +38,16 @@ public class GGServer extends WebSocketServer implements GGui {
         this.game = game
 
         lobbies['General'] = new Lobby(name: 'General')
+
+        final ggui = this
+        Thread t = new Thread() {
+            public void run() {
+                gameManager = new GameManager([:], ggui)
+                gameManager.loadGame(gameDir, game)
+                gameManager.gameLoop()
+            }
+        }
+        t.start()
     }
 
     @Override
@@ -109,6 +125,10 @@ public class GGServer extends WebSocketServer implements GGui {
                     lobbies[target].sendMsg(player.name, cmd.msg)
                 }
                 break
+
+            case 'setPlayerId':
+                player.id = cmd.id
+                break
         }
 //        else if (s.startsWith("startGame")) {
 //            final GGui ggs = this
@@ -131,21 +151,45 @@ public class GGServer extends WebSocketServer implements GGui {
 
     @Override
     public Action getChoice() {
-        System.exit(0)
-        return null
+        while (actionSelection == null) {
+            Thread.sleep(1000)
+        }
+
+        def actionPicked
+        actions.each {
+            if (it.toString() == actionSelection) {
+                actionPicked = it
+            }
+        }
+
+        actionSelection = null
+
+        return actionPicked
     }
 
     @Override
     public void showChoices(int player, List<Action> actions) {
-        List<String> acts = new ArrayList<String>()
-        for (Action a : actions)
-            acts.add(a.toString())
-        sendToAll(gss.serialize(acts))
+        this.actions = actions
+        def acts = actions.toString()
+        getPlayer(player).send([cmd: 'actions', actions: acts])
     }
 
     @Override
     public void showGS(int player, Map gs) {
-        sendToAll(player + " gs: " + gss.serialize(gs))
+        getPlayer(player).send([cmd: 'gs', gs: gss.serialize(gs)])
+    }
+
+    private Player getPlayer(int playerId) {
+        def p = null
+        while (p == null) {
+            players.each { name, player ->
+                if (player.id == playerId) {
+                    p = player
+                }
+            }
+            Thread.sleep(1000)
+        }
+        return p
     }
 
     private void sendToAll(Map data) {

@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat
 public class Player {
     def name
     def lobbies = []
+    def id
     WebSocket conn
 
     public Player(WebSocket conn) {
