@@ -49,7 +49,7 @@ Card.prototype.draw = function(context) {
     }
 };
 
-Card.prototype.handleMouseDrag = function(xDelta, yDelta) {
+Card.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
     this.curX += xDelta;
     this.curY += yDelta;
     this.zLevel = 1000;

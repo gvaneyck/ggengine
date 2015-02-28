@@ -133,7 +133,7 @@ UIManager.prototype.mouseMoveHandler = function(e) {
                 e.preventDefault();
                 var xDelta = xy.x - this.lastMousePos.x;
                 var yDelta = xy.y - this.lastMousePos.y;
-                if (element.handleMouseDrag(xDelta, yDelta)) { this.dirty = true; }
+                if (element.handleMouseDrag(xy, xDelta, yDelta)) { this.dirty = true; }
                 break;
             }
         }
@@ -212,7 +212,7 @@ function UIElement(x, y, width, height) {
 UIElement.prototype.draw = function(context) { };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; return false; };
 UIElement.prototype.handleMouseDown = function(xy) { return false; };
-UIElement.prototype.handleMouseDrag = function(xDelta, yDelta) { return false; };
+UIElement.prototype.handleMouseDrag = function(xy, xDelta, yDelta) { return false; };
 UIElement.prototype.handleMouseUp = function(xy) { return false; };
 UIElement.prototype.handleMouseClick = function(xy) { return false; };
 UIElement.prototype.handleMouseDoubleClick = function(xy) { return false; };
@@ -557,7 +557,7 @@ ScrollArea.prototype.handleMouseDown = function(xy) {
     return false;
 };
 
-ScrollArea.prototype.handleMouseDrag = function(xDelta, yDelta) {
+ScrollArea.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
     // Check if scrollbar is focused
     if (this.scrollBar.focus) {
         return this.updateScrollBarForScroll(yDelta);
