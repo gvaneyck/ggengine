@@ -7,11 +7,13 @@
 // - requestAnimationFrame instead of draw loop, http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
 // - Browser compatibility/jQuery handlers/Mobile
 // - Linking in game elements -> via drag or shift/ctrl click
+// - Dirty rectangles drawing
 // - Voice chat?
 
 // Event handlers:
 // handleMouseDown = Hit element + Mouse down (automatically gain focus)
 // handleMouseDrag = Focused element + Mouse move while mouse is down
+// handleMouseUp = Focused element + Mouse up
 // handleMouseClick = Hit element + Focused element + Mouse up
 // handleMouseDoubleClick = Hit element + Focused element + 2x Mouse up within interval
 // handleMouseWheel = Focused element + Mouse scroll
@@ -62,7 +64,7 @@ function UIManager(canvas) {
     document.addEventListener('mouseup', function(e) { _this.mouseUpHandler.call(_this, e); });
     document.addEventListener('wheel', function(e) { _this.mouseWheelHandler.call(_this, e); }, false);
     document.addEventListener('keypress', function(e) { _this.typingHandler.call(_this, e); });
-    window.onresize = this.sizeWindow;
+    window.onresize = function(e) { _this.sizeWindow.call(_this, e); };
 
     // Start draw loop
     var fps = 30;
@@ -78,6 +80,11 @@ UIManager.prototype.sizeWindow = function(e) {
 
 UIManager.prototype.draw = function() {
     if (!this.dirty) { return; }
+
+    // Sort by z order
+    this.elements.sort(function(a, b) {
+        return a.zLevel - b.zLevel;
+    });
 
     var context = this.canvas.getContext('2d');
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -139,8 +146,13 @@ UIManager.prototype.mouseUpHandler = function(e) {
     var xy = getCursorPosition(e, this.canvas);
     for (var i = 0; i < this.elements.length; i++) {
         var element = this.elements[i];
+        var handled = false;
+        if (element.visible && element.focus) {
+            console.log(element);
+            if (element.handleMouseUp(xy)) { this.dirty = true; }
+            handled = true;
+        }
         if (element.visible && element.focus && isClicked(xy, element)) {
-            e.preventDefault();
             var now = new Date().getTime();
             if (this.lastClick.element == element && now - this.lastClick.time < 500) {
                 if (element.handleMouseDoubleClick(xy)) { this.dirty = true; }
@@ -151,6 +163,10 @@ UIManager.prototype.mouseUpHandler = function(e) {
                 this.lastClick.element = element;
                 this.lastClick.time = now;
             }
+            handled = true;
+        }
+        if (handled) {
+            e.preventDefault();
             break;
         }
     }
@@ -188,6 +204,7 @@ function UIElement(x, y, width, height) {
     this.y = y;
     this.width = width;
     this.height = height;
+    this.zLevel = 0;
     this.focus = false;
     this.visible = true;
 }
@@ -196,6 +213,7 @@ UIElement.prototype.draw = function(context) { };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; return false; };
 UIElement.prototype.handleMouseDown = function(xy) { return false; };
 UIElement.prototype.handleMouseDrag = function(xDelta, yDelta) { return false; };
+UIElement.prototype.handleMouseUp = function(xy) { return false; };
 UIElement.prototype.handleMouseClick = function(xy) { return false; };
 UIElement.prototype.handleMouseDoubleClick = function(xy) { return false; };
 UIElement.prototype.handleMouseWheel = function(yDelta) { return false; };

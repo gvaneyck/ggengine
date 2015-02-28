@@ -3,32 +3,65 @@
 function Card(x, y, width, height, data) {
     UIElement.call(this, x, y, width, height);
     this.value = -1;
+    this.color = 'black';
     if (data != undefined) {
         this.value = data.value;
         this.color = data.color;
     }
+    this.curX = x;
+    this.curY = y;
 }
 
 Card.prototype = Object.create(UIElement.prototype);
 Card.prototype.constructor = Card;
 
 Card.prototype.draw = function(context) {
-    context.beginPath();
-    context.rect(this.x, this.y, this.width, this.height);
-    context.fillStyle = this.color;
-    context.fill();
-    context.strokeStyle = 'black';
-    context.stroke();
+    if (this.curX == this.x && this.curY == this.y) {
+        context.beginPath();
+        context.rect(this.x, this.y, this.width, this.height);
+        context.fillStyle = this.color;
+        context.fill();
+        context.strokeStyle = 'black';
+        context.stroke();
+    }
+    else {
+        context.beginPath();
+        context.rect(this.x, this.y, this.width, this.height);
+        context.fillStyle = 'grey';
+        context.fill();
+        context.strokeStyle = 'grey';
+        context.stroke();
+
+        context.beginPath();
+        context.rect(this.curX, this.curY, this.width, this.height);
+        context.fillStyle = this.color;
+        context.fill();
+        context.strokeStyle = 'black';
+        context.stroke();
+    }
 
     if (this.value != -1) {
         context.font = '32pt Calibri';
         context.fillStyle = 'white';
         context.strokeStyle = 'black';
-        context.fillText(this.value, this.x + 3, this.y + 32);
-        context.strokeText(this.value, this.x + 3, this.y + 32);
+        context.fillText(this.value, this.curX + 3, this.curY + 32);
+        context.strokeText(this.value, this.curX + 3, this.curY + 32);
     }
 };
 
+Card.prototype.handleMouseDrag = function(xDelta, yDelta) {
+    this.curX += xDelta;
+    this.curY += yDelta;
+    this.zLevel = 1000;
+    return true;
+};
+
+Card.prototype.handleMouseUp = function(xy) {
+    this.curX = this.x;
+    this.curY = this.y;
+    this.zLevel = 0;
+    return true;
+};
 
 /// Code begins
 
@@ -79,7 +112,8 @@ function initGame(canvasElement) {
 /// Web sockets ///
 
 function openWebSocket() {
-    websocket = new WebSocket('ws://127.0.0.1:9003/');
+    //websocket = new WebSocket('ws://127.0.0.1:9003/');
+    websocket = new WebSocket('ws://76.91.23.89:9003');
     websocket.onopen = function (evt) { onOpen(evt); };
     websocket.onclose = function (evt) { onClose(evt); };
     websocket.onmessage = function (evt) { onMessage(evt); };
@@ -168,7 +202,7 @@ function sendCmd(cmd) {
 }
 
 function renderTest(canvasElement) {
-    var gameState = JSON.parse('{"1":{"table":{"red":[], "white":[], "blue":[], "green":[], "yellow":[]}, "hand":["red 5", "blue !", "white 10", "blue 3", "red 7", "white 2", "green 5", "blue 7"]}, "2":{"table":{"red":[], "white":[], "blue":[], "green":[], "yellow":[]}}, "discard":{"red":[], "white":[], "blue":[], "green":[], "yellow":[]}, "deck":44, "currentPlayer":1}');
+    var gameState = JSON.parse('{"1":{"table":{"red":[],"white":[],"blue":[],"green":[],"yellow":[]},"hand":[{"value":8,"color":"green"},{"value":10,"color":"red"},{"value":0,"color":"white"},{"value":4,"color":"white"},{"value":6,"color":"white"},{"value":10,"color":"white"},{"value":0,"color":"yellow"},{"value":9,"color":"yellow"}]},"2":{"table":{"red":[],"white":[],"blue":[],"green":[],"yellow":[]}},"discard":{"red":[],"white":[],"blue":[],"green":[],"yellow":[]},"deck":44,"currentPlayer":1}');
     uiManager = new UIManager(canvasElement);
     loadGameState(gameState);
 }
@@ -196,7 +230,7 @@ function loadGameState(gameState) {
         var card = new Card(xOffset, yOffset1, cw, ch, cardData);
         uiManager.addElement(card);
 
-        var card2 = new Card(xOffset, yOffset2, cw, ch, '');
+        var card2 = new Card(xOffset, yOffset2, cw, ch);
         uiManager.addElement(card2);
 
         xOffset += cw + 10;

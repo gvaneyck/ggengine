@@ -1,6 +1,6 @@
 package LostCities
 
-class Card {
+class Card implements Comparable<Card> {
 
     static gm
     static gs
@@ -27,4 +27,13 @@ class Card {
     public String toString() {
     	return "${color} ${(value == 0 ? '!' : value)}"
 	}
+
+    int compareTo(Card o) {
+        if (color.charAt(0) != o.color.charAt(0)) {
+            return color.charAt(0) - o.color.charAt(0)
+        }
+        else {
+            return value - o.value
+        }
+    }
 }

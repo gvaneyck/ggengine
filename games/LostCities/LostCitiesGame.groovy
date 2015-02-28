@@ -32,6 +32,7 @@ class LostCitiesGame extends Game {
             (1..8).each { i ->
                 gs[it].hand << gs.deck.remove(0)
             }
+            gs[it].hand.sort()
 
             gs[it].table = [:]
             colors.each { color ->
@@ -58,7 +59,7 @@ class LostCitiesGame extends Game {
         curp.hand.each { card ->
             def pile = curp.table[card.color]
             if (pile.isEmpty() || pile.last().value <= card.value) {
-                actions << new Action(card, 'play')
+                actions << new Action(this, 'playCard')
             }
         }
         curp.hand.each { card ->
@@ -82,11 +83,13 @@ class LostCitiesGame extends Game {
 
     def drawDeck() {
         gs[gs.currentPlayer].hand << gs.deck.remove(0)
+        gs[gs.currentPlayer].hand.sort()
     }
 
     def drawPile(color) {
         def pile = gs.discard[color]
         gs[gs.currentPlayer].hand << pile.pop()
+        gs[gs.currentPlayer].hand.sort()
     }
 
     public boolean isFinished() {
