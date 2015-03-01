@@ -1,3 +1,46 @@
+/// Board ///
+
+function Board(x, y, cw, ch) {
+    UIElement.call(this, x, y, cw * 5 + 60, ch + 20);
+    this.piles = { blue: [], green: [], red: [], white: [], yellow: [] };
+    this.ch = ch;
+    this.cw = cw;
+}
+
+Board.prototype = Object.create(UIElement.prototype);
+Board.prototype.constructor = Board;
+
+Board.prototype.draw = function(context) {
+    context.beginPath();
+    context.rect(this.x, this.y, this.width, this.height);
+    context.strokeStyle = 'black';
+    context.stroke();
+
+    var xOffset = this.x + 10;
+    var yOffset = this.y + 10;
+    for (var pileColor in this.piles) {
+        var pile = this.piles[pileColor];
+        if (pile.length == 0) {
+            context.beginPath();
+            context.rect(xOffset, yOffset, this.cw, this.ch);
+            context.fillStyle = pileColor;
+            context.fill();
+            context.strokeStyle = 'black';
+            context.stroke();
+        }
+        else {
+            var card = pile[pile.length - 1];
+            card.x = xOffset;
+            card.y = yOffset;
+            card.height = this.ch;
+            card.width = this.cw;
+            card.draw(context);
+        }
+        xOffset += this.cw + 10;
+    }
+};
+
+
 /// Card ///
 
 function Card(x, y, width, height, data) {
@@ -235,6 +278,9 @@ function loadGameState(gameState) {
 
         xOffset += cw + 10;
     }
+
+    var board = new Board((cw * 3 + 30) / 2, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
+    uiManager.addElement(board);
 
     // Mark dirty
     uiManager.dirty = true

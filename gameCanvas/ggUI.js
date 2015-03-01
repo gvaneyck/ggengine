@@ -1,4 +1,5 @@
 // Big TODOs
+// - Split up xy into x and y
 // - Label - Copy text, links, emoji, onHover card images
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
 // - Reconnect websocket
@@ -67,7 +68,7 @@ function UIManager(canvas) {
     window.onresize = function(e) { _this.sizeWindow.call(_this, e); };
 
     // Start draw loop
-    var fps = 30;
+    var fps = 60;
     setInterval(function() {
         _this.draw.call(_this);
     }, 1000 / fps);
@@ -148,7 +149,6 @@ UIManager.prototype.mouseUpHandler = function(e) {
         var element = this.elements[i];
         var handled = false;
         if (element.visible && element.focus) {
-            console.log(element);
             if (element.handleMouseUp(xy)) { this.dirty = true; }
             handled = true;
         }
