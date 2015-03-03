@@ -60,11 +60,11 @@ function UIManager(canvas) {
 
     // Attach events
     var _this = this;
-    document.addEventListener('mousedown', function(e) { _this.mouseDownHandler.call(_this, e); });
-    document.addEventListener('mousemove', function(e) { _this.mouseMoveHandler.call(_this, e); });
-    document.addEventListener('mouseup', function(e) { _this.mouseUpHandler.call(_this, e); });
-    document.addEventListener('wheel', function(e) { _this.mouseWheelHandler.call(_this, e); }, false);
-    document.addEventListener('keypress', function(e) { _this.typingHandler.call(_this, e); });
+    document.addEventListener('mousedown', function(e) { _this.sortElements(); _this.mouseDownHandler.call(_this, e); });
+    document.addEventListener('mousemove', function(e) { _this.sortElements(); _this.mouseMoveHandler.call(_this, e); });
+    document.addEventListener('mouseup', function(e) { _this.sortElements(); _this.mouseUpHandler.call(_this, e); });
+    document.addEventListener('wheel', function(e) { _this.sortElements(); _this.mouseWheelHandler.call(_this, e); }, false);
+    document.addEventListener('keypress', function(e) { _this.sortElements(); _this.typingHandler.call(_this, e); });
     window.onresize = function(e) { _this.sizeWindow.call(_this, e); };
 
     // Start draw loop
@@ -82,10 +82,7 @@ UIManager.prototype.sizeWindow = function(e) {
 UIManager.prototype.draw = function() {
     if (!this.dirty) { return; }
 
-    // Sort by z order
-    this.elements.sort(function(a, b) {
-        return a.zLevel - b.zLevel;
-    });
+    this.sortElements();
 
     var context = this.canvas.getContext('2d');
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -98,6 +95,13 @@ UIManager.prototype.draw = function() {
     }
 
     this.dirty = false;
+};
+
+UIManager.prototype.sortElements = function() {
+    // Sort by z order
+    this.elements.sort(function(a, b) {
+        return a.zLevel - b.zLevel;
+    });
 };
 
 UIManager.prototype.addElement = function(element) {
@@ -113,11 +117,13 @@ UIManager.prototype.mouseDownHandler = function(e) {
     this.isMouseDown = true;
     this.lastMousePos = xy;
 
-    for (var i = 0; i < this.elements.length; i++) {
+    var handled = false;
+    for (var i = this.elements.length - 1; i >= 0; i--) {
         var element = this.elements[i];
-        if (element.visible && isClicked(xy, element)) {
+        if (!handled && element.visible && isClicked(xy, element)) {
             if (element.setFocus(true)) { this.dirty = true; }
             if (element.handleMouseDown(xy)) { this.dirty = true; }
+            handled = true;
         }
         else {
             if (element.setFocus(false)) { this.dirty = true; }
@@ -128,7 +134,7 @@ UIManager.prototype.mouseDownHandler = function(e) {
 UIManager.prototype.mouseMoveHandler = function(e) {
     if (this.isMouseDown) {
         var xy = getCursorPosition(e, this.canvas);
-        for (var i = 0; i < this.elements.length; i++) {
+        for (var i = this.elements.length - 1; i >= 0; i--) {
             var element = this.elements[i];
             if (element.visible && element.focus) {
                 e.preventDefault();
@@ -145,7 +151,7 @@ UIManager.prototype.mouseMoveHandler = function(e) {
 UIManager.prototype.mouseUpHandler = function(e) {
     this.isMouseDown = false;
     var xy = getCursorPosition(e, this.canvas);
-    for (var i = 0; i < this.elements.length; i++) {
+    for (var i = this.elements.length - 1; i >= 0; i--) {
         var element = this.elements[i];
         var handled = false;
         if (element.visible && element.focus) {
@@ -173,7 +179,7 @@ UIManager.prototype.mouseUpHandler = function(e) {
 };
 
 UIManager.prototype.mouseWheelHandler = function(e) {
-    for (var i = 0; i < this.elements.length; i++) {
+    for (var i = this.elements.length - 1; i >= 0; i--) {
         var element = this.elements[i];
         if (element.visible && element.focus) {
             e.preventDefault();
@@ -184,7 +190,7 @@ UIManager.prototype.mouseWheelHandler = function(e) {
 };
 
 UIManager.prototype.typingHandler = function(e) {
-    for (var i = 0; i < this.elements.length; i++) {
+    for (var i = this.elements.length - 1; i >= 0; i--) {
         var element = this.elements[i];
         if (element.visible && element.focus) {
             if (element.handleKey(e)) {
@@ -425,6 +431,7 @@ Textbox.prototype.draw = function(context) {
         context.lineTo(cursorXpos, this.y + this.height - 3);
     }
 
+    context.lineWidth = 1;
     context.strokeStyle = 'black';
     context.stroke();
 
@@ -436,6 +443,7 @@ Textbox.prototype.draw = function(context) {
     // Draw border
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
+    context.lineWidth = 1;
     context.strokeStyle = 'black';
     context.stroke();
 };
@@ -532,7 +540,8 @@ ScrollArea.prototype.draw = function(context) {
     // Draw border + scrollbar
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
-    context.strokeStyle = '#000000';
+    context.lineWidth = 1;
+    context.strokeStyle = 'black';
     context.stroke();
 
     if (this.scrollBar.visible) {
@@ -540,12 +549,16 @@ ScrollArea.prototype.draw = function(context) {
         context.rect(this.x + this.width - 10, this.y, 10, this.height);
         context.fillStyle = '#cccccc';
         context.fill();
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
         context.stroke();
 
         context.beginPath();
         context.rect(this.scrollBar.x, this.scrollBar.y, this.scrollBar.width, this.scrollBar.height);
-        context.fillStyle = '#000000';
+        context.fillStyle = 'black';
         context.fill();
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
         context.stroke();
     }
 };
