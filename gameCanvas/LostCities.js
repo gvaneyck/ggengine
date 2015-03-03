@@ -37,7 +37,6 @@ Board.prototype.draw = function(context) {
             card.curY = card.y = yOffset;
             card.height = this.ch;
             card.width = this.cw;
-            console.log(card);
         }
         if (pileColor == this.highlight) {
             context.beginPath();
