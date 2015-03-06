@@ -6,6 +6,8 @@
 // - Sessions (cookie + server)
 // - Deal with half pixels
 // - requestAnimationFrame instead of draw loop, http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
+// - Redo temp context shenanigans in resize to actually create an element and destroy it on draw
+// - Reload game state on resize
 // - Browser compatibility/jQuery handlers/Mobile
 // - Linking in game elements -> via drag or shift/ctrl click
 // - Dirty rectangles drawing
@@ -74,9 +76,19 @@ function UIManager(canvas) {
     }, 1000 / fps);
 }
 
+UIManager.prototype.scratchPad = document.createElement('canvas').getContext('2d');
+
 UIManager.prototype.sizeWindow = function(e) {
+    // Draw current canvas to temp canvas
+    this.scratchPad.drawImage(this.canvas, 0, 0);
+
+    // Resize current canvas
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+
+    // Draw temp canvas back to the current canvas
+    this.canvas.getContext('2d').drawImage(this.scratchPad.canvas, 0, 0);
+    this.dirty = true;
 };
 
 UIManager.prototype.draw = function() {
@@ -100,12 +112,15 @@ UIManager.prototype.draw = function() {
 UIManager.prototype.sortElements = function() {
     // Sort by z order
     this.elements.sort(function(a, b) {
-        return a.zLevel - b.zLevel;
+        return a.getZLevel() - b.getZLevel();
     });
 };
 
 UIManager.prototype.addElement = function(element) {
+    var startIdx = this.elements.length;
     this.elements.push(element);
+    this.elements = this.elements.concat(element.getChildren());
+    element.scratchPad = this.scratchPad;
     this.dirty = true;
 };
 
@@ -215,6 +230,8 @@ function UIElement(x, y, width, height) {
     this.visible = true;
 }
 
+UIElement.prototype.getChildren = function() { return []; };
+UIElement.prototype.getZLevel = function() { return this.zLevel; };
 UIElement.prototype.draw = function(context) { };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; return false; };
 UIElement.prototype.handleMouseDown = function(xy) { return false; };
@@ -236,8 +253,6 @@ function Label(x, y, text) {
 
 Label.prototype = Object.create(UIElement.prototype);
 Label.prototype.constructor = Label;
-
-Label.prototype.scratchPad = document.createElement('canvas').getContext('2d');
 
 Label.prototype.setText = function(text) {
     this.scratchPad.font = '12pt Calibri';

@@ -3,13 +3,25 @@
 function Board(x, y, cw, ch) {
     UIElement.call(this, x, y, cw * 5 + 60, ch + 20);
     this.highlight = '';
-    this.ch = ch;
-    this.cw = cw;
-    this.resetPiles();
+    this.piles = {
+        blue: new Pile(this.x + 10, this.y + 10, cw, ch),
+        green: new Pile(this.x + cw + 20, this.y + 10, cw, ch),
+        red: new Pile(this.x + 2 * cw + 30, this.y + 10, cw, ch),
+        white: new Pile(this.x + 3 * cw + 40, this.y + 10, cw, ch),
+        yellow: new Pile(this.x + 4 * cw + 50, this.y + 10, cw, ch)
+    };
 }
 
 Board.prototype = Object.create(UIElement.prototype);
 Board.prototype.constructor = Board;
+
+Board.prototype.getChildren = function() {
+    var children = [];
+    for (var pileColor in this.piles) {
+        children.push(this.piles[pileColor]);
+    }
+    return children;
+};
 
 Board.prototype.draw = function(context) {
     context.beginPath();
@@ -22,35 +34,84 @@ Board.prototype.draw = function(context) {
     var yOffset = this.y + 10;
     for (var pileColor in this.piles) {
         var pile = this.piles[pileColor];
-        if (pile.length == 0) {
+        pile.draw(context);
+
+        if (this.highlight == pileColor) {
             context.beginPath();
-            context.rect(xOffset, yOffset, this.cw, this.ch);
-            context.fillStyle = pileColor;
-            context.fill();
-            context.lineWidth = 1;
-            context.strokeStyle = 'black';
-            context.stroke();
-        }
-        else {
-            var card = pile[pile.length - 1];
-            card.curX = card.x = xOffset;
-            card.curY = card.y = yOffset;
-            card.height = this.ch;
-            card.width = this.cw;
-        }
-        if (pileColor == this.highlight) {
-            context.beginPath();
-            context.rect(xOffset, yOffset, this.cw, this.ch);
+            context.rect(pile.x, pile.y, pile.width, pile.height);
             context.lineWidth = 7;
-            context.strokeStyle = 'black';
+            context.strokeStyle = (pileColor == 'white' ? 'black' : pileColor);
             context.stroke();
         }
-        xOffset += this.cw + 10;
     }
 };
 
 Board.prototype.resetPiles = function() {
-    this.piles = { blue: [], green: [], red: [], white: [], yellow: [] };
+    for (var pileColor in this.piles) {
+        this.piles[pileColor].pile = [];
+    }
+};
+
+
+/// Pile ///
+function Pile(x, y, width, height, xOffset, yOffset) {
+    UIElement.call(this, x, y, width, height);
+    this.pile = [];
+    this.xOffset = (xOffset != undefined ? xOffset : 0);
+    this.yOffset = (yOffset != undefined ? yOffset : 0);
+}
+
+Pile.prototype = Object.create(UIElement.prototype);
+Pile.prototype.constructor = Pile;
+
+Pile.prototype.addCard = function(card) {
+    this.pile.push(card);
+    card.curX = card.x = this.x;
+    card.curY = card.y = this.y;
+    card.width = this.width;
+    card.height = this.height;
+};
+
+Pile.prototype.getZLevel = function() {
+    return (this.pile.length == 0 ? this.zLevel : this.pile[this.pile.length - 1].zLevel);
+};
+
+Pile.prototype.drawEmpty = function(context) {
+    context.beginPath();
+    context.rect(this.x, this.y, this.width, this.height);
+    context.fillStyle = 'grey';
+    context.fill();
+    context.lineWidth = 1;
+    context.strokeStyle = 'grey';
+    context.stroke();
+};
+
+Pile.prototype.draw = function(context) {
+    if (this.xOffset == 0 && this.yOffset == 0) {
+        if (this.pile.length <= 1) {
+            this.drawEmpty(context);
+        }
+        if (this.pile.length >= 1) {
+            this.pile[this.pile.length - 1].draw(context);
+        }
+    }
+    else {
+
+    }
+};
+
+Pile.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
+    if (this.pile.length >= 1) {
+        return this.pile[this.pile.length - 1].handleMouseDrag(xy, xDelta, yDelta);
+    }
+    return false;
+};
+
+Pile.prototype.handleMouseUp = function(xy) {
+    if (this.pile.length >= 1) {
+        return this.pile[this.pile.length - 1].handleMouseUp(xy);
+    }
+    return false;
 };
 
 
@@ -73,40 +134,24 @@ Card.prototype = Object.create(UIElement.prototype);
 Card.prototype.constructor = Card;
 
 Card.prototype.draw = function(context) {
-    if (this.curX == this.x && this.curY == this.y) {
-        context.beginPath();
-        context.rect(this.x, this.y, this.width, this.height);
-        context.fillStyle = this.color;
-        context.fill();
-        context.lineWidth = 1;
-        context.strokeStyle = 'black';
-        context.stroke();
-    }
-    else {
-        context.beginPath();
-        context.rect(this.x, this.y, this.width, this.height);
-        context.fillStyle = 'grey';
-        context.fill();
-        context.lineWidth = 1;
-        context.strokeStyle = 'grey';
-        context.stroke();
-
-        context.beginPath();
-        context.rect(this.curX, this.curY, this.width, this.height);
-        context.fillStyle = this.color;
-        context.fill();
-        context.lineWidth = 1;
-        context.strokeStyle = 'black';
-        context.stroke();
-    }
+    context.beginPath();
+    context.rect(this.curX, this.curY, this.width, this.height);
+    context.fillStyle = this.color;
+    context.fill();
+    context.lineWidth = 1;
+    context.strokeStyle = 'black';
+    context.stroke();
 
     if (this.value != -1) {
         context.font = '32pt Calibri';
         context.fillStyle = 'white';
-        context.fillText(this.value, this.curX + 3, this.curY + 32);
         context.strokeStyle = 'black';
         context.lineWidth = 1;
+        context.fillText(this.value, this.curX + 3, this.curY + 32);
         context.strokeText(this.value, this.curX + 3, this.curY + 32);
+        var textWidth = context.measureText(this.value).width;
+        context.fillText(this.value, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
+        context.strokeText(this.value, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
     }
 };
 
@@ -291,8 +336,7 @@ function renderTest(canvasElement) {
     loadGameState(gameState);
 }
 
-function loadGameState(gameState) //noinspection Annotator
-{
+function loadGameState(gameState) {
     console.log(gameState);
 
     // Clean old elements from uiManager
@@ -326,7 +370,7 @@ function loadGameState(gameState) //noinspection Annotator
     for (var color in gameState.discard) {
         var pile = gameState.discard[color];
         for (var i = 0; i < pile.length; i++) {
-            board.piles[color].push(new Card(0, 0, 0, 0, pile[i]));
+            board.piles[color].addCard(new Card(0, 0, 0, 0, pile[i]));
         }
     }
 
