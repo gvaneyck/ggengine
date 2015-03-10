@@ -276,8 +276,8 @@ function initGame(canvasElement) {
 /// Web sockets ///
 
 function openWebSocket() {
-    //websocket = new WebSocket('ws://127.0.0.1:9003/');
-    websocket = new WebSocket('ws://76.91.23.89:9003');
+    websocket = new WebSocket('ws://127.0.0.1:9003/');
+    //websocket = new WebSocket('ws://76.91.23.89:9003');
     websocket.onopen = function (evt) { onOpen(evt); };
     websocket.onclose = function (evt) { onClose(evt); };
     websocket.onmessage = function (evt) { onMessage(evt); };
@@ -410,12 +410,12 @@ function loadGameState(gameState) {
         card.handleMouseUp = function(xy) {
             for (var color in board.piles) {
                 if (isClicked(xy, board.piles[color])) {
-                    sendCmd({action: 'discard', args: [this.handIdx]});
+                    sendCmd({cmd: 'action', action: 'discard', args: [this.handIdx]});
                 }
             }
             for (var color in board.p2) {
                 if (isClicked(xy, board.p2[color])) {
-                    sendCmd({action: 'playCard', args: [this.handIdx]});
+                    sendCmd({cmd: 'action', action: 'playCard', args: [this.handIdx]});
                 }
             }
             return Card.prototype.handleMouseUp.call(this, xy);
@@ -452,9 +452,13 @@ function loadGameState(gameState) {
 }
 
 function gameTest(canvasElement, p) {
+    uiManager = new UIManager(canvasElement);
+    board = new Board(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
+    uiManager.addElement(board);
+
     player = '' + p;
     opponent = (p == 1 ? '2' : '1');
-    uiManager = new UIManager(canvasElement);
+
     openWebSocket();
     websocket.onmessage = gameMessage;
     websocket.onopen = function(e) {

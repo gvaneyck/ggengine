@@ -129,6 +129,22 @@ public class GGServer extends WebSocketServer implements GGui {
             case 'setPlayerId':
                 player.id = cmd.id
                 break
+
+            case 'action':
+                def args = cmd.args
+                actions.each {
+                    if (it.method == cmd.action && it.args.length == cmd.args.length) {
+                        boolean matches = true
+                        for (int i = 0; i < it.args.length; i++) {
+                            if (it.args[i] != cmd.args[i]) {
+                                 matches = false
+                            }
+                        }
+                        if (matches) {
+                            actionSelection = it
+                        }
+                    }
+                }
         }
 //        else if (s.startsWith("startGame")) {
 //            final GGui ggs = this
