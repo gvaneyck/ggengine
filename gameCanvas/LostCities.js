@@ -104,7 +104,7 @@ Pile.prototype.getZLevel = function() {
 Pile.prototype.highlight = function(context) {
     context.beginPath();
     var widthIncr = Math.max(0, (this.pile.length - 1) * this.xOffset);
-    var heightIncr = Math.max(0, (this.pile.length - 1) * this.yOffset);;
+    var heightIncr = Math.max(0, (this.pile.length - 1) * this.yOffset);
     context.rect(this.x - 2, this.y - 2, this.width + widthIncr + 4, this.height + heightIncr + 4);
     context.lineWidth = 3;
     context.strokeStyle = 'black';
@@ -381,6 +381,8 @@ function renderTest(canvasElement) {
 function loadGameState(gameState) {
     console.log(gameState);
 
+    var oldCardMouseUp = Card.prototype.handleMouseUp;
+
     // Clean old elements from uiManager
     for (var i = uiManager.elements.length - 1; i >= 0; i--) {
         var element = uiManager.elements[i];
@@ -389,7 +391,7 @@ function loadGameState(gameState) {
         }
     }
 
-    // Generate new elements
+    // Handle hand
     var cardsInHand = gameState[player].hand.length;
     var yOffset = 10;
     var yIncr = (uiManager.canvas.height - 20 - ch) / (cardsInHand - 1);
@@ -398,11 +400,26 @@ function loadGameState(gameState) {
     for (var i = 0; i < cardsInHand; i++) {
         var cardData = gameState[player].hand[i];
         var card = new Card(xOffset, yOffset, cw, ch, cardData);
+        card.handIdx = i;
         card.zLevel = yOffset;
         if (cardsInHand == 7) {
             card.draggable = false;
         }
         uiManager.addElement(card);
+
+        card.handleMouseUp = function(xy) {
+            for (var color in board.piles) {
+                if (isClicked(xy, board.piles[color])) {
+                    sendCmd({action: 'discard', args: [this.handIdx]});
+                }
+            }
+            for (var color in board.p2) {
+                if (isClicked(xy, board.p2[color])) {
+                    sendCmd({action: 'playCard', args: [this.handIdx]});
+                }
+            }
+            return Card.prototype.handleMouseUp.call(this, xy);
+        };
 
         yOffset += yIncr;
     }
@@ -431,7 +448,7 @@ function loadGameState(gameState) {
     }
 
     // Mark dirty
-    uiManager.dirty = true
+    uiManager.dirty = true;
 }
 
 function gameTest(canvasElement, p) {
