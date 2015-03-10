@@ -2,7 +2,6 @@
 
 function Board(x, y, cw, ch) {
     UIElement.call(this, x, y, cw * 5 + 60, ch + 20);
-    this.highlight = '';
     this.piles = {
         blue: new Pile(this.x + 10, this.y + 10, cw, ch),
         green: new Pile(this.x + cw + 20, this.y + 10, cw, ch),
@@ -10,6 +9,21 @@ function Board(x, y, cw, ch) {
         white: new Pile(this.x + 3 * cw + 40, this.y + 10, cw, ch),
         yellow: new Pile(this.x + 4 * cw + 50, this.y + 10, cw, ch)
     };
+    this.p1 = {
+        blue: new Pile(this.x + 10, this.y - 10 - ch, cw, ch, 0, -40),
+        green: new Pile(this.x + cw + 20, this.y - 10 - ch, cw, ch, 0, -40),
+        red: new Pile(this.x + 2 * cw + 30, this.y - 10 - ch, cw, ch, 0, -40),
+        white: new Pile(this.x + 3 * cw + 40, this.y - 10 - ch, cw, ch, 0, -40),
+        yellow: new Pile(this.x + 4 * cw + 50, this.y - 10 - ch, cw, ch, 0, -40)
+    };
+    this.p2 = {
+        blue: new Pile(this.x + 10, this.y + 30 + ch, cw, ch, 0, 40),
+        green: new Pile(this.x + cw + 20, this.y + 30 + ch, cw, ch, 0, 40),
+        red: new Pile(this.x + 2 * cw + 30, this.y + 30 + ch, cw, ch, 0, 40),
+        white: new Pile(this.x + 3 * cw + 40, this.y + 30 + ch, cw, ch, 0, 40),
+        yellow: new Pile(this.x + 4 * cw + 50, this.y + 30 + ch, cw, ch, 0, 40)
+    };
+    this.draggedCard = null;
 }
 
 Board.prototype = Object.create(UIElement.prototype);
@@ -30,18 +44,27 @@ Board.prototype.draw = function(context) {
     context.strokeStyle = 'black';
     context.stroke();
 
-    var xOffset = this.x + 10;
-    var yOffset = this.y + 10;
     for (var pileColor in this.piles) {
+        this.p1[pileColor].draw(context);
+        this.p2[pileColor].draw(context);
+
         var pile = this.piles[pileColor];
         pile.draw(context);
 
-        if (this.highlight == pileColor) {
-            context.beginPath();
-            context.rect(pile.x, pile.y, pile.width, pile.height);
-            context.lineWidth = 7;
-            context.strokeStyle = (pileColor == 'white' ? 'black' : pileColor);
-            context.stroke();
+        if (this.draggedCard != null) {
+            var cardColor = this.draggedCard.color;
+            this.piles[cardColor].highlight(context);
+
+            var myPile = this.p2[cardColor];
+            if (myPile.pile.length >= 1) {
+                var topCard = myPile.pile[myPile.pile.length - 1];
+                if (this.draggedCard.value >= topCard.value) {
+                    myPile.highlight(context);
+                }
+            }
+            else {
+                myPile.highlight(context);
+            }
         }
     }
 };
@@ -49,6 +72,8 @@ Board.prototype.draw = function(context) {
 Board.prototype.resetPiles = function() {
     for (var pileColor in this.piles) {
         this.piles[pileColor].pile = [];
+        this.p1[pileColor].pile = [];
+        this.p2[pileColor].pile = [];
     }
 };
 
@@ -65,15 +90,25 @@ Pile.prototype = Object.create(UIElement.prototype);
 Pile.prototype.constructor = Pile;
 
 Pile.prototype.addCard = function(card) {
-    this.pile.push(card);
-    card.curX = card.x = this.x;
-    card.curY = card.y = this.y;
+    card.curX = card.x = this.x + this.xOffset * this.pile.length;
+    card.curY = card.y = this.y + this.yOffset * this.pile.length;
     card.width = this.width;
     card.height = this.height;
+    this.pile.push(card);
 };
 
 Pile.prototype.getZLevel = function() {
     return (this.pile.length == 0 ? this.zLevel : this.pile[this.pile.length - 1].zLevel);
+};
+
+Pile.prototype.highlight = function(context) {
+    context.beginPath();
+    var widthIncr = Math.max(0, (this.pile.length - 1) * this.xOffset);
+    var heightIncr = Math.max(0, (this.pile.length - 1) * this.yOffset);;
+    context.rect(this.x - 2, this.y - 2, this.width + widthIncr + 4, this.height + heightIncr + 4);
+    context.lineWidth = 3;
+    context.strokeStyle = 'black';
+    context.stroke();
 };
 
 Pile.prototype.drawEmpty = function(context) {
@@ -91,12 +126,19 @@ Pile.prototype.draw = function(context) {
         if (this.pile.length <= 1) {
             this.drawEmpty(context);
         }
+        if (this.pile.length >= 2) {
+            this.pile[this.pile.length - 2].draw(context);
+        }
         if (this.pile.length >= 1) {
             this.pile[this.pile.length - 1].draw(context);
         }
     }
     else {
-
+        this.drawEmpty(context);
+        for (var i = 0; i < this.pile.length; i++) {
+            var card = this.pile[i];
+            card.draw(context);
+        }
     }
 };
 
@@ -160,7 +202,7 @@ Card.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
         return false;
     }
 
-    board.highlight = this.color;
+    board.draggedCard = this;
 
     this.curX += xDelta;
     this.curY += yDelta;
@@ -172,7 +214,7 @@ Card.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
 };
 
 Card.prototype.handleMouseUp = function(xy) {
-    board.highlight = '';
+    board.draggedCard = null;
     this.curX = this.x;
     this.curY = this.y;
     this.zLevel = this.oldZLevel;
@@ -332,7 +374,7 @@ function renderTest(canvasElement) {
     board = new Board(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
     uiManager.addElement(board);
 
-    var gameState = JSON.parse('{"1":{"table":{"red":[],"white":[{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"hand":[{"value":8,"color":"green"},{"value":10,"color":"red"},{"value":0,"color":"white"},{"value":4,"color":"white"},{"value":6,"color":"white"},{"value":10,"color":"white"},{"value":0,"color":"yellow"},{"value":9,"color":"yellow"}]},"2":{"table":{"red":[],"white":[{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]}},"discard":{"red":[],"white":[{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"deck":44,"currentPlayer":1}');
+    var gameState = JSON.parse('{"1":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"hand":[{"value":8,"color":"green"},{"value":10,"color":"red"},{"value":0,"color":"white"},{"value":4,"color":"white"},{"value":6,"color":"white"},{"value":10,"color":"white"},{"value":0,"color":"yellow"},{"value":9,"color":"yellow"}]},"2":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]}},"discard":{"red":[],"white":[{"value":2,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"deck":44,"currentPlayer":1}');
     loadGameState(gameState);
 }
 
@@ -371,6 +413,20 @@ function loadGameState(gameState) {
         var pile = gameState.discard[color];
         for (var i = 0; i < pile.length; i++) {
             board.piles[color].addCard(new Card(0, 0, 0, 0, pile[i]));
+        }
+    }
+
+    // Handle player tableau
+    for (var color in gameState[opponent].table) {
+        var pile = gameState[opponent].table[color];
+        for (var i = 0; i < pile.length; i++) {
+            board.p1[color].addCard(new Card(0, 0, 0, 0, pile[i]));
+        }
+    }
+    for (var color in gameState[player].table) {
+        var pile = gameState[player].table[color];
+        for (var i = 0; i < pile.length; i++) {
+            board.p2[color].addCard(new Card(0, 0, 0, 0, pile[i]));
         }
     }
 
