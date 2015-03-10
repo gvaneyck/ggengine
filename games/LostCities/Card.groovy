@@ -13,17 +13,6 @@ class Card implements Comparable<Card> {
         this.color = color
     }
 
-    def play() {
-        def player = gs[gs.currentPlayer]
-        player.table[color] << this
-        player.hand.remove(this)
-    }
-
-    def discard() {
-        gs.discard[color] << this
-        gs.lastDiscard = color
-    }
-
     public String toString() {
     	return "${color} ${(value == 0 ? '!' : value)}"
 	}

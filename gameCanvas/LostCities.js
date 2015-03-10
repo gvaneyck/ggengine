@@ -410,7 +410,7 @@ function loadGameState(gameState) {
         card.handleMouseUp = function(xy) {
             for (var color in board.piles) {
                 if (isClicked(xy, board.piles[color])) {
-                    sendCmd({cmd: 'action', action: 'discard', args: [this.handIdx]});
+                    sendCmd({cmd: 'action', action: 'discardCard', args: [this.handIdx]});
                 }
             }
             for (var color in board.p2) {

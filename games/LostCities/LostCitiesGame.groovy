@@ -56,14 +56,14 @@ class LostCitiesGame extends Game {
         }
 
         def actions = []
-        curp.hand.each { card ->
+        curp.hand.eachWithIndex { card, i ->
             def pile = curp.table[card.color]
             if (pile.isEmpty() || pile.last().value <= card.value) {
-                actions << new Action(this, 'playCard')
+                actions << new Action(this, 'playCard', [i])
             }
         }
-        curp.hand.each { card ->
-            actions << new Action(card, 'discard')
+        curp.hand.eachWithIndex { card, i ->
+            actions << new Action(this, 'discardCard', [i])
         }
 
         gm.presentActions(cur, actions)
@@ -79,6 +79,18 @@ class LostCitiesGame extends Game {
         gm.presentActions(cur, actions)
 
         gs.currentPlayer = (cur == 1 ? 2 : 1)
+    }
+
+    def playCard(idx) {
+        def player = gs[gs.currentPlayer]
+        def card = player.hand.remove(idx)
+        player.table[card.color] << card
+    }
+
+    def discardCard(idx) {
+        def card = gs[gs.currentPlayer].hand.remove(idx)
+        gs.discard[card.color] << card
+        gs.lastDiscard = card.color
     }
 
     def drawDeck() {

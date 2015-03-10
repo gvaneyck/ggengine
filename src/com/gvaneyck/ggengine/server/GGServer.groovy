@@ -131,9 +131,8 @@ public class GGServer extends WebSocketServer implements GGui {
                 break
 
             case 'action':
-                def args = cmd.args
                 actions.each {
-                    if (it.method == cmd.action && it.args.length == cmd.args.length) {
+                    if (it.method == cmd.action && it.args.length == cmd.args.size()) {
                         boolean matches = true
                         for (int i = 0; i < it.args.length; i++) {
                             if (it.args[i] != cmd.args[i]) {
@@ -171,13 +170,7 @@ public class GGServer extends WebSocketServer implements GGui {
             Thread.sleep(1000)
         }
 
-        def actionPicked
-        actions.each {
-            if (it.toString() == actionSelection) {
-                actionPicked = it
-            }
-        }
-
+        def actionPicked = actionSelection
         actionSelection = null
 
         return actionPicked
