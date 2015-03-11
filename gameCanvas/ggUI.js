@@ -1,9 +1,12 @@
 // Big TODOs
+// - Implement hover
 // - Split up xy into x and y
 // - Label - Copy text, links, emoji, onHover card images
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
-// - Reconnect websocket
-// - Sessions (cookie + server)
+// - Authentication/Sessions (cookie + server)
+// - Send action to clients when chosen for logging
+// - Auto-pick single actions
+// - Don't send gamestate if it hasn't changed for a player (hide decision timing)
 // - Deal with half pixels
 // - requestAnimationFrame instead of draw loop, http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
 // - Redo temp context shenanigans in resize to actually create an element and destroy it on draw
@@ -13,9 +16,6 @@
 // - Dirty rectangles drawing
 // - Voice chat?
 
-// - Send action to clients when chosen for logging
-// - Auto-pick single actions
-// - Don't send gamestate if it hasn't changed for a player (hide decision timing)
 
 // Event handlers:
 // handleMouseDown = Hit element + Mouse down (automatically gain focus)

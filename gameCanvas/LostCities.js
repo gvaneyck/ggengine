@@ -31,7 +31,7 @@ function Board(x, y, cw, ch) {
             sendCmd({cmd: 'action', action: 'drawPile', args: [this.color]});
         }
     }
-    
+
     this.draggedCard = null;
 }
 
@@ -60,7 +60,7 @@ Board.prototype.draw = function(context) {
         var pile = this.piles[pileColor];
         pile.draw(context);
 
-        if (this.draggedCard != null) {
+        if (gs.state == 'PLAY_OR_DISCARD' && this.draggedCard != null && this.draggedCard.location == 'hand') {
             var cardColor = this.draggedCard.color;
             this.piles[cardColor].highlight(context);
 
@@ -80,17 +80,19 @@ Board.prototype.draw = function(context) {
 
 Board.prototype.resetPiles = function() {
     for (var pileColor in this.piles) {
-        this.piles[pileColor].pile = [];
-        this.p1[pileColor].pile = [];
-        this.p2[pileColor].pile = [];
+        this.piles[pileColor].reset();
+        this.p1[pileColor].reset();
+        this.p2[pileColor].reset();
     }
 };
 
 
 /// Pile ///
-function Pile(x, y, width, height, xOffset, yOffset) {
-    UIElement.call(this, x, y, width, height);
+function Pile(x, y, cw, ch, xOffset, yOffset) {
+    UIElement.call(this, x, y, cw, ch);
     this.pile = [];
+    this.cw = cw;
+    this.ch = ch;
     this.xOffset = (xOffset != undefined ? xOffset : 0);
     this.yOffset = (yOffset != undefined ? yOffset : 0);
 }
@@ -101,9 +103,18 @@ Pile.prototype.constructor = Pile;
 Pile.prototype.addCard = function(card) {
     card.curX = card.x = this.x + this.xOffset * this.pile.length;
     card.curY = card.y = this.y + this.yOffset * this.pile.length;
-    card.width = this.width;
-    card.height = this.height;
+    card.width = this.cw;
+    card.height = this.ch;
     this.pile.push(card);
+
+    this.width += this.xOffset;
+    this.height += this.yOffset;
+};
+
+Pile.prototype.reset = function() {
+    this.width = this.cw;
+    this.height = this.ch;
+    this.pile = [];
 };
 
 Pile.prototype.getZLevel = function() {
@@ -122,7 +133,7 @@ Pile.prototype.highlight = function(context) {
 
 Pile.prototype.drawEmpty = function(context) {
     context.beginPath();
-    context.rect(this.x, this.y, this.width, this.height);
+    context.rect(this.x, this.y, this.cw, this.ch);
     context.fillStyle = 'grey';
     context.fill();
     context.lineWidth = 1;
@@ -168,7 +179,7 @@ Pile.prototype.handleMouseUp = function(xy) {
 
 /// Card ///
 
-function Card(x, y, width, height, data) {
+function Card(data, x, y, width, height) {
     UIElement.call(this, x, y, width, height);
     this.value = -1;
     this.color = 'black';
@@ -215,7 +226,7 @@ Card.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
 
     this.curX += xDelta;
     this.curY += yDelta;
-    if (this.zLevel != 1000) {
+    if (this.zLevel < 1000) {
         this.oldZLevel = this.zLevel;
         this.zLevel = 1000;
     }
@@ -234,8 +245,8 @@ Card.prototype.handleMouseUp = function(xy) {
 
 var websocket;
 
-var player = '1';
-var opponent = '2';
+var gs = {me: '1', them: '2'};
+
 var name;
 
 var lobbies = {};
@@ -400,23 +411,35 @@ function loadGameState(gameState) {
         }
     }
 
+    // Set global game state stuff
+    var cardsInHand = gameState[gs.me].hand.length;
+    if (gameState.currentPlayer != gs.me) {
+        gs.state = 'NOT_MY_TURN';
+    }
+    else if (cardsInHand == 8) {
+        gs.state = 'PLAY_OR_DISCARD';
+    }
+    else if (cardsInHand == 7) {
+        gs.state = 'DRAW_CARD';
+    }
+    else {
+        console.log('Couldn\'t determine game state');
+    }
+
     // Handle hand
-    var cardsInHand = gameState[player].hand.length;
     var yOffset = 10;
     var yIncr = (uiManager.canvas.height - 20 - ch) / (cardsInHand - 1);
     var xOffset = board.width + 160;
 
     for (var i = 0; i < cardsInHand; i++) {
-        var cardData = gameState[player].hand[i];
+        var cardData = gameState[gs.me].hand[i];
 
-        var card = new Card(xOffset, yOffset, cw, ch, cardData);
+        var card = new Card(cardData, xOffset, yOffset, cw, ch);
+        card.location = 'hand';
         card.handIdx = i;
         card.zLevel = yOffset;
 
-        if (cardsInHand == 7 || gameState.currentPlayer != player) {
-            card.draggable = false;
-        }
-        else {
+        if (gs.state == 'PLAY_OR_DISCARD') {
             card.handleMouseUp = function (xy) {
                 for (var color in board.piles) {
                     if (isClicked(xy, board.piles[color])) {
@@ -442,26 +465,34 @@ function loadGameState(gameState) {
     for (var color in gameState.discard) {
         var pile = gameState.discard[color];
         for (var i = 0; i < pile.length; i++) {
-            board.piles[color].addCard(new Card(0, 0, 0, 0, pile[i]));
+            var card = new Card(pile[i]);
+            card.location = 'discard';
+            board.piles[color].addCard(card);
         }
     }
 
     // Handle player tableau
-    for (var color in gameState[opponent].table) {
-        var pile = gameState[opponent].table[color];
+    for (var color in gameState[gs.them].table) {
+        var pile = gameState[gs.them].table[color];
         for (var i = 0; i < pile.length; i++) {
-            board.p1[color].addCard(new Card(0, 0, 0, 0, pile[i]));
+            var card = new Card(pile[i]);
+            card.location = 'myTable';
+            board.p1[color].addCard(card);
         }
     }
-    for (var color in gameState[player].table) {
-        var pile = gameState[player].table[color];
+    for (var color in gameState[gs.me].table) {
+        var pile = gameState[gs.me].table[color];
         for (var i = 0; i < pile.length; i++) {
-            board.p2[color].addCard(new Card(0, 0, 0, 0, pile[i]));
+            var card = new Card(pile[i]);
+            card.location = 'theirTable';
+            board.p2[color].addCard(card);
         }
     }
 
     // Handle deck
-    var deck = new Card(board.width + 20, board.y + 10, 100, 150, {color: 'black', value: gameState.deck});
+    var deck = new Card({color: 'black', value: gameState.deck}, board.width + 20, board.y + 10, 100, 150);
+    deck.location = 'deck';
+    deck.draggable = false;
     uiManager.addElement(deck);
     deck.handleMouseDoubleClick = function (xy) {
         sendCmd({cmd: 'action', action: 'drawDeck'});
@@ -476,8 +507,8 @@ function gameTest(canvasElement, p) {
     board = new Board(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
     uiManager.addElement(board);
 
-    player = '' + p;
-    opponent = (p == 1 ? '2' : '1');
+    gs.me = p;
+    gs.them = (p == 1 ? 2 : 1);
 
     openWebSocket();
     websocket.onmessage = gameMessage;
