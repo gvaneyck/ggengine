@@ -2,9 +2,6 @@ package com.gvaneyck.ggengine.gametests;
 
 import com.gvaneyck.ggengine.GameManager;
 import com.gvaneyck.ggengine.server.GGServer;
-import org.java_websocket.drafts.Draft_76;
-
-import java.util.HashMap;
 
 public class LostCitiesTest {
     public static void main(String[] args) {

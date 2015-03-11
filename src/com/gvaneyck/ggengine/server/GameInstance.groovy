@@ -54,8 +54,13 @@ public class GameInstance implements Runnable, GGui {
     }
 
     @Override
-    public Action getChoice() {
+    public Action resolveChoice(List<Action> actions) {
         synchronized (gameThread) {
+            actionOptions = actions
+            players.each { id, player ->
+                showChoicesToPlayer(id, player)
+            }
+
             while (choice == null) {
                 gameThread.wait()
             }
@@ -64,14 +69,6 @@ public class GameInstance implements Runnable, GGui {
             choice = null
 
             return choicePicked
-        }
-    }
-
-    @Override
-    public void showChoices(List<Action> actions) {
-        actionOptions = actions
-        players.each { id, player ->
-            showChoicesToPlayer(id, player)
         }
     }
 

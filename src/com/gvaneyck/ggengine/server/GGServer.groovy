@@ -1,9 +1,5 @@
 package com.gvaneyck.ggengine.server
 
-import com.gvaneyck.ggengine.Action
-import com.gvaneyck.ggengine.GameManager
-import com.gvaneyck.ggengine.gamestate.GameStateSerializer
-import com.gvaneyck.ggengine.ui.GGui
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.java_websocket.WebSocket

@@ -140,8 +140,7 @@ public class GameManager {
     }
 
     public void presentActions(List<Action> actions) {
-        ui.showChoices(actions);
-        Action action = ui.getChoice();
+        Action action = ui.resolveChoice(actions);
         action.invoke();
     }
 
