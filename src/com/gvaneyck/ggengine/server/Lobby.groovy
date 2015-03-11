@@ -5,7 +5,7 @@ public class Lobby {
     def game
     def password
 
-    def players = []
+    def players = Collections.synchronizedList([])
 
     public Lobby(Map params) {
         this(params.name, params.game, params.password)

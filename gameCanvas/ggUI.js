@@ -13,6 +13,10 @@
 // - Dirty rectangles drawing
 // - Voice chat?
 
+// - Send action to clients when chosen for logging
+// - Auto-pick single actions
+// - Don't send gamestate if it hasn't changed for a player (hide decision timing)
+
 // Event handlers:
 // handleMouseDown = Hit element + Mouse down (automatically gain focus)
 // handleMouseDrag = Focused element + Mouse move while mouse is down

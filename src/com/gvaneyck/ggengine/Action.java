@@ -26,11 +26,15 @@ public class Action {
         this.args = args;
     }
 
-    public boolean matches(String name, Object[] args) {
-        if (method.equals(name) && this.args.length == args.length) {
+    public boolean matches(int playerId, String name, Object[] args) {
+        if (this.args == null || args == null) {
+            return (this.args == args);
+        }
+
+        if (this.playerId == playerId && method.equals(name) && this.args.length == args.length) {
             boolean matches = true;
             for (int i = 0; i < args.length; i++) {
-                if (this.args[i] != args[i]) {
+                if (!this.args[i].equals(args[i])) {
                     matches = false;
                     break;
                 }
@@ -72,20 +76,19 @@ public class Action {
         }
         catch (Exception e) { }
 
-        if (args == null) {
-            return clazz + "." + method + "()";
-        }
-
-        StringBuilder buffer = new StringBuilder(playerId);
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(playerId);
         buffer.append('-');
         buffer.append(clazz);
         buffer.append('.');
         buffer.append(method);
         buffer.append('(');
-        for (int i = 0; i < args.length; i++) {
-            buffer.append(args[i]);
-            if (i < args.length - 1) {
-                buffer.append(", ");
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                buffer.append(args[i]);
+                if (i < args.length - 1) {
+                    buffer.append(", ");
+                }
             }
         }
         buffer.append(')');

@@ -112,7 +112,7 @@ public class GGServer extends WebSocketServer {
                 break
 
             case 'action':
-                gameInstance.setChoice(cmd.action, cmd.args.toArray())
+                gameInstance.setChoice(player, cmd.action, cmd.args?.toArray())
         }
 //        else if (s.startsWith("startGame")) {
 //            final GGui ggs = this

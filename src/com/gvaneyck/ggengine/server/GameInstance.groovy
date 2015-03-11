@@ -35,14 +35,19 @@ public class GameInstance implements Runnable, GGui {
         showChoicesToPlayer(playerId, player)
     }
 
-    public setChoice(action, args) {
+    public setChoice(player, action, args) {
+        def playerId = playerIds[player.name]
+        if (playerId == null) {
+            return
+        }
+
         synchronized (gameThread) {
             if (choice != null) {
                 return
             }
 
             actionOptions.each {
-                if (it.matches(action, args)) {
+                if (it.matches(playerId, action, args)) {
                     choice = it
                 }
             }

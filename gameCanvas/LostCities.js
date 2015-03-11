@@ -23,6 +23,15 @@ function Board(x, y, cw, ch) {
         white: new Pile(this.x + 3 * cw + 40, this.y + 30 + ch, cw, ch, 0, 40),
         yellow: new Pile(this.x + 4 * cw + 50, this.y + 30 + ch, cw, ch, 0, 40)
     };
+
+    for (var color in this.piles) {
+        var pile = this.piles[color];
+        pile.color = color;
+        pile.handleMouseDoubleClick = function(xy) {
+            sendCmd({cmd: 'action', action: 'drawPile', args: [this.color]});
+        }
+    }
+    
     this.draggedCard = null;
 }
 
@@ -395,31 +404,35 @@ function loadGameState(gameState) {
     var cardsInHand = gameState[player].hand.length;
     var yOffset = 10;
     var yIncr = (uiManager.canvas.height - 20 - ch) / (cardsInHand - 1);
-    var xOffset = board.width + 100;
+    var xOffset = board.width + 160;
 
     for (var i = 0; i < cardsInHand; i++) {
         var cardData = gameState[player].hand[i];
+
         var card = new Card(xOffset, yOffset, cw, ch, cardData);
         card.handIdx = i;
         card.zLevel = yOffset;
-        if (cardsInHand == 7) {
+
+        if (cardsInHand == 7 || gameState.currentPlayer != player) {
             card.draggable = false;
         }
-        uiManager.addElement(card);
+        else {
+            card.handleMouseUp = function (xy) {
+                for (var color in board.piles) {
+                    if (isClicked(xy, board.piles[color])) {
+                        sendCmd({cmd: 'action', action: 'discardCard', args: [this.handIdx]});
+                    }
+                }
+                for (var color in board.p2) {
+                    if (isClicked(xy, board.p2[color])) {
+                        sendCmd({cmd: 'action', action: 'playCard', args: [this.handIdx]});
+                    }
+                }
+                return Card.prototype.handleMouseUp.call(this, xy);
+            };
+        }
 
-        card.handleMouseUp = function(xy) {
-            for (var color in board.piles) {
-                if (isClicked(xy, board.piles[color])) {
-                    sendCmd({cmd: 'action', action: 'discardCard', args: [this.handIdx]});
-                }
-            }
-            for (var color in board.p2) {
-                if (isClicked(xy, board.p2[color])) {
-                    sendCmd({cmd: 'action', action: 'playCard', args: [this.handIdx]});
-                }
-            }
-            return Card.prototype.handleMouseUp.call(this, xy);
-        };
+        uiManager.addElement(card);
 
         yOffset += yIncr;
     }
@@ -446,6 +459,13 @@ function loadGameState(gameState) {
             board.p2[color].addCard(new Card(0, 0, 0, 0, pile[i]));
         }
     }
+
+    // Handle deck
+    var deck = new Card(board.width + 20, board.y + 10, 100, 150, {color: 'black', value: gameState.deck});
+    uiManager.addElement(deck);
+    deck.handleMouseDoubleClick = function (xy) {
+        sendCmd({cmd: 'action', action: 'drawDeck'});
+    };
 
     // Mark dirty
     uiManager.dirty = true;
