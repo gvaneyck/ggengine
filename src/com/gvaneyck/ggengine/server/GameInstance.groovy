@@ -26,7 +26,7 @@ public class GameInstance implements Runnable, GGui {
     }
 
     public doReconnect(player) {
-        if (!playerNames.containsKey(player.name)) {
+        if (!playerIds.containsKey(player.name)) {
             return
         }
 
@@ -35,22 +35,36 @@ public class GameInstance implements Runnable, GGui {
         showChoicesToPlayer(playerId, player)
     }
 
-    public synchronized setChoice(choice) {
-        this.choice = choice
-        gameThread.notify()
+    public setChoice(action, args) {
+        synchronized (gameThread) {
+            if (choice != null) {
+                return
+            }
+
+            actionOptions.each {
+                if (it.matches(action, args)) {
+                    choice = it
+                }
+            }
+
+            if (choice != null) {
+                gameThread.notify()
+            }
+        }
     }
 
-
     @Override
-    public synchronized Action getChoice() {
-        while (choice == null) {
-            gameThread.wait()
+    public Action getChoice() {
+        synchronized (gameThread) {
+            while (choice == null) {
+                gameThread.wait()
+            }
+
+            def choicePicked = choice
+            choice = null
+
+            return choicePicked
         }
-
-        def choicePicked = choice
-        choice = null
-
-        return choicePicked
     }
 
     @Override

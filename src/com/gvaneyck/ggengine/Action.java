@@ -26,6 +26,22 @@ public class Action {
         this.args = args;
     }
 
+    public boolean matches(String name, Object[] args) {
+        if (method.equals(name) && this.args.length == args.length) {
+            boolean matches = true;
+            for (int i = 0; i < args.length; i++) {
+                if (this.args[i] != args[i]) {
+                    matches = false;
+                    break;
+                }
+            }
+            return matches;
+        }
+        else {
+            return false;
+        }
+    }
+
     public void invoke() {
         try {
             if (args != null) {

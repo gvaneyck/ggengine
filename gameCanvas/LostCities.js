@@ -463,7 +463,6 @@ function gameTest(canvasElement, p) {
     websocket.onmessage = gameMessage;
     websocket.onopen = function(e) {
         sendCmd({cmd: 'setName', name: 'Jabe' + p});
-        sendCmd({cmd: 'setPlayerId', id: p});
     };
 }
 
@@ -473,5 +472,4 @@ function gameMessage(evt) {
     if (cmd.cmd == 'gs') {
         loadGameState(JSON.parse(cmd.gs));
     }
-    uiManager.dirty = true
 }

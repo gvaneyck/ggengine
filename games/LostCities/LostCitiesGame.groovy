@@ -66,7 +66,7 @@ class LostCitiesGame extends Game {
             actions << new Action(cur, this, 'discardCard', [i])
         }
 
-        gm.presentActions(cur, actions)
+        gm.presentActions(actions)
 
         actions = []
         actions << new Action(cur, this, 'drawDeck')
@@ -76,7 +76,7 @@ class LostCitiesGame extends Game {
             }
         }
 
-        gm.presentActions(cur, actions)
+        gm.presentActions(actions)
 
         gs.currentPlayer = (cur == 1 ? 2 : 1)
     }

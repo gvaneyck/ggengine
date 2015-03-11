@@ -21,10 +21,7 @@ public class GGServer extends WebSocketServer {
     def players = [:] // String -> Player
     def lobbies = [:] // String -> Lobby
 
-    def gameManager
-
-    def actions
-    volatile actionSelection
+    def gameInstance
 
     public GGServer(String gameDir, String game) throws UnknownHostException {
         this(gameDir, game, 9003, new Draft_76())
@@ -36,6 +33,9 @@ public class GGServer extends WebSocketServer {
         this.game = game
 
         lobbies['General'] = new Lobby(name: 'General')
+
+        gameInstance = new GameInstance('foobar')
+        gameInstance.playerIds = ['Jabe1': 1, 'Jabe2': 2]
     }
 
     @Override
@@ -72,6 +72,7 @@ public class GGServer extends WebSocketServer {
                     player.send([cmd: 'nameSelect', success: true, name: name])
                     player.send([cmd: 'lobbyList', names: lobbies.keySet()])
                     lobbies['General'].addPlayer(player)
+                    gameInstance.doReconnect(player)
                 }
                 else {
                     player.send([cmd: 'nameSelect', success: false])
@@ -115,19 +116,7 @@ public class GGServer extends WebSocketServer {
                 break
 
             case 'action':
-                actions.each {
-                    if (it.method == cmd.action && it.args.length == cmd.args.size()) {
-                        boolean matches = true
-                        for (int i = 0; i < it.args.length; i++) {
-                            if (it.args[i] != cmd.args[i]) {
-                                 matches = false
-                            }
-                        }
-                        if (matches) {
-                            actionSelection = it
-                        }
-                    }
-                }
+                gameInstance.setChoice(cmd.action, cmd.args.toArray())
         }
 //        else if (s.startsWith("startGame")) {
 //            final GGui ggs = this
