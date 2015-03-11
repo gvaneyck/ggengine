@@ -19,21 +19,12 @@ public class ConsoleUI implements GGui {
     }
 
     @Override
-    public void showChoices(int player, List<Action> actions) {
-        System.out.println("Player " + player + "'s turn:");
+    public void showChoices(List<Action> actions) {
         currentActions = actions;
         for (int i = 0; i < actions.size(); i++) {
             Action a = actions.get(i);
             System.out.print(i + ") ");
             System.out.println(a.toString());
         }
-    }
-
-    public void showChoices(List<Action> actions) {
-
-    }
-
-    public void showGS(int player, Map gs) {
-        // Swallowed
     }
 }

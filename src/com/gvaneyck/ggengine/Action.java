@@ -4,23 +4,26 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 public class Action {
+    public int playerId;
     public Object instance;
     public String method;
     public Object[] args;
 
-    public Action(Object instance, String method) {
+    public Action(int playerId, Object instance, String method) {
+        this.playerId = playerId;
         this.instance = instance;
         this.method = method;
     }
 
-    public Action(Object instance, String method, Object[] args) {
+    public Action(int playerId, Object instance, String method, List<Object> args) {
+        this(playerId, instance, method, args.toArray());
+    }
+
+    public Action(int playerId, Object instance, String method, Object[] args) {
+        this.playerId = playerId;
         this.instance = instance;
         this.method = method;
         this.args = args;
-    }
-
-    public Action(Object instance, String method, List<Object> args) {
-        this(instance, method, args.toArray());
     }
 
     public void invoke() {
@@ -57,7 +60,9 @@ public class Action {
             return clazz + "." + method + "()";
         }
 
-        StringBuilder buffer = new StringBuilder(clazz);
+        StringBuilder buffer = new StringBuilder(playerId);
+        buffer.append('-');
+        buffer.append(clazz);
         buffer.append('.');
         buffer.append(method);
         buffer.append('(');

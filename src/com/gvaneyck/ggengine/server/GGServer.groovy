@@ -12,7 +12,7 @@ import org.java_websocket.drafts.Draft_76
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 
-public class GGServer extends WebSocketServer implements GGui {
+public class GGServer extends WebSocketServer {
 
     def gameDir
     def game
@@ -20,8 +20,6 @@ public class GGServer extends WebSocketServer implements GGui {
     def connections = [:] // WebSocket -> Player
     def players = [:] // String -> Player
     def lobbies = [:] // String -> Lobby
-
-    def gss = new GameStateSerializer()
 
     def gameManager
 
@@ -38,16 +36,6 @@ public class GGServer extends WebSocketServer implements GGui {
         this.game = game
 
         lobbies['General'] = new Lobby(name: 'General')
-
-        final ggui = this
-        Thread t = new Thread() {
-            public void run() {
-                gameManager = new GameManager([:], ggui)
-                gameManager.loadGame(gameDir, game)
-                gameManager.gameLoop()
-            }
-        }
-        t.start()
     }
 
     @Override
@@ -126,10 +114,6 @@ public class GGServer extends WebSocketServer implements GGui {
                 }
                 break
 
-            case 'setPlayerId':
-                player.id = cmd.id
-                break
-
             case 'action':
                 actions.each {
                     if (it.method == cmd.action && it.args.length == cmd.args.size()) {
@@ -162,30 +146,6 @@ public class GGServer extends WebSocketServer implements GGui {
     public void onError(WebSocket webSocket, Exception e) {
         println webSocket.getRemoteSocketAddress().getAddress().getHostAddress() + ' ERROR'
         e.printStackTrace()
-    }
-
-    @Override
-    public Action getChoice() {
-        while (actionSelection == null) {
-            Thread.sleep(1000)
-        }
-
-        def actionPicked = actionSelection
-        actionSelection = null
-
-        return actionPicked
-    }
-
-    @Override
-    public void showChoices(int player, List<Action> actions) {
-        this.actions = actions
-        def acts = actions.toString()
-        getPlayer(player).send([cmd: 'actions', actions: acts])
-    }
-
-    @Override
-    public void showGS(int player, Map gs) {
-        getPlayer(player).send([cmd: 'gs', gs: gss.serialize(gs)])
     }
 
     private Player getPlayer(int playerId) {

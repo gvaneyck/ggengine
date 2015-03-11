@@ -59,20 +59,20 @@ class LostCitiesGame extends Game {
         curp.hand.eachWithIndex { card, i ->
             def pile = curp.table[card.color]
             if (pile.isEmpty() || pile.last().value <= card.value) {
-                actions << new Action(this, 'playCard', [i])
+                actions << new Action(cur, this, 'playCard', [i])
             }
         }
         curp.hand.eachWithIndex { card, i ->
-            actions << new Action(this, 'discardCard', [i])
+            actions << new Action(cur, this, 'discardCard', [i])
         }
 
         gm.presentActions(cur, actions)
 
         actions = []
-        actions << new Action(this, 'drawDeck')
+        actions << new Action(cur, this, 'drawDeck')
         gs.discard.each { color, pile ->
             if (!pile.isEmpty() && color != gs.lastDiscard) {
-                actions << new Action(this, 'drawPile', color)
+                actions << new Action(cur, this, 'drawPile', color)
             }
         }
 

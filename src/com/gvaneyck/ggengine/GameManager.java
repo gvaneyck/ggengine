@@ -139,11 +139,13 @@ public class GameManager {
         game.end();
     }
 
-    public void presentActions(int player, List<Action> actions) {
-        ui.showGS(1, gsf.filterGameState(gs, 1));
-        ui.showGS(2, gsf.filterGameState(gs, 2));
-        ui.showChoices(player, actions);
+    public void presentActions(List<Action> actions) {
+        ui.showChoices(actions);
         Action action = ui.getChoice();
         action.invoke();
+    }
+
+    public Map getGameState(int player) {
+        return gsf.filterGameState(gs, player);
     }
 }
