@@ -1,6 +1,6 @@
-/// Board ///
+/// LostCitiesBoard ///
 
-function Board(x, y, cw, ch) {
+function LostCitiesBoard(x, y, cw, ch) {
     UIElement.call(this, x, y, cw * 5 + 60, ch + 20);
     this.piles = {
         blue: new Pile(this.x + 10, this.y + 10, cw, ch),
@@ -35,10 +35,10 @@ function Board(x, y, cw, ch) {
     this.draggedCard = null;
 }
 
-Board.prototype = Object.create(UIElement.prototype);
-Board.prototype.constructor = Board;
+LostCitiesBoard.prototype = Object.create(UIElement.prototype);
+LostCitiesBoard.prototype.constructor = LostCitiesBoard;
 
-Board.prototype.getChildren = function() {
+LostCitiesBoard.prototype.getChildren = function() {
     var children = [];
     for (var pileColor in this.piles) {
         children.push(this.piles[pileColor]);
@@ -46,7 +46,7 @@ Board.prototype.getChildren = function() {
     return children;
 };
 
-Board.prototype.draw = function(context) {
+LostCitiesBoard.prototype.draw = function(context) {
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
     context.lineWidth = 1;
@@ -60,7 +60,7 @@ Board.prototype.draw = function(context) {
         var pile = this.piles[pileColor];
         pile.draw(context);
 
-        if (gs.state == 'PLAY_OR_DISCARD' && this.draggedCard != null && this.draggedCard.location == 'hand') {
+        if (this.draggedCard != null) {
             var cardColor = this.draggedCard.color;
             this.piles[cardColor].highlight(context);
 
@@ -78,7 +78,7 @@ Board.prototype.draw = function(context) {
     }
 };
 
-Board.prototype.resetPiles = function() {
+LostCitiesBoard.prototype.resetPiles = function() {
     for (var pileColor in this.piles) {
         this.piles[pileColor].reset();
         this.p1[pileColor].reset();
@@ -87,159 +87,42 @@ Board.prototype.resetPiles = function() {
 };
 
 
-/// Pile ///
-function Pile(x, y, cw, ch, xOffset, yOffset) {
-    UIElement.call(this, x, y, cw, ch);
-    this.pile = [];
-    this.cw = cw;
-    this.ch = ch;
-    this.xOffset = (xOffset != undefined ? xOffset : 0);
-    this.yOffset = (yOffset != undefined ? yOffset : 0);
-}
+/// LostCitiesCard ///
 
-Pile.prototype = Object.create(UIElement.prototype);
-Pile.prototype.constructor = Pile;
+function LostCitiesCard(data, x, y, width, height) { Card.call(this, data, x, y, width, height); } // No constructor
+LostCitiesCard.prototype = Object.create(Card.prototype);
+LostCitiesCard.prototype.constructor = LostCitiesCard;
 
-Pile.prototype.addCard = function(card) {
-    card.curX = card.x = this.x + this.xOffset * this.pile.length;
-    card.curY = card.y = this.y + this.yOffset * this.pile.length;
-    card.width = this.cw;
-    card.height = this.ch;
-    this.pile.push(card);
-
-    this.width += this.xOffset;
-    this.height += this.yOffset;
+LostCitiesCard.prototype.handleMouseDown = function(xy) {
+    var dirty = Card.prototype.handleMouseDown(xy);
+    if (gs.state == 'PLAY_OR_DISCARD' && this.location == 'hand') {
+        board.draggedCard = this;
+        dirty = true;
+    }
+    return dirty;
 };
 
-Pile.prototype.reset = function() {
-    this.width = this.cw;
-    this.height = this.ch;
-    this.pile = [];
-};
-
-Pile.prototype.getZLevel = function() {
-    return (this.pile.length == 0 ? this.zLevel : this.pile[this.pile.length - 1].zLevel);
-};
-
-Pile.prototype.highlight = function(context) {
-    context.beginPath();
-    var widthIncr = Math.max(0, (this.pile.length - 1) * this.xOffset);
-    var heightIncr = Math.max(0, (this.pile.length - 1) * this.yOffset);
-    context.rect(this.x - 2, this.y - 2, this.width + widthIncr + 4, this.height + heightIncr + 4);
-    context.lineWidth = 3;
-    context.strokeStyle = 'black';
-    context.stroke();
-};
-
-Pile.prototype.drawEmpty = function(context) {
-    context.beginPath();
-    context.rect(this.x, this.y, this.cw, this.ch);
-    context.fillStyle = 'grey';
-    context.fill();
-    context.lineWidth = 1;
-    context.strokeStyle = 'grey';
-    context.stroke();
-};
-
-Pile.prototype.draw = function(context) {
-    if (this.xOffset == 0 && this.yOffset == 0) {
-        if (this.pile.length <= 1) {
-            this.drawEmpty(context);
+LostCitiesCard.prototype.handleMouseUp = function(xy) {
+    var dirty = Card.prototype.handleMouseUp.call(this, xy);
+    if (board.draggedCard != null) {
+        board.draggedCard = null;
+        dirty = true;
+    }
+    if (gs.state == 'PLAY_OR_DISCARD') {
+        for (var color in board.piles) {
+            if (isClicked(xy, board.piles[color])) {
+                sendCmd({cmd: 'action', action: 'discardCard', args: [this.handIdx]});
+            }
         }
-        if (this.pile.length >= 2) {
-            this.pile[this.pile.length - 2].draw(context);
-        }
-        if (this.pile.length >= 1) {
-            this.pile[this.pile.length - 1].draw(context);
+        for (var color in board.p2) {
+            if (isClicked(xy, board.p2[color])) {
+                sendCmd({cmd: 'action', action: 'playCard', args: [this.handIdx]});
+            }
         }
     }
-    else {
-        this.drawEmpty(context);
-        for (var i = 0; i < this.pile.length; i++) {
-            var card = this.pile[i];
-            card.draw(context);
-        }
-    }
+    return dirty;
 };
 
-Pile.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
-    if (this.pile.length >= 1) {
-        return this.pile[this.pile.length - 1].handleMouseDrag(xy, xDelta, yDelta);
-    }
-    return false;
-};
-
-Pile.prototype.handleMouseUp = function(xy) {
-    if (this.pile.length >= 1) {
-        return this.pile[this.pile.length - 1].handleMouseUp(xy);
-    }
-    return false;
-};
-
-
-/// Card ///
-
-function Card(data, x, y, width, height) {
-    UIElement.call(this, x, y, width, height);
-    this.value = -1;
-    this.color = 'black';
-    if (data != undefined) {
-        this.value = data.value;
-        this.color = data.color;
-    }
-    this.curX = x;
-    this.curY = y;
-    this.draggable = true;
-}
-
-Card.prototype = Object.create(UIElement.prototype);
-Card.prototype.constructor = Card;
-
-Card.prototype.draw = function(context) {
-    context.beginPath();
-    context.rect(this.curX, this.curY, this.width, this.height);
-    context.fillStyle = this.color;
-    context.fill();
-    context.lineWidth = 1;
-    context.strokeStyle = 'black';
-    context.stroke();
-
-    if (this.value != -1) {
-        context.font = '32pt Calibri';
-        context.fillStyle = 'white';
-        context.strokeStyle = 'black';
-        context.lineWidth = 1;
-        context.fillText(this.value, this.curX + 3, this.curY + 32);
-        context.strokeText(this.value, this.curX + 3, this.curY + 32);
-        var textWidth = context.measureText(this.value).width;
-        context.fillText(this.value, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
-        context.strokeText(this.value, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
-    }
-};
-
-Card.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
-    if (!this.draggable) {
-        return false;
-    }
-
-    board.draggedCard = this;
-
-    this.curX += xDelta;
-    this.curY += yDelta;
-    if (this.zLevel < 1000) {
-        this.oldZLevel = this.zLevel;
-        this.zLevel = 1000;
-    }
-    return true;
-};
-
-Card.prototype.handleMouseUp = function(xy) {
-    board.draggedCard = null;
-    this.curX = this.x;
-    this.curY = this.y;
-    this.zLevel = this.oldZLevel;
-    return true;
-};
 
 /// Code begins
 
@@ -391,7 +274,7 @@ function sendCmd(cmd) {
 function renderTest(canvasElement) {
     uiManager = new UIManager(canvasElement);
 
-    board = new Board(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
+    board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
     uiManager.addElement(board);
 
     var gameState = JSON.parse('{"1":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"hand":[{"value":8,"color":"green"},{"value":10,"color":"red"},{"value":0,"color":"white"},{"value":4,"color":"white"},{"value":6,"color":"white"},{"value":10,"color":"white"},{"value":0,"color":"yellow"},{"value":9,"color":"yellow"}]},"2":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]}},"discard":{"red":[],"white":[{"value":2,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"deck":44,"currentPlayer":1}');
@@ -434,26 +317,10 @@ function loadGameState(gameState) {
     for (var i = 0; i < cardsInHand; i++) {
         var cardData = gameState[gs.me].hand[i];
 
-        var card = new Card(cardData, xOffset, yOffset, cw, ch);
+        var card = new LostCitiesCard(cardData, xOffset, yOffset, cw, ch);
         card.location = 'hand';
         card.handIdx = i;
         card.zLevel = yOffset;
-
-        if (gs.state == 'PLAY_OR_DISCARD') {
-            card.handleMouseUp = function (xy) {
-                for (var color in board.piles) {
-                    if (isClicked(xy, board.piles[color])) {
-                        sendCmd({cmd: 'action', action: 'discardCard', args: [this.handIdx]});
-                    }
-                }
-                for (var color in board.p2) {
-                    if (isClicked(xy, board.p2[color])) {
-                        sendCmd({cmd: 'action', action: 'playCard', args: [this.handIdx]});
-                    }
-                }
-                return Card.prototype.handleMouseUp.call(this, xy);
-            };
-        }
 
         uiManager.addElement(card);
 
@@ -465,7 +332,7 @@ function loadGameState(gameState) {
     for (var color in gameState.discard) {
         var pile = gameState.discard[color];
         for (var i = 0; i < pile.length; i++) {
-            var card = new Card(pile[i]);
+            var card = new LostCitiesCard(pile[i]);
             card.location = 'discard';
             board.piles[color].addCard(card);
         }
@@ -475,7 +342,7 @@ function loadGameState(gameState) {
     for (var color in gameState[gs.them].table) {
         var pile = gameState[gs.them].table[color];
         for (var i = 0; i < pile.length; i++) {
-            var card = new Card(pile[i]);
+            var card = new LostCitiesCard(pile[i]);
             card.location = 'myTable';
             board.p1[color].addCard(card);
         }
@@ -483,14 +350,14 @@ function loadGameState(gameState) {
     for (var color in gameState[gs.me].table) {
         var pile = gameState[gs.me].table[color];
         for (var i = 0; i < pile.length; i++) {
-            var card = new Card(pile[i]);
+            var card = new LostCitiesCard(pile[i]);
             card.location = 'theirTable';
             board.p2[color].addCard(card);
         }
     }
 
     // Handle deck
-    var deck = new Card({color: 'black', value: gameState.deck}, board.width + 20, board.y + 10, 100, 150);
+    var deck = new LostCitiesCard({color: 'black', value: gameState.deck}, board.width + 20, board.y + 10, 100, 150);
     deck.location = 'deck';
     deck.draggable = false;
     uiManager.addElement(deck);
@@ -504,7 +371,7 @@ function loadGameState(gameState) {
 
 function gameTest(canvasElement, p) {
     uiManager = new UIManager(canvasElement);
-    board = new Board(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
+    board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
     uiManager.addElement(board);
 
     gs.me = p;

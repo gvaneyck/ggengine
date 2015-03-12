@@ -604,3 +604,159 @@ ScrollArea.prototype.handleMouseWheel = function(yDelta) {
     return false;
 };
 
+
+/// Game UI elements ///
+
+
+/// Pile ///
+
+function Pile(x, y, cw, ch, xOffset, yOffset) {
+    UIElement.call(this, x, y, cw, ch);
+    this.pile = [];
+    this.cw = cw;
+    this.ch = ch;
+    this.xOffset = (xOffset != undefined ? xOffset : 0);
+    this.yOffset = (yOffset != undefined ? yOffset : 0);
+}
+
+Pile.prototype = Object.create(UIElement.prototype);
+Pile.prototype.constructor = Pile;
+
+Pile.prototype.addCard = function(card) {
+    card.curX = card.x = this.x + this.xOffset * this.pile.length;
+    card.curY = card.y = this.y + this.yOffset * this.pile.length;
+    card.width = this.cw;
+    card.height = this.ch;
+    this.pile.push(card);
+
+    if (this.pile.length > 1) {
+        this.width += this.xOffset;
+        this.height += this.yOffset;
+    }
+};
+
+Pile.prototype.reset = function() {
+    this.width = this.cw;
+    this.height = this.ch;
+    this.pile = [];
+};
+
+Pile.prototype.getZLevel = function() {
+    return (this.pile.length == 0 ? this.zLevel : this.pile[this.pile.length - 1].zLevel);
+};
+
+Pile.prototype.highlight = function(context) {
+    context.beginPath();
+    context.rect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+    context.lineWidth = 3;
+    context.strokeStyle = 'black';
+    context.stroke();
+};
+
+Pile.prototype.drawEmpty = function(context) {
+    context.beginPath();
+    context.rect(this.x, this.y, this.cw, this.ch);
+    context.fillStyle = 'grey';
+    context.fill();
+    context.lineWidth = 1;
+    context.strokeStyle = 'grey';
+    context.stroke();
+};
+
+Pile.prototype.draw = function(context) {
+    if (this.xOffset == 0 && this.yOffset == 0) {
+        if (this.pile.length <= 1) {
+            this.drawEmpty(context);
+        }
+        if (this.pile.length >= 2) {
+            this.pile[this.pile.length - 2].draw(context);
+        }
+        if (this.pile.length >= 1) {
+            this.pile[this.pile.length - 1].draw(context);
+        }
+    }
+    else {
+        this.drawEmpty(context);
+        for (var i = 0; i < this.pile.length; i++) {
+            var card = this.pile[i];
+            card.draw(context);
+        }
+    }
+};
+
+Pile.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
+    if (this.pile.length >= 1) {
+        return this.pile[this.pile.length - 1].handleMouseDrag(xy, xDelta, yDelta);
+    }
+    return false;
+};
+
+Pile.prototype.handleMouseUp = function(xy) {
+    if (this.pile.length >= 1) {
+        return this.pile[this.pile.length - 1].handleMouseUp(xy);
+    }
+    return false;
+};
+
+
+/// Card ///
+
+function Card(data, x, y, width, height) {
+    UIElement.call(this, x, y, width, height);
+    this.value = -1;
+    this.color = 'black';
+    if (data != undefined) {
+        this.value = data.value;
+        this.color = data.color;
+    }
+    this.curX = x;
+    this.curY = y;
+    this.draggable = true;
+}
+
+Card.prototype = Object.create(UIElement.prototype);
+Card.prototype.constructor = Card;
+
+Card.prototype.draw = function(context) {
+    context.beginPath();
+    context.rect(this.curX, this.curY, this.width, this.height);
+    context.fillStyle = this.color;
+    context.fill();
+    context.lineWidth = 1;
+    context.strokeStyle = 'black';
+    context.stroke();
+
+    if (this.value != -1) {
+        context.font = '32pt Calibri';
+        context.fillStyle = 'white';
+        context.strokeStyle = 'black';
+        context.lineWidth = 1;
+        context.fillText(this.value, this.curX + 3, this.curY + 32);
+        context.strokeText(this.value, this.curX + 3, this.curY + 32);
+        var textWidth = context.measureText(this.value).width;
+        context.fillText(this.value, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
+        context.strokeText(this.value, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
+    }
+};
+
+Card.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
+    if (!this.draggable) {
+        return false;
+    }
+
+    this.curX += xDelta;
+    this.curY += yDelta;
+    if (this.zLevel < 1000) {
+        this.oldZLevel = this.zLevel;
+        this.zLevel = 1000;
+    }
+    return true;
+};
+
+Card.prototype.handleMouseUp = function(xy) {
+    var dirty = (this.curX != this.x || this.curY != this.y);
+    this.curX = this.x;
+    this.curY = this.y;
+    this.zLevel = this.oldZLevel;
+    return dirty;
+};

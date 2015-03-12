@@ -85,6 +85,7 @@ class LostCitiesGame extends Game {
         def player = gs[gs.currentPlayer]
         def card = player.hand.remove(idx)
         player.table[card.color] << card
+        gs.lastDiscard = null
     }
 
     def discardCard(idx) {
