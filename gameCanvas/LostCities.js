@@ -28,7 +28,9 @@ function LostCitiesBoard(x, y, cw, ch) {
         var pile = this.piles[color];
         pile.color = color;
         pile.handleMouseDoubleClick = function(xy) {
-            sendCmd({cmd: 'action', action: 'drawPile', args: [this.color]});
+            if (gs.state == 'DRAW_CARD' && this.pile.length >= 1) {
+                sendCmd({cmd: 'action', action: 'drawPile', args: [this.color]});
+            }
         }
     }
 
@@ -284,8 +286,6 @@ function renderTest(canvasElement) {
 function loadGameState(gameState) {
     console.log(gameState);
 
-    var oldCardMouseUp = Card.prototype.handleMouseUp;
-
     // Clean old elements from uiManager
     for (var i = uiManager.elements.length - 1; i >= 0; i--) {
         var element = uiManager.elements[i];
@@ -360,10 +360,12 @@ function loadGameState(gameState) {
     var deck = new LostCitiesCard({color: 'black', value: gameState.deck}, board.width + 20, board.y + 10, 100, 150);
     deck.location = 'deck';
     deck.draggable = false;
-    uiManager.addElement(deck);
     deck.handleMouseDoubleClick = function (xy) {
-        sendCmd({cmd: 'action', action: 'drawDeck'});
+        if (gs.state == 'DRAW_CARD') {
+            sendCmd({cmd: 'action', action: 'drawDeck'});
+        }
     };
+    uiManager.addElement(deck);
 
     // Mark dirty
     uiManager.dirty = true;

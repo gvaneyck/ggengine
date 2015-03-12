@@ -11,6 +11,7 @@
 // - requestAnimationFrame instead of draw loop, http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
 // - Redo temp context shenanigans in resize to actually create an element and destroy it on draw
 // - Reload game state on resize
+// - Opening up dev console doesn't send window resize
 // - Browser compatibility/jQuery handlers/Mobile
 // - Linking in game elements -> via drag or shift/ctrl click
 // - Dirty rectangles drawing
