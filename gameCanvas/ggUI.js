@@ -122,10 +122,8 @@ UIManager.prototype.sortElements = function() {
 };
 
 UIManager.prototype.addElement = function(element) {
-    var startIdx = this.elements.length;
     this.elements.push(element);
     this.elements = this.elements.concat(element.getChildren());
-    element.scratchPad = this.scratchPad;
     this.dirty = true;
 };
 
@@ -235,6 +233,7 @@ function UIElement(x, y, width, height) {
     this.visible = true;
 }
 
+UIElement.prototype.scratchPad = document.createElement('canvas').getContext('2d');
 UIElement.prototype.getChildren = function() { return []; };
 UIElement.prototype.getZLevel = function() { return this.zLevel; };
 UIElement.prototype.draw = function(context) { };
@@ -285,6 +284,7 @@ Label.prototype.draw = function(context) {
     var yPos = this.y + 12;
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
+        context.fillStyle = 'black';
         context.fillText(line, this.x, yPos);
         yPos += 20;
     }

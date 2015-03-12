@@ -111,7 +111,7 @@ class LostCitiesGame extends Game {
 
     public void end() {
         def scores = []
-        (1..2) {
+        (1..2).each {
             def total = 0
             def player = gs[it]
             player.table.each { color, pile ->

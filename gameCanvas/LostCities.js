@@ -138,7 +138,7 @@ var lobbies = {};
 
 var uiManager;
 
-var errLabel = {};
+var generalLabel = {};
 var nameLabel = {};
 var nameBox = {};
 var chatBox = {};
@@ -152,7 +152,7 @@ var board;
 function initGame(canvasElement) {
     uiManager = new UIManager(canvasElement);
 
-    errLabel = new Label(10, 33, '');
+    generalLabel = new Label(10, 33, '');
 
     nameLabel = new Label(10, 13, 'Enter nickname: ');
     nameBox = new Textbox(nameLabel.width + 10, 10, 200, 20);
@@ -169,7 +169,7 @@ function initGame(canvasElement) {
     chatArea2 = new ScrollArea(10, 38, 400, 100, chatArea);
     chatArea2.visible = false;
 
-    uiManager.addElement(errLabel);
+    uiManager.addElement(generalLabel);
     uiManager.addElement(nameLabel);
     uiManager.addElement(nameBox);
     uiManager.addElement(chatBox);
@@ -204,14 +204,14 @@ function onMessage(evt) {
     if (cmd.cmd == 'nameSelect') {
         if (cmd.success) {
             name = cmd.name;
-            errLabel.visible = false;
+            generalLabel.visible = false;
             nameBox.visible = false;
             nameLabel.visible = false;
             chatBox.visible = true;
             chatArea2.visible = true;
         }
         else {
-            errLabel.setText('Invalid name');
+            generalLabel.setText('Invalid name');
         }
     }
     else if (cmd.cmd == 'lobbyList') {
@@ -277,7 +277,9 @@ function renderTest(canvasElement) {
     uiManager = new UIManager(canvasElement);
 
     board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
+    generalLabel = new Label(10, 10, '');
     uiManager.addElement(board);
+    uiManager.addElement(generalLabel);
 
     var gameState = JSON.parse('{"1":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"hand":[{"value":8,"color":"green"},{"value":10,"color":"red"},{"value":0,"color":"white"},{"value":4,"color":"white"},{"value":6,"color":"white"},{"value":10,"color":"white"},{"value":0,"color":"yellow"},{"value":9,"color":"yellow"}]},"2":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]}},"discard":{"red":[],"white":[{"value":2,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"deck":44,"currentPlayer":1}');
     loadGameState(gameState);
@@ -298,12 +300,15 @@ function loadGameState(gameState) {
     var cardsInHand = gameState[gs.me].hand.length;
     if (gameState.currentPlayer != gs.me) {
         gs.state = 'NOT_MY_TURN';
+        generalLabel.setText('Opponent\'s turn');
     }
     else if (cardsInHand == 8) {
         gs.state = 'PLAY_OR_DISCARD';
+        generalLabel.setText('Play or discard');
     }
     else if (cardsInHand == 7) {
         gs.state = 'DRAW_CARD';
+        generalLabel.setText('Draw a card');
     }
     else {
         console.log('Couldn\'t determine game state');
@@ -373,8 +378,11 @@ function loadGameState(gameState) {
 
 function gameTest(canvasElement, p) {
     uiManager = new UIManager(canvasElement);
+
     board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
+    generalLabel = new Label(board.width + 20, board.y - 10, '');
     uiManager.addElement(board);
+    uiManager.addElement(generalLabel);
 
     gs.me = p;
     gs.them = (p == 1 ? 2 : 1);
