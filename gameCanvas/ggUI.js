@@ -1,5 +1,5 @@
 // Big TODOs
-// - Implement hover
+// - Use hover
 // - Label - Copy text, links, emoji, onHover card images
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
 // - Authentication/Sessions (cookie + server)
@@ -15,13 +15,18 @@
 
 
 // Event handlers:
-// handleMouseDown = Hit element + Mouse down (automatically gain focus)
+// handleMouseDown = Hit element + Mouse down (automatically gain focus via setFocus)
+// handleMouseHover = All Hit elements + Mouse move (automatically gain hover via setHover)
 // handleMouseDrag = Focused element + Mouse move while mouse is down
 // handleMouseUp = Focused element + Mouse up
 // handleMouseClick = Hit element + Focused element + Mouse up
 // handleMouseDoubleClick = Hit element + Focused element + 2x Mouse up within interval
 // handleMouseWheel = Focused element + Mouse scroll
 // handleKey = Focused element + Key press
+
+// handleMouseHover is special where a true return value means "stop handling hover" instead of the usual "redraw"
+// This is to support things like dragging cards when you want to highlight something beneath the card (like a pile)
+// If you need redraw on hover and you're not triggering it on handleMouseDrag, you need to return true from setHover
 
 
 /// Helper functions ///
@@ -83,7 +88,7 @@ UIManager.prototype.sizeWindow = function(e) {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
 
-    // Chain call for things like doing a new layout
+    // Chain call for things like re-doing layout
     this.onresize();
     this.dirty = true;
     this.draw(); // Must explicitly call draw
@@ -145,8 +150,20 @@ UIManager.prototype.mouseDownHandler = function(e) {
 };
 
 UIManager.prototype.mouseMoveHandler = function(e) {
+    var xy = getCursorPosition(e, this.canvas);
+
+    // Hover
+    var handled = false;
+    for (var i = this.elements.length - 1; i >= 0; i--) {
+        var element = this.elements[i];
+        if (!handled && element.visible && isClicked(xy.x, xy.y, element)) {
+            if (element.setHover(true)) { this.dirty = true; }
+            if (element.handleMouseHover(xy.x, xy.y)) { handled = true; }
+        }
+    }
+
+    // Drag
     if (this.isMouseDown) {
-        var xy = getCursorPosition(e, this.canvas);
         for (var i = this.elements.length - 1; i >= 0; i--) {
             var element = this.elements[i];
             if (element.visible && element.focus) {
@@ -225,6 +242,7 @@ function UIElement(x, y, width, height) {
     this.height = height;
     this.zLevel = 0;
     this.focus = false;
+    this.hover = false;
     this.visible = true;
 }
 
@@ -233,7 +251,9 @@ UIElement.prototype.getChildren = function() { return []; };
 UIElement.prototype.getZLevel = function() { return this.zLevel; };
 UIElement.prototype.draw = function(context) { };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; return false; };
+UIElement.prototype.setHover = function(hover) { this.hover = hover; return false; };
 UIElement.prototype.handleMouseDown = function(x, y) { return false; };
+UIElement.prototype.handleMouseHover = function(x, y) { return false; };
 UIElement.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) { return false; };
 UIElement.prototype.handleMouseUp = function(x, y) { return false; };
 UIElement.prototype.handleMouseClick = function(x, y) { return false; };
