@@ -1,6 +1,5 @@
 // Big TODOs
 // - Implement hover
-// - Split up xy into x and y
 // - Label - Copy text, links, emoji, onHover card images
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
 // - Authentication/Sessions (cookie + server)
@@ -27,11 +26,11 @@
 
 /// Helper functions ///
 
-function isClicked(xy, element) {
-    return (element.x <= xy.x
-        && element.y <= xy.y
-        && element.x + element.width >= xy.x
-        && element.y + element.height >= xy.y);
+function isClicked(x, y, element) {
+    return (element.x <= x
+        && element.y <= y
+        && element.x + element.width >= x
+        && element.y + element.height >= y);
 }
 
 function getCursorPosition(e, bounds) {
@@ -134,9 +133,9 @@ UIManager.prototype.mouseDownHandler = function(e) {
     var handled = false;
     for (var i = this.elements.length - 1; i >= 0; i--) {
         var element = this.elements[i];
-        if (!handled && element.visible && isClicked(xy, element)) {
+        if (!handled && element.visible && isClicked(xy.x, xy.y, element)) {
             if (element.setFocus(true)) { this.dirty = true; }
-            if (element.handleMouseDown(xy)) { this.dirty = true; }
+            if (element.handleMouseDown(xy.x, xy.y)) { this.dirty = true; }
             handled = true;
         }
         else {
@@ -154,7 +153,7 @@ UIManager.prototype.mouseMoveHandler = function(e) {
                 e.preventDefault();
                 var xDelta = xy.x - this.lastMousePos.x;
                 var yDelta = xy.y - this.lastMousePos.y;
-                if (element.handleMouseDrag(xy, xDelta, yDelta)) { this.dirty = true; }
+                if (element.handleMouseDrag(xy.x, xy.y, xDelta, yDelta)) { this.dirty = true; }
                 break;
             }
         }
@@ -169,17 +168,17 @@ UIManager.prototype.mouseUpHandler = function(e) {
         var element = this.elements[i];
         var handled = false;
         if (element.visible && element.focus) {
-            if (element.handleMouseUp(xy)) { this.dirty = true; }
+            if (element.handleMouseUp(xy.x, xy.y)) { this.dirty = true; }
             handled = true;
         }
-        if (element.visible && element.focus && isClicked(xy, element)) {
+        if (element.visible && element.focus && isClicked(xy.x, xy.y, element)) {
             var now = new Date().getTime();
             if (this.lastClick.element == element && now - this.lastClick.time < 500) {
-                if (element.handleMouseDoubleClick(xy)) { this.dirty = true; }
+                if (element.handleMouseDoubleClick(xy.x, xy.y)) { this.dirty = true; }
                 this.lastClick.element = null;
             }
             else {
-                if (element.handleMouseClick(xy)) { this.dirty = true; }
+                if (element.handleMouseClick(xy.x, xy.y)) { this.dirty = true; }
                 this.lastClick.element = element;
                 this.lastClick.time = now;
             }
@@ -234,11 +233,11 @@ UIElement.prototype.getChildren = function() { return []; };
 UIElement.prototype.getZLevel = function() { return this.zLevel; };
 UIElement.prototype.draw = function(context) { };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; return false; };
-UIElement.prototype.handleMouseDown = function(xy) { return false; };
-UIElement.prototype.handleMouseDrag = function(xy, xDelta, yDelta) { return false; };
-UIElement.prototype.handleMouseUp = function(xy) { return false; };
-UIElement.prototype.handleMouseClick = function(xy) { return false; };
-UIElement.prototype.handleMouseDoubleClick = function(xy) { return false; };
+UIElement.prototype.handleMouseDown = function(x, y) { return false; };
+UIElement.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) { return false; };
+UIElement.prototype.handleMouseUp = function(x, y) { return false; };
+UIElement.prototype.handleMouseClick = function(x, y) { return false; };
+UIElement.prototype.handleMouseDoubleClick = function(x, y) { return false; };
 UIElement.prototype.handleMouseWheel = function(yDelta) { return false; };
 UIElement.prototype.handleKey = function(e) { return false; };
 
@@ -579,14 +578,14 @@ ScrollArea.prototype.draw = function(context) {
     }
 };
 
-ScrollArea.prototype.handleMouseDown = function(xy) {
+ScrollArea.prototype.handleMouseDown = function(x, y) {
     if (this.scrollBar.visible) {
-        this.scrollBar.focus = isClicked(xy, this.scrollBar)
+        this.scrollBar.focus = isClicked(x, y, this.scrollBar)
     }
     return false;
 };
 
-ScrollArea.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
+ScrollArea.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) {
     // Check if scrollbar is focused
     if (this.scrollBar.focus) {
         return this.updateScrollBarForScroll(yDelta);
@@ -681,16 +680,16 @@ Pile.prototype.draw = function(context) {
     }
 };
 
-Pile.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
+Pile.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) {
     if (this.pile.length >= 1) {
-        return this.pile[this.pile.length - 1].handleMouseDrag(xy, xDelta, yDelta);
+        return this.pile[this.pile.length - 1].handleMouseDrag(x, y, xDelta, yDelta);
     }
     return false;
 };
 
-Pile.prototype.handleMouseUp = function(xy) {
+Pile.prototype.handleMouseUp = function(x, y) {
     if (this.pile.length >= 1) {
-        return this.pile[this.pile.length - 1].handleMouseUp(xy);
+        return this.pile[this.pile.length - 1].handleMouseUp(x, y);
     }
     return false;
 };
@@ -736,7 +735,7 @@ Card.prototype.draw = function(context) {
     }
 };
 
-Card.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
+Card.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) {
     if (!this.draggable) {
         return false;
     }
@@ -750,7 +749,7 @@ Card.prototype.handleMouseDrag = function(xy, xDelta, yDelta) {
     return true;
 };
 
-Card.prototype.handleMouseUp = function(xy) {
+Card.prototype.handleMouseUp = function(x, y) {
     var dirty = (this.curX != this.x || this.curY != this.y);
     this.curX = this.x;
     this.curY = this.y;

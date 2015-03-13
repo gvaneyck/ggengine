@@ -27,7 +27,7 @@ function LostCitiesBoard(x, y, cw, ch) {
     for (var color in this.piles) {
         var pile = this.piles[color];
         pile.color = color;
-        pile.handleMouseDoubleClick = function(xy) {
+        pile.handleMouseDoubleClick = function(x, y) {
             if (gs.state == 'DRAW_CARD' && this.pile.length >= 1) {
                 sendCmd({cmd: 'action', action: 'drawPile', args: [this.color]});
             }
@@ -95,8 +95,8 @@ function LostCitiesCard(data, x, y, width, height) { Card.call(this, data, x, y,
 LostCitiesCard.prototype = Object.create(Card.prototype);
 LostCitiesCard.prototype.constructor = LostCitiesCard;
 
-LostCitiesCard.prototype.handleMouseDown = function(xy) {
-    var dirty = Card.prototype.handleMouseDown(xy);
+LostCitiesCard.prototype.handleMouseDown = function(x, y) {
+    var dirty = Card.prototype.handleMouseDown(x, y);
     if (gs.state == 'PLAY_OR_DISCARD' && this.location == 'hand') {
         board.draggedCard = this;
         dirty = true;
@@ -104,20 +104,20 @@ LostCitiesCard.prototype.handleMouseDown = function(xy) {
     return dirty;
 };
 
-LostCitiesCard.prototype.handleMouseUp = function(xy) {
-    var dirty = Card.prototype.handleMouseUp.call(this, xy);
+LostCitiesCard.prototype.handleMouseUp = function(x, y) {
+    var dirty = Card.prototype.handleMouseUp.call(this, x, y);
     if (board.draggedCard != null) {
         board.draggedCard = null;
         dirty = true;
     }
     if (gs.state == 'PLAY_OR_DISCARD') {
         for (var color in board.piles) {
-            if (isClicked(xy, board.piles[color])) {
+            if (isClicked(x, y, board.piles[color])) {
                 sendCmd({cmd: 'action', action: 'discardCard', args: [this.handIdx]});
             }
         }
         for (var color in board.p2) {
-            if (isClicked(xy, board.p2[color])) {
+            if (isClicked(x, y, board.p2[color])) {
                 sendCmd({cmd: 'action', action: 'playCard', args: [this.handIdx]});
             }
         }
@@ -370,7 +370,7 @@ function loadGameState() {
     var deck = new LostCitiesCard({color: 'black', value: gameState.deck}, board.width + 20, board.y + 10, 100, 150);
     deck.location = 'deck';
     deck.draggable = false;
-    deck.handleMouseDoubleClick = function (xy) {
+    deck.handleMouseDoubleClick = function(x, y) {
         if (gs.state == 'DRAW_CARD') {
             sendCmd({cmd: 'action', action: 'drawDeck'});
         }
