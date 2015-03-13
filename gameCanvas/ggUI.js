@@ -160,6 +160,9 @@ UIManager.prototype.mouseMoveHandler = function(e) {
             if (element.setHover(true)) { this.dirty = true; }
             if (element.handleMouseHover(xy.x, xy.y)) { handled = true; }
         }
+        else {
+            if (element.setHover(false)) { this.dirty = true; }
+        }
     }
 
     // Drag
@@ -253,13 +256,21 @@ UIElement.prototype.draw = function(context) { };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; return false; };
 UIElement.prototype.setHover = function(hover) { this.hover = hover; return false; };
 UIElement.prototype.handleMouseDown = function(x, y) { return false; };
-UIElement.prototype.handleMouseHover = function(x, y) { return false; };
+UIElement.prototype.handleMouseHover = function(x, y) { return true; };
 UIElement.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) { return false; };
 UIElement.prototype.handleMouseUp = function(x, y) { return false; };
 UIElement.prototype.handleMouseClick = function(x, y) { return false; };
 UIElement.prototype.handleMouseDoubleClick = function(x, y) { return false; };
 UIElement.prototype.handleMouseWheel = function(yDelta) { return false; };
 UIElement.prototype.handleKey = function(e) { return false; };
+
+UIElement.prototype.highlight = function(context) {
+    context.beginPath();
+    context.rect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+    context.lineWidth = 3;
+    context.strokeStyle = 'black';
+    context.stroke();
+};
 
 
 /// Label ///
@@ -659,14 +670,6 @@ Pile.prototype.reset = function() {
 
 Pile.prototype.getZLevel = function() {
     return (this.pile.length == 0 ? this.zLevel : this.pile[this.pile.length - 1].zLevel);
-};
-
-Pile.prototype.highlight = function(context) {
-    context.beginPath();
-    context.rect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
-    context.lineWidth = 3;
-    context.strokeStyle = 'black';
-    context.stroke();
 };
 
 Pile.prototype.drawEmpty = function(context) {

@@ -44,6 +44,8 @@ LostCitiesBoard.prototype.getChildren = function() {
     var children = [];
     for (var pileColor in this.piles) {
         children.push(this.piles[pileColor]);
+        children.push(this.p1[pileColor]);
+        children.push(this.p2[pileColor]);
     }
     return children;
 };
@@ -64,17 +66,31 @@ LostCitiesBoard.prototype.draw = function(context) {
 
         if (this.draggedCard != null) {
             var cardColor = this.draggedCard.color;
-            this.piles[cardColor].highlight(context);
-
             var myPile = this.p2[cardColor];
+            var discardPile = this.piles[cardColor];
+
+            var highlightMine = true;
             if (myPile.pile.length >= 1) {
                 var topCard = myPile.pile[myPile.pile.length - 1];
-                if (this.draggedCard.value >= topCard.value) {
+                if (this.draggedCard.value < topCard.value) {
+                    highlightMine = false;
+                }
+            }
+
+            if (highlightMine) {
+                if (myPile.hover) {
                     myPile.highlight(context);
+                }
+                else if (discardPile.hover) {
+                    discardPile.highlight(context);
+                }
+                else {
+                    myPile.highlight(context);
+                    discardPile.highlight(context);
                 }
             }
             else {
-                myPile.highlight(context);
+                discardPile.highlight(context);
             }
         }
     }
@@ -95,13 +111,25 @@ function LostCitiesCard(data, x, y, width, height) { Card.call(this, data, x, y,
 LostCitiesCard.prototype = Object.create(Card.prototype);
 LostCitiesCard.prototype.constructor = LostCitiesCard;
 
+LostCitiesCard.prototype.setHover = function(hover) {
+    if (this.hover != hover) {
+        this.hover = hover;
+        return true;
+    }
+    return false;
+};
+
 LostCitiesCard.prototype.handleMouseDown = function(x, y) {
-    var dirty = Card.prototype.handleMouseDown(x, y);
+    var dirty = Card.prototype.handleMouseDown.call(this, x, y);
     if (gs.state == 'PLAY_OR_DISCARD' && this.location == 'hand') {
         board.draggedCard = this;
         dirty = true;
     }
     return dirty;
+};
+
+LostCitiesCard.prototype.handleMouseHover = function(x, y) {
+    return (board.draggedCard != this);
 };
 
 LostCitiesCard.prototype.handleMouseUp = function(x, y) {
@@ -110,6 +138,7 @@ LostCitiesCard.prototype.handleMouseUp = function(x, y) {
         board.draggedCard = null;
         dirty = true;
     }
+
     if (gs.state == 'PLAY_OR_DISCARD') {
         for (var color in board.piles) {
             if (isClicked(x, y, board.piles[color])) {
@@ -122,7 +151,15 @@ LostCitiesCard.prototype.handleMouseUp = function(x, y) {
             }
         }
     }
+
     return dirty;
+};
+
+LostCitiesCard.prototype.draw = function(context) {
+    Card.prototype.draw.call(this, context);
+    if (board.draggedCard == null && this.location == 'hand' && this.hover) {
+        this.highlight(context);
+    }
 };
 
 
