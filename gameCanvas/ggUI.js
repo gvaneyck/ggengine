@@ -8,8 +8,7 @@
 // - Don't send gamestate if it hasn't changed for a player (hide decision timing)
 // - Deal with half pixels
 // - Redo temp context shenanigans in resize to actually create an element and destroy it on draw
-// - Reload game state on resize
-// - Opening up dev console doesn't send window resize
+// - Add set pos methods for cascading to children, as well as for empty constructors for dynamically positioned elements
 // - Browser compatibility/jQuery handlers/Mobile
 // - Linking in game elements -> via drag or shift/ctrl click
 // - Dirty rectangles drawing
@@ -70,10 +69,9 @@ function UIManager(canvas) {
     document.addEventListener('mouseup', function(e) { _this.sortElements(); _this.mouseUpHandler.call(_this, e); });
     document.addEventListener('wheel', function(e) { _this.sortElements(); _this.mouseWheelHandler.call(_this, e); }, false);
     document.addEventListener('keypress', function(e) { _this.sortElements(); _this.typingHandler.call(_this, e); });
-    window.onresize = function(e) { _this.sizeWindow.call(_this, e); };
+    window.addEventListener('resize', function(e) { _this.sizeWindow(); }, false);
 
     // Start draw loop
-    var _this = this;
     var drawLoop = function() {
         requestAnimationFrame(drawLoop);
         _this.draw();
@@ -81,20 +79,18 @@ function UIManager(canvas) {
     drawLoop();
 }
 
-UIManager.prototype.scratchPad = document.createElement('canvas').getContext('2d');
-
 UIManager.prototype.sizeWindow = function(e) {
-    // Draw current canvas to temp canvas
-    this.scratchPad.drawImage(this.canvas, 0, 0);
-
     // Resize current canvas
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
 
-    // Draw temp canvas back to the current canvas
-    this.canvas.getContext('2d').drawImage(this.scratchPad.canvas, 0, 0);
+    // Chain call for things like doing a new layout
+    this.onresize();
     this.dirty = true;
+    this.draw(); // Must explicitly call draw
 };
+
+UIManager.prototype.onresize = function() {};
 
 UIManager.prototype.draw = function() {
     if (!this.dirty) { return; }

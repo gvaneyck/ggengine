@@ -137,6 +137,7 @@ var name;
 var lobbies = {};
 
 var uiManager;
+var gameState;
 
 var generalLabel = {};
 var nameLabel = {};
@@ -151,6 +152,7 @@ var board;
 
 function initGame(canvasElement) {
     uiManager = new UIManager(canvasElement);
+    uiManager.onresize = loadGameState;
 
     generalLabel = new Label(10, 33, '');
 
@@ -275,18 +277,21 @@ function sendCmd(cmd) {
 
 function renderTest(canvasElement) {
     uiManager = new UIManager(canvasElement);
+    uiManager.onresize = loadGameState;
 
     board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
     generalLabel = new Label(board.width + 20, board.y - 10, '');
     uiManager.addElement(board);
     uiManager.addElement(generalLabel);
 
-    var gameState = JSON.parse('{"1":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"hand":[{"value":8,"color":"green"},{"value":10,"color":"red"},{"value":0,"color":"white"},{"value":4,"color":"white"},{"value":6,"color":"white"},{"value":10,"color":"white"},{"value":0,"color":"yellow"},{"value":9,"color":"yellow"}]},"2":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]}},"discard":{"red":[],"white":[{"value":2,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"deck":44,"currentPlayer":1}');
-    loadGameState(gameState);
+    gameState = JSON.parse('{"1":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"hand":[{"value":8,"color":"green"},{"value":10,"color":"red"},{"value":0,"color":"white"},{"value":4,"color":"white"},{"value":6,"color":"white"},{"value":10,"color":"white"},{"value":0,"color":"yellow"},{"value":9,"color":"yellow"}]},"2":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]}},"discard":{"red":[],"white":[{"value":2,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"deck":44,"currentPlayer":1}');
+    loadGameState();
 }
 
-function loadGameState(gameState) {
-    console.log(gameState);
+function loadGameState() {
+    if (gameState == undefined) {
+        return;
+    }
 
     // Clean old elements from uiManager
     for (var i = uiManager.elements.length - 1; i >= 0; i--) {
@@ -378,6 +383,7 @@ function loadGameState(gameState) {
 
 function gameTest(canvasElement, p) {
     uiManager = new UIManager(canvasElement);
+    uiManager.onresize = loadGameState;
 
     board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
     generalLabel = new Label(board.width + 20, board.y - 10, '');
@@ -398,6 +404,7 @@ function gameMessage(evt) {
     console.log('MSG: ' + evt.data);
     var cmd = JSON.parse(evt.data);
     if (cmd.cmd == 'gs') {
-        loadGameState(JSON.parse(cmd.gs));
+        gameState = JSON.parse(cmd.gs);
+        loadGameState();
     }
 }
