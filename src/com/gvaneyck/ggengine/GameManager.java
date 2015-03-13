@@ -139,9 +139,17 @@ public class GameManager {
         game.end();
     }
 
-    public void presentActions(List<Action> actions) {
-        Action action = ui.resolveChoice(actions);
-        action.invoke();
+    public void presentActions(List<Action> actions) throws Exception {
+        if (actions.isEmpty()) {
+            throw new Exception("No actions to choose from");
+        }
+        else if (actions.size() == 1) {
+            actions.get(0).invoke();
+        }
+        else {
+            Action action = ui.resolveChoice(actions);
+            action.invoke();
+        }
     }
 
     public Map getGameState(int player) {

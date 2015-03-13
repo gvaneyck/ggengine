@@ -5,10 +5,8 @@
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
 // - Authentication/Sessions (cookie + server)
 // - Send action to clients when chosen for logging
-// - Auto-pick single actions
 // - Don't send gamestate if it hasn't changed for a player (hide decision timing)
 // - Deal with half pixels
-// - requestAnimationFrame instead of draw loop, http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
 // - Redo temp context shenanigans in resize to actually create an element and destroy it on draw
 // - Reload game state on resize
 // - Opening up dev console doesn't send window resize
@@ -75,10 +73,12 @@ function UIManager(canvas) {
     window.onresize = function(e) { _this.sizeWindow.call(_this, e); };
 
     // Start draw loop
-    var fps = 60;
-    setInterval(function() {
-        _this.draw.call(_this);
-    }, 1000 / fps);
+    var _this = this;
+    var drawLoop = function() {
+        requestAnimationFrame(drawLoop);
+        _this.draw();
+    };
+    drawLoop();
 }
 
 UIManager.prototype.scratchPad = document.createElement('canvas').getContext('2d');
