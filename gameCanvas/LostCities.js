@@ -277,7 +277,7 @@ function renderTest(canvasElement) {
     uiManager = new UIManager(canvasElement);
 
     board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
-    generalLabel = new Label(10, 10, '');
+    generalLabel = new Label(board.width + 20, board.y - 10, '');
     uiManager.addElement(board);
     uiManager.addElement(generalLabel);
 
