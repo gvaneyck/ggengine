@@ -22,7 +22,9 @@ public class Player {
 
     public void send(Map data) {
         synchronized (conn) {
-            conn.send(new JsonBuilder(data).toString())
+            if (conn.isOpen()) {
+                conn.send(new JsonBuilder(data).toString())
+            }
         }
     }
 }
