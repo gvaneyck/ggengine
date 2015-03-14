@@ -11,6 +11,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class GameManager {
     private Map<String, Object> gs;
@@ -21,6 +22,9 @@ public class GameManager {
     private Game game;
 
     private GGui ui;
+
+    private AccessibleRandom internalRand = new AccessibleRandom();
+    public Random rand = internalRand.getRand();
 
     public GameManager() {
         gs = new HashMap<String, Object>();

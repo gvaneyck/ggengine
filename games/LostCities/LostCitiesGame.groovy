@@ -19,7 +19,7 @@ class LostCitiesGame extends Game {
                 gs.deck << new Card(value, color)
             }
         }
-        Collections.shuffle(gs.deck)
+        Collections.shuffle(gs.deck, gm.rand)
 
         gs.discard = [:]
         colors.each { color ->
