@@ -226,7 +226,6 @@ function openWebSocket() {
 }
 
 function onMessage(evt) {
-    console.log('MSG: ' + evt.data);
     var cmd = JSON.parse(evt.data);
     if (cmd.cmd == 'nameSelect') {
         if (cmd.success) {
@@ -420,7 +419,6 @@ function gameTest(canvasElement, p) {
 }
 
 function gameMessage(evt) {
-    console.log('MSG: ' + evt.data);
     var cmd = JSON.parse(evt.data);
     if (cmd.cmd == 'gs') {
         gameState = JSON.parse(cmd.gs);
