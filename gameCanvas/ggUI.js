@@ -1,5 +1,4 @@
 // Big TODOs
-// - Use hover
 // - Label - Copy text, links, emoji, onHover card images
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
 // - Authentication/Sessions (cookie + server)

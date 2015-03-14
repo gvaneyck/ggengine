@@ -215,26 +215,14 @@ function initGame(canvasElement) {
     uiManager.addElement(chatArea2);
 
     openWebSocket();
+    websocket.onmessage = onMessage;
 }
 
 /// Web sockets ///
 
 function openWebSocket() {
-    websocket = new WebSocket('ws://127.0.0.1:9003/');
-    //websocket = new WebSocket('ws://76.91.23.89:9003');
-    websocket.onopen = function (evt) { onOpen(evt); };
-    websocket.onclose = function (evt) { onClose(evt); };
-    websocket.onmessage = function (evt) { onMessage(evt); };
-    websocket.onerror = function (evt) { onError(evt); };
-}
-
-function onOpen(evt) {
-    console.log('CONNECTED');
-    connected = true;
-}
-
-function onClose(evt) {
-    console.log('DISCONNECTED');
+    websocket = new ReconnectingWebSocket('127.0.0.1:9003');
+    websocket.connect();
 }
 
 function onMessage(evt) {
@@ -301,15 +289,8 @@ function formatChatLine(chat) {
     return message;
 }
 
-function onError(evt) {
-    console.log('ERROR: ' + evt.data);
-}
-
 function sendCmd(cmd) {
-    console.log(JSON.stringify(cmd));
-    if (websocket != undefined) {
-        websocket.send(JSON.stringify(cmd));
-    }
+    websocket.send(JSON.stringify(cmd));
 }
 
 function renderTest(canvasElement) {
@@ -431,6 +412,7 @@ function gameTest(canvasElement, p) {
     gs.them = (p == 1 ? 2 : 1);
 
     openWebSocket();
+    //websocket = new WebSocket('ws://127.0.0.1:9003');
     websocket.onmessage = gameMessage;
     websocket.onopen = function(e) {
         sendCmd({cmd: 'setName', name: 'Jabe' + p});

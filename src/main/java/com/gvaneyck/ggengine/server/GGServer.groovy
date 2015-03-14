@@ -4,7 +4,7 @@ import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.java_websocket.WebSocket
 import org.java_websocket.drafts.Draft
-import org.java_websocket.drafts.Draft_76
+import org.java_websocket.drafts.Draft_17
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 
@@ -20,7 +20,7 @@ public class GGServer extends WebSocketServer {
     def gameInstance
 
     public GGServer(String gameDir, String game) throws UnknownHostException {
-        this(gameDir, game, 9003, new Draft_76())
+        this(gameDir, game, 9003, new Draft_17())
     }
 
     public GGServer(String gameDir, String game, int port, Draft d) throws UnknownHostException {
