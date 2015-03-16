@@ -176,12 +176,16 @@ var lobbies = {};
 var uiManager;
 var gameState;
 
-var generalLabel = {};
-var nameLabel = {};
-var nameBox = {};
-var chatBox = {};
-var chatArea = {};
-var chatArea2 = {};
+var generalLabel;
+
+var nameLabel;
+var nameBox;
+var loginButton;
+
+var chatBox;
+var chatLabel;
+var messagesLabel;
+var messagesScrollArea;
 
 var cw = 100;
 var ch = 150;
@@ -191,6 +195,17 @@ function initGame(canvasElement) {
     uiManager = new UIManager(canvasElement);
     uiManager.onresize = loadGameState;
 
+    //var label1 = new Label(0, 0, 'FOOBAR');
+    //var label2 = new Label(0, 0, 'X');
+    //var label3 = new Label(0, 0, 'X');
+    //var label4 = new Label(0, 0, 'FOOOOOOOOOOOOOBAR');
+    //var table = new Table(10, 10, 200);
+    //table.elements.push([label1, label2, label3, label4]);
+    //table.elements.push([label1, label2, label3, label4]);
+    //table.elements.push([label1, label2, label3, label4]);
+    //table.elements.push([label1, label2, label3, label4]);
+    //uiManager.addElement(table);
+
     generalLabel = new Label(10, 33, '');
 
     nameLabel = new Label(10, 13, 'Enter nickname: ');
@@ -199,20 +214,32 @@ function initGame(canvasElement) {
         sendCmd({cmd: 'setName', name: msg});
     };
 
-    chatBox = new Textbox(10, 10, 200, 20);
+    loginButton = new Button(nameBox.x + nameBox.width + 10, 10, 41, 20, 'Login');
+    loginButton.handleMouseClick = function(x, y) {
+        sendCmd({cmd: 'setName', name: nameBox.text});
+        return false;
+    };
+
+    chatLabel = new Label(10, 13, 'Chat: ');
+    chatLabel.visible = false;
+    chatBox = new Textbox(chatLabel.width + 10, 10, 400 - chatLabel.width, 20);
     chatBox.visible = false;
     chatBox.submitHandler = function(msg) {
         sendCmd({cmd: 'msg', msg: msg, target: 'General'});
     };
-    chatArea = new FixedWidthLabel(10, 38, 384, '');
-    chatArea2 = new ScrollArea(10, 38, 400, 100, chatArea);
-    chatArea2.visible = false;
+
+    messagesLabel = new FixedWidthLabel(10, 38, 384, '');
+    messagesScrollArea = new ScrollArea(10, 38, 400, 300, messagesLabel);
+    messagesScrollArea.visible = false;
 
     uiManager.addElement(generalLabel);
     uiManager.addElement(nameLabel);
     uiManager.addElement(nameBox);
+    uiManager.addElement(loginButton);
+
+    uiManager.addElement(chatLabel);
     uiManager.addElement(chatBox);
-    uiManager.addElement(chatArea2);
+    uiManager.addElement(messagesScrollArea);
 
     openWebSocket();
     websocket.onmessage = onMessage;
@@ -230,11 +257,15 @@ function onMessage(evt) {
     if (cmd.cmd == 'nameSelect') {
         if (cmd.success) {
             name = cmd.name;
+
             generalLabel.visible = false;
             nameBox.visible = false;
             nameLabel.visible = false;
+            loginButton.visible = false;
+
             chatBox.visible = true;
-            chatArea2.visible = true;
+            chatLabel.visible = true;
+            messagesScrollArea.visible = true;
         }
         else {
             generalLabel.setText('Invalid name');
@@ -266,12 +297,12 @@ function onMessage(evt) {
         }
     }
     else if (cmd.cmd == 'chat') {
-        var text = chatArea.text;
+        var text = messagesLabel.text;
         if (text.length != 0) {
             text += '\n';
         }
         text += formatChatLine(cmd);
-        chatArea.setText(text);
+        messagesLabel.setText(text);
     }
     uiManager.dirty = true;
 }

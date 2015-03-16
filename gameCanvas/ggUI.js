@@ -532,10 +532,12 @@ ScrollArea.prototype.updateScrollBarForText = function() {
     var eleHeight = this.element.height;
     var yScroll = this.scrollBar.yScroll;
 
-    // If we were at the bottom, auto-scroll
-    if (yScroll + areaHeight - 6 == eleHeight - 20 // 20 is one line of text
-        || !this.scrollBar.visible && areaHeight - 6 < eleHeight) {
-        yScroll = eleHeight - (areaHeight - 6);
+    if (this.element instanceof FixedWidthLabel) {
+        // If we were at the bottom, auto-scroll
+        if (yScroll + areaHeight - 6 == eleHeight - 20 // 20 is one line of text
+            || !this.scrollBar.visible && areaHeight - 6 < eleHeight) {
+            yScroll = eleHeight - (areaHeight - 6);
+        }
     }
 
     var barHeight = areaHeight * areaHeight / eleHeight;
@@ -628,6 +630,97 @@ ScrollArea.prototype.handleMouseWheel = function(yDelta) {
         return this.updateScrollBarForScroll(yDelta * 2);
     }
     return false;
+};
+
+
+/// Button ///
+
+function Button(x, y, width, height, text) {
+    UIElement.call(this, x, y, width, height);
+    this.text = text;
+}
+
+Button.prototype = Object.create(UIElement.prototype);
+Button.prototype.constructor = Button;
+
+Button.prototype.draw = function(context) {
+    context.font = '12pt Calibri';
+    context.fillStyle = 'black';
+    context.fillText(this.text, this.x + 3, this.y + 15);
+
+    context.beginPath();
+    context.rect(this.x, this.y, this.width, this.height);
+    context.lineWidth = 1;
+    context.strokeStyle = 'black';
+    context.stroke();
+};
+
+
+/// Table ///
+
+function Table(x, y, width) {
+    UIElement.call(this, x, y, width, 0);
+    this.elements = [];
+}
+
+Table.prototype = Object.create(UIElement.prototype);
+Table.prototype.constructor = Table;
+
+Table.prototype.onSizeChange = function() { };
+
+Table.prototype.draw = function(context) {
+    var maxWidths = [];
+    for (var i = 0; i < this.elements.length; i++) {
+        var row = this.elements[i];
+        for (var j = 0; j < row.length; j++) {
+            if (maxWidths[j] == undefined || maxWidths[j] < row[j].width) {
+                maxWidths[j] = row[j].width
+            }
+        }
+    }
+
+    this.height = this.elements.length * 20;
+
+    // Draw border
+    context.beginPath();
+    context.rect(this.x, this.y, this.width, this.height);
+    context.lineWidth = 1;
+    context.strokeStyle = 'black';
+    context.stroke();
+
+    // Draw row lines
+    var yOff = 20;
+    for (var i = 0; i < this.elements.length - 1; i++) {
+        context.beginPath();
+        context.moveTo(this.x, this.y + yOff);
+        context.lineTo(this.x + this.width, this.y + yOff);
+        context.stroke();
+        yOff += 20;
+    }
+
+    // Draw col lines
+    var xOff = 0;
+    for (var i = 0; i < maxWidths.length - 1; i++) {
+        xOff += maxWidths[i] + 6;
+        context.beginPath();
+        context.moveTo(this.x + xOff, this.y);
+        context.lineTo(this.x + xOff, this.y + this.height);
+        context.stroke();
+    }
+
+    // Draw elements
+    var yPos = this.y + 3;
+    for (var i = 0; i < this.elements.length; i++) {
+        var xPos = this.x + 3;
+        var row = this.elements[i];
+        for (var j = 0; j < row.length; j++) {
+            row[j].x = xPos;
+            row[j].y = yPos;
+            row[j].draw(context);
+            xPos += maxWidths[j] + 6;
+        }
+        yPos += 20;
+    }
 };
 
 
