@@ -708,17 +708,31 @@ Table.prototype.draw = function(context) {
         context.stroke();
     }
 
+    // Fix last column width
+    maxWidths[maxWidths.length - 1] = this.width - xOff - 6;
+
     // Draw elements
     var yPos = this.y + 3;
     for (var i = 0; i < this.elements.length; i++) {
         var xPos = this.x + 3;
+
         var row = this.elements[i];
         for (var j = 0; j < row.length; j++) {
+            // Set clip area
+            context.save();
+            context.beginPath();
+            context.rect(xPos - 2, yPos - 2, maxWidths[j], 18);
+            context.clip();
+
             row[j].x = xPos;
             row[j].y = yPos;
             row[j].draw(context);
             xPos += maxWidths[j] + 6;
+
+            // Restore context
+            context.restore();
         }
+
         yPos += 20;
     }
 };
