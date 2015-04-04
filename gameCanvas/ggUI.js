@@ -661,6 +661,7 @@ Button.prototype.draw = function(context) {
 function Table(x, y, width) {
     UIElement.call(this, x, y, width, 0);
     this.elements = [];
+    this.emptyText = '';
 }
 
 Table.prototype = Object.create(UIElement.prototype);
@@ -669,6 +670,21 @@ Table.prototype.constructor = Table;
 Table.prototype.onSizeChange = function() { };
 
 Table.prototype.draw = function(context) {
+    this.height = this.elements.length * 20;
+    if (this.elements.length == 0) {
+        this.height = 20;
+        context.font = '12pt Calibri';
+        context.fillText(this.emptyText, this.x + 3, this.y + 15);
+    }
+
+    // Draw border
+    context.beginPath();
+    context.rect(this.x, this.y, this.width, this.height);
+    context.lineWidth = 1;
+    context.strokeStyle = 'black';
+    context.stroke();
+
+    // Calculate widths
     var maxWidths = [];
     for (var i = 0; i < this.elements.length; i++) {
         var row = this.elements[i];
@@ -678,15 +694,6 @@ Table.prototype.draw = function(context) {
             }
         }
     }
-
-    this.height = this.elements.length * 20;
-
-    // Draw border
-    context.beginPath();
-    context.rect(this.x, this.y, this.width, this.height);
-    context.lineWidth = 1;
-    context.strokeStyle = 'black';
-    context.stroke();
 
     // Draw row lines
     var yOff = 20;
@@ -721,7 +728,7 @@ Table.prototype.draw = function(context) {
             // Set clip area
             context.save();
             context.beginPath();
-            context.rect(xPos - 2, yPos - 2, maxWidths[j], 18);
+            context.rect(xPos - 2, yPos - 2, maxWidths[j] + 4, 18);
             context.clip();
 
             row[j].x = xPos;

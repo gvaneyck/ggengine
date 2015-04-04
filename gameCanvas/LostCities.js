@@ -182,6 +182,9 @@ var nameLabel;
 var nameBox;
 var loginButton;
 
+var createButton;
+var lobbyTable;
+
 var chatBox;
 var chatLabel;
 var messagesLabel;
@@ -195,54 +198,53 @@ function initGame(canvasElement) {
     uiManager = new UIManager(canvasElement);
     uiManager.onresize = loadGameState;
 
-    var label1 = new Label(0, 0, 'FOOBAR');
-    var label2 = new Label(0, 0, 'X');
-    var label3 = new Label(0, 0, 'X');
-    var label4 = new Label(0, 0, 'FOOOOOOOOOOOOOBAR');
-    var table = new Table(10, 10, 200);
-    table.elements.push([label1, label2, label3, label4]);
-    table.elements.push([label1, label2, label3, label4]);
-    table.elements.push([label1, label2, label3, label4]);
-    table.elements.push([label1, label2, label3, label4]);
-    uiManager.addElement(table);
+    generalLabel = new Label(10, 33, '');
 
-//    generalLabel = new Label(10, 33, '');
-//
-//    nameLabel = new Label(10, 13, 'Enter nickname: ');
-//    nameBox = new Textbox(nameLabel.width + 10, 10, 200, 20);
-//    nameBox.submitHandler = function(msg) {
-//        sendCmd({cmd: 'setName', name: msg});
-//    };
-//
-//    loginButton = new Button(nameBox.x + nameBox.width + 10, 10, 41, 20, 'Login');
-//    loginButton.handleMouseClick = function(x, y) {
-//        sendCmd({cmd: 'setName', name: nameBox.text});
-//        return false;
-//    };
-//
-//    chatLabel = new Label(10, 13, 'Chat: ');
-//    chatLabel.visible = false;
-//    chatBox = new Textbox(chatLabel.width + 10, 10, 400 - chatLabel.width, 20);
-//    chatBox.visible = false;
-//    chatBox.submitHandler = function(msg) {
-//        sendCmd({cmd: 'msg', msg: msg, target: 'General'});
-//    };
-//
-//    messagesLabel = new FixedWidthLabel(10, 38, 384, '');
-//    messagesScrollArea = new ScrollArea(10, 38, 400, 300, messagesLabel);
-//    messagesScrollArea.visible = false;
-//
-//    uiManager.addElement(generalLabel);
-//    uiManager.addElement(nameLabel);
-//    uiManager.addElement(nameBox);
-//    uiManager.addElement(loginButton);
-//
-//    uiManager.addElement(chatLabel);
-//    uiManager.addElement(chatBox);
-//    uiManager.addElement(messagesScrollArea);
-//
-//    openWebSocket();
-//    websocket.onmessage = onMessage;
+    nameLabel = new Label(10, 13, 'Enter nickname: ');
+    nameBox = new Textbox(nameLabel.width + 10, 10, 200, 20);
+    nameBox.submitHandler = function(msg) {
+        sendCmd({cmd: 'setName', name: msg});
+    };
+
+    loginButton = new Button(nameBox.x + nameBox.width + 10, 10, 41, 20, 'Login');
+    loginButton.handleMouseClick = function(x, y) {
+        sendCmd({cmd: 'setName', name: nameBox.text});
+        return false;
+    };
+
+    createButton = new Button(10, 10, 20, 20, 'Create Game');
+    createButton.visible = false;
+
+    lobbyTable = new Table(10, 38, 500);
+    lobbyTable.emptyText = 'No games found';
+    lobbyTable.visible = false;
+
+    chatLabel = new Label(550, 13, 'Chat: ');
+    chatLabel.visible = false;
+    chatBox = new Textbox(chatLabel.width + 550, 10, 400 - chatLabel.width, 20);
+    chatBox.visible = false;
+    chatBox.submitHandler = function(msg) {
+        sendCmd({cmd: 'msg', msg: msg, target: 'General'});
+    };
+
+    messagesLabel = new FixedWidthLabel(550, 38, 384, '');
+    messagesScrollArea = new ScrollArea(550, 38, 400, 300, messagesLabel);
+    messagesScrollArea.visible = false;
+
+    uiManager.addElement(generalLabel);
+    uiManager.addElement(nameLabel);
+    uiManager.addElement(nameBox);
+    uiManager.addElement(loginButton);
+
+    uiManager.addElement(createButton);
+    uiManager.addElement(lobbyTable);
+
+    uiManager.addElement(chatLabel);
+    uiManager.addElement(chatBox);
+    uiManager.addElement(messagesScrollArea);
+
+    openWebSocket();
+    websocket.onmessage = onMessage;
 }
 
 /// Web sockets ///
@@ -263,6 +265,8 @@ function onMessage(evt) {
             nameLabel.visible = false;
             loginButton.visible = false;
 
+            createButton.visible = true;
+            lobbyTable.visible = true;
             chatBox.visible = true;
             chatLabel.visible = true;
             messagesScrollArea.visible = true;
