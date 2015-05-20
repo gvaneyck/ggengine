@@ -17,8 +17,17 @@ var ui = {
     serverLabel: null,
     serverBox: null,
     loginButton: null,
+
     createButton: null,
     lobbyTable: null,
+
+    gameNameLabel: null,
+    gameNameBox: null,
+    gameNameButton: null,
+    gamePlayerLabel: null,
+    gamePlayerList: null,
+    exitButton: null,
+
     chatLabel: null,
     chatBox: null,
     messagesScrollArea: null
@@ -46,10 +55,58 @@ function initUi() {
 
     ui.createButton = new Button(10, 10, 'Create Game');
     ui.createButton.visible = false;
+    ui.createButton.handleMouseClick = function(x, y) {
+        ui.createButton.visible = false;
+        ui.lobbyTable.visible = false;
+
+        ui.gameNameLabel.visible = true;
+        ui.gameNameBox.visible = true;
+        ui.gameNameButton.visible = true;
+        ui.exitButton.visible = true;
+
+        return true;
+    };
 
     ui.lobbyTable = new Table(10, 38, 500);
     ui.lobbyTable.emptyText = 'No games found';
     ui.lobbyTable.visible = false;
+
+    ui.gameNameLabel = new Label(10, 38, 'Game Name: ');
+    ui.gameNameLabel.visible = false;
+    ui.gameNameBox = new Textbox(ui.gameNameLabel.width + 10, 35, 200, 20);
+    ui.gameNameBox.visible = false;
+    ui.gameNameBox.submitHandler = function(msg) {
+        createGame(msg);
+    };
+    ui.gameNameButton = new Button(ui.gameNameBox.x + ui.gameNameBox.width + 10, 35, 'Create');
+    ui.gameNameButton.visible = false;
+    ui.gameNameButton.handleMouseClick = function(x, y) {
+        createGame(ui.gameNameBox.text);
+        return true;
+    };
+
+    ui.gamePlayerLabel = new Label(10, 38, '');
+    ui.gamePlayerLabel.visible = false;
+    ui.gamePlayerList = new Label(10, 58, '');
+    ui.gamePlayerList.visible = false;
+
+    ui.exitButton = new Button(10, 10, 'Exit Game');
+    ui.exitButton.visible = false;
+    ui.exitButton.handleMouseClick = function(x, y) {
+        ui.gameNameLabel.visible = false;
+        ui.gameNameBox.visible = false;
+        ui.gameNameButton.visible = false;
+        ui.gamePlayerLabel.visible = false;
+        ui.gamePlayerList.visible = false;
+        ui.exitButton.visible = false;
+
+        ui.createButton.visible = true;
+        ui.lobbyTable.visible = true;
+
+        // TODO: Leave lobby
+
+        return true;
+    };
 
     ui.chatLabel = new Label(550, 13, 'Chat: ');
     ui.chatLabel.visible = false;
@@ -62,6 +119,20 @@ function initUi() {
     var messagesLabel = new FixedWidthLabel(550, 38, 384, '');
     ui.messagesScrollArea = new ScrollArea(550, 38, 400, 300, messagesLabel);
     ui.messagesScrollArea.visible = false;
+}
+
+function createGame(gameName) {
+    ui.gameNameLabel.visible = false;
+    ui.gameNameBox.visible = false;
+    ui.gameNameButton.visible = false;
+
+    ui.gamePlayerLabel.visible = true;
+    ui.gamePlayerList.visible = true;
+
+    ui.gamePlayerLabel.setText('Player List for \'' + gameName + '\'');
+    ui.gameNameLabel.setText(state.playerName + '\n' + state.playerName);
+
+    // TODO: Create game
 }
 
 function setupLobby(canvasElement, gameName) {
