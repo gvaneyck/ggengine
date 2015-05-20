@@ -33,6 +33,16 @@ var ui = {
     messagesScrollArea: null
 };
 
+function setupLobby(canvasElement, gameName) {
+    state.gameName = gameName;
+
+    initUi();
+
+    uiManager = new UIManager(canvasElement);
+    uiManager.addElements(ui);
+    //uiManager.onresize = loadGameState;
+}
+
 function initUi() {
     ui.generalLabel = new Label(10, 33, '');
 
@@ -56,14 +66,7 @@ function initUi() {
     ui.createButton = new Button(10, 10, 'Create Game');
     ui.createButton.visible = false;
     ui.createButton.handleMouseClick = function(x, y) {
-        ui.createButton.visible = false;
-        ui.lobbyTable.visible = false;
-
-        ui.gameNameLabel.visible = true;
-        ui.gameNameBox.visible = true;
-        ui.gameNameButton.visible = true;
-        ui.exitButton.visible = true;
-
+        startCreateGame();
         return true;
     };
 
@@ -93,18 +96,7 @@ function initUi() {
     ui.exitButton = new Button(10, 10, 'Exit Game');
     ui.exitButton.visible = false;
     ui.exitButton.handleMouseClick = function(x, y) {
-        ui.gameNameLabel.visible = false;
-        ui.gameNameBox.visible = false;
-        ui.gameNameButton.visible = false;
-        ui.gamePlayerLabel.visible = false;
-        ui.gamePlayerList.visible = false;
-        ui.exitButton.visible = false;
-
-        ui.createButton.visible = true;
-        ui.lobbyTable.visible = true;
-
-        // TODO: Leave lobby
-
+        leaveGame();
         return true;
     };
 
@@ -121,6 +113,23 @@ function initUi() {
     ui.messagesScrollArea.visible = false;
 }
 
+function login(nickname, host) {
+    websocket = new ReconnectingWebSocket(host);
+    websocket.connect();
+    websocket.onmessage = onMessage;
+    sendCmd({cmd: 'setName', name: nickname});
+}
+
+function startCreateGame() {
+    ui.createButton.visible = false;
+    ui.lobbyTable.visible = false;
+
+    ui.gameNameLabel.visible = true;
+    ui.gameNameBox.visible = true;
+    ui.gameNameButton.visible = true;
+    ui.exitButton.visible = true;
+}
+
 function createGame(gameName) {
     ui.gameNameLabel.visible = false;
     ui.gameNameBox.visible = false;
@@ -135,21 +144,18 @@ function createGame(gameName) {
     // TODO: Create game
 }
 
-function setupLobby(canvasElement, gameName) {
-    state.gameName = gameName;
+function leaveGame() {
+    ui.gameNameLabel.visible = false;
+    ui.gameNameBox.visible = false;
+    ui.gameNameButton.visible = false;
+    ui.gamePlayerLabel.visible = false;
+    ui.gamePlayerList.visible = false;
+    ui.exitButton.visible = false;
 
-    initUi();
+    ui.createButton.visible = true;
+    ui.lobbyTable.visible = true;
 
-    uiManager = new UIManager(canvasElement);
-    uiManager.addElements(ui);
-    //uiManager.onresize = loadGameState;
-}
-
-function login(nickname, host) {
-    websocket = new ReconnectingWebSocket(host);
-    websocket.connect();
-    websocket.onmessage = onMessage;
-    sendCmd({cmd: 'setName', name: nickname});
+    // TODO: Leave game (if in one)
 }
 
 /// Web sockets ///
