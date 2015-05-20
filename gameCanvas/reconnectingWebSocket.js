@@ -1,5 +1,6 @@
 function ReconnectingWebSocket(url) {
     this.url = url;
+    this.pendingMessages = [];
 }
 
 ReconnectingWebSocket.prototype.connect = function() {
@@ -16,10 +17,16 @@ ReconnectingWebSocket.prototype._onOpen = function(e) {
     if (this.onopen != undefined) {
         this.onopen(e);
     }
+    if (this.pendingMessages.length > 0) {
+        for (var idx in this.pendingMessages) {
+            this.send(this.pendingMessages[idx]);
+        }
+        this.pendingMessages = [];
+    }
 };
 
 ReconnectingWebSocket.prototype._onMessage = function(e) {
-    console.log('MESSAGE: ' + e.data);
+    console.log('RECV: ' + e.data);
     if (this.onmessage != undefined) {
         this.onmessage(e);
     }
@@ -41,8 +48,11 @@ ReconnectingWebSocket.prototype._onClose = function(e) {
 };
 
 ReconnectingWebSocket.prototype.send = function(data) {
-    console.log(data);
     if (this.websocket.readyState == WebSocket.OPEN) {
+        console.log('SEND: ' + data);
         this.websocket.send(data);
+    }
+    else {
+        this.pendingMessages.push(data);
     }
 };

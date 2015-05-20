@@ -127,6 +127,18 @@ UIManager.prototype.addElement = function(element) {
 };
 
 
+UIManager.prototype.addElements = function(elements) {
+    for (var key in elements) {
+        if (key instanceof UIElement) {
+            this.addElement(key);
+        }
+        else if (elements[key] instanceof UIElement) {
+            this.addElement(elements[key]);
+        }
+    }
+};
+
+
 UIManager.prototype.mouseDownHandler = function(e) {
     e.preventDefault();
     var xy = getCursorPosition(e, this.canvas);
@@ -635,12 +647,11 @@ ScrollArea.prototype.handleMouseWheel = function(yDelta) {
 
 /// Button ///
 
-function Button(x, y, width, height, text) {
-    UIElement.call(this, x, y, width, height);
-    this.text = text;
+function Button(x, y, text) {
+    Label.call(this, x, y, text);
 }
 
-Button.prototype = Object.create(UIElement.prototype);
+Button.prototype = Object.create(Label.prototype);
 Button.prototype.constructor = Button;
 
 Button.prototype.draw = function(context) {
@@ -649,7 +660,7 @@ Button.prototype.draw = function(context) {
     context.fillText(this.text, this.x + 3, this.y + 15);
 
     context.beginPath();
-    context.rect(this.x, this.y, this.width, this.height);
+    context.rect(this.x, this.y, this.width + 6, this.height + 6);
     context.lineWidth = 1;
     context.strokeStyle = 'black';
     context.stroke();

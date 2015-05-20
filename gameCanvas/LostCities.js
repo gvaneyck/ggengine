@@ -206,13 +206,13 @@ function initGame(canvasElement) {
         sendCmd({cmd: 'setName', name: msg});
     };
 
-    loginButton = new Button(nameBox.x + nameBox.width + 10, 10, 41, 20, 'Login');
+    loginButton = new Button(nameBox.x + nameBox.width + 10, 10, 'Login');
     loginButton.handleMouseClick = function(x, y) {
         sendCmd({cmd: 'setName', name: nameBox.text});
         return false;
     };
 
-    createButton = new Button(10, 10, 20, 20, 'Create Game');
+    createButton = new Button(10, 10, 'Create Game');
     createButton.visible = false;
 
     lobbyTable = new Table(10, 38, 500);
