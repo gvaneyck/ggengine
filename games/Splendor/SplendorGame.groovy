@@ -11,7 +11,7 @@ class SplendorGame extends Game {
         gs.decks = [[], [], []]
 
         def firstLine = true
-        new File('splendor.csv').eachLine { line ->
+        new File('games/Splendor/splendor.csv').eachLine { line ->
             if (firstLine) {
                 firstLine = false
                 return
