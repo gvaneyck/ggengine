@@ -27,8 +27,11 @@ public class GameManager {
     public Random rand = internalRand.getRand();
 
     public GameManager() {
-        gs = new HashMap<String, Object>();
-        ui = new ConsoleUI();
+        this(new HashMap<String, Object>(), new ConsoleUI());
+    }
+
+    public GameManager(Map<String, Object> gs) {
+        this(gs, new ConsoleUI());
     }
 
     public GameManager(Map<String, Object> gs, GGui ui) {
@@ -151,6 +154,7 @@ public class GameManager {
             actions.get(0).invoke();
         }
         else {
+//            getGameState(1);
             Action action = ui.resolveChoice(actions);
             action.invoke();
         }
