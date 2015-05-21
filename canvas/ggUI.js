@@ -11,6 +11,7 @@
 // - Linking in game elements -> via drag or shift/ctrl click
 // - Dirty rectangles drawing
 // - Voice chat?
+// - If same name, reconnecting to multiple games and/or multiple players in same game
 
 
 // Event handlers:
@@ -287,6 +288,11 @@ UIElement.prototype.highlight = function(context) {
 /// Label ///
 
 function Label(x, y, text) {
+    if (y == undefined) {
+        text = x;
+        x = 0;
+        y = 0;
+    }
     UIElement.call(this, x, y, 0, 0);
     this.onSizeChange = function() { };
     this.setText(text);
@@ -678,7 +684,44 @@ function Table(x, y, width) {
 Table.prototype = Object.create(UIElement.prototype);
 Table.prototype.constructor = Table;
 
-Table.prototype.onSizeChange = function() { };
+Table.prototype.onCellClick = function(row, col) { return false; };
+
+Table.prototype.calcWidths = function() {
+    var maxWidths = [];
+    for (var i = 0; i < this.elements.length; i++) {
+        var row = this.elements[i];
+        for (var j = 0; j < row.length; j++) {
+            if (maxWidths[j] == undefined || maxWidths[j] < row[j].width) {
+                maxWidths[j] = row[j].width
+            }
+        }
+    }
+
+    // Fix last column width
+    var xOff = 0;
+    for (var i = 0; i < maxWidths.length - 1; i++) {
+        xOff += maxWidths[i] - 6;
+    }
+    maxWidths[maxWidths.length - 1] = this.width - xOff - 6;
+
+    return maxWidths
+};
+
+Table.prototype.handleMouseClick = function(x, y) {
+    var maxWidths = this.calcWidths();
+    var row = Math.floor((y - this.y) / 20);
+    var col = 0;
+    var xOff = x - this.x;
+    for (var i = 0; i < maxWidths.length; i++) {
+        xOff -= maxWidths[i] + 6;
+        if (xOff <= 0) {
+            col = i;
+            break;
+        }
+    }
+
+    return this.onCellClick(row, col);
+};
 
 Table.prototype.draw = function(context) {
     this.height = this.elements.length * 20;
@@ -695,17 +738,6 @@ Table.prototype.draw = function(context) {
     context.strokeStyle = 'black';
     context.stroke();
 
-    // Calculate widths
-    var maxWidths = [];
-    for (var i = 0; i < this.elements.length; i++) {
-        var row = this.elements[i];
-        for (var j = 0; j < row.length; j++) {
-            if (maxWidths[j] == undefined || maxWidths[j] < row[j].width) {
-                maxWidths[j] = row[j].width
-            }
-        }
-    }
-
     // Draw row lines
     var yOff = 20;
     for (var i = 0; i < this.elements.length - 1; i++) {
@@ -717,6 +749,7 @@ Table.prototype.draw = function(context) {
     }
 
     // Draw col lines
+    var maxWidths = this.calcWidths();
     var xOff = 0;
     for (var i = 0; i < maxWidths.length - 1; i++) {
         xOff += maxWidths[i] + 6;
@@ -725,9 +758,6 @@ Table.prototype.draw = function(context) {
         context.lineTo(this.x + xOff, this.y + this.height);
         context.stroke();
     }
-
-    // Fix last column width
-    maxWidths[maxWidths.length - 1] = this.width - xOff - 6;
 
     // Draw elements
     var yPos = this.y + 3;

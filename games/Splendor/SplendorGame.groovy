@@ -108,9 +108,9 @@ class SplendorGame extends Game {
         }
 
         if (curp.stash.size() < 3) {
-            actions << new Action(cur, this, 'stashRandomCard', [0])
-            actions << new Action(cur, this, 'stashRandomCard', [1])
-            actions << new Action(cur, this, 'stashRandomCard', [2])
+            if (gs.decks[0].size() > 0) { actions << new Action(cur, this, 'stashRandomCard', [0]) }
+            if (gs.decks[1].size() > 0) { actions << new Action(cur, this, 'stashRandomCard', [1]) }
+            if (gs.decks[2].size() > 0) { actions << new Action(cur, this, 'stashRandomCard', [2]) }
         }
 
         gs.bank.each { color, amt ->
@@ -154,7 +154,10 @@ class SplendorGame extends Game {
         curp.prod[card.gem]++
         curp.poitns += card.points
 
-        gs.markets[tier][idx] = gs.decks[tier].remove(0)
+        gs.markets[tier][idx] = null
+        if (gs.decks[tier].size() > 0) {
+            gs.decks[tier].remove(0)
+        }
     }
 
     def stashCard(tier, idx) {
@@ -166,6 +169,11 @@ class SplendorGame extends Game {
         if (gs.bank.gold > 0) {
             gs.bank.gold--
             curp.bank.gold++
+        }
+
+        gs.markets[tier][idx] = null
+        if (gs.decks[tier].size() > 0) {
+            gs.decks[tier].remove(0)
         }
     }
 

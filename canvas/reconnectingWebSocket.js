@@ -41,6 +41,7 @@ ReconnectingWebSocket.prototype._onError = function(e) {
 
 ReconnectingWebSocket.prototype._onClose = function(e) {
     console.log('CLOSE');
+    this.pendingMessages = [];
     if (this.onclose != undefined) {
         this.onclose(e);
     }

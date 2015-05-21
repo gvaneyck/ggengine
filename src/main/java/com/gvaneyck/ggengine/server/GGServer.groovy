@@ -17,7 +17,7 @@ public class GGServer extends WebSocketServer {
     def players = [:] // String -> Player
     def lobbies = [:] // String -> Lobby
 
-    def gameInstance
+    def gameInstances = [:]
 
     public GGServer(String gameDir, String game) throws UnknownHostException {
         this(gameDir, game, 9003, new Draft_17())
@@ -29,9 +29,6 @@ public class GGServer extends WebSocketServer {
         this.game = game
 
         lobbies['General'] = new Lobby(name: 'General')
-
-        gameInstance = new GameInstance('foobar')
-        gameInstance.playerIds = ['Jabe1': 1, 'Jabe2': 2]
     }
 
     @Override
@@ -48,6 +45,10 @@ public class GGServer extends WebSocketServer {
         players.remove(player.name)
         player.lobbies.each {
             it.removePlayer(player)
+            if (it.name != 'General' && it.players.isEmpty()) {
+                lobbies.remove(it.name)
+                sendToAll([cmd: 'lobbyDestroy', name: it.name])
+            }
         }
     }
 
@@ -73,7 +74,7 @@ public class GGServer extends WebSocketServer {
                     player.send([cmd: 'nameSelect', success: true, name: name])
                     player.send([cmd: 'lobbyList', names: lobbies.keySet()])
                     lobbies['General'].addPlayer(player)
-                    gameInstance.doReconnect(player)
+                    if (gameInstances.containsKey(player.name)) { gameInstances[player.name].doReconnect(player) }
                     return true
                 }
                 else {
@@ -103,11 +104,26 @@ public class GGServer extends WebSocketServer {
                     return false
                 }
 
+                if (lobby.maxSize == lobby.players.size()) {
+                    return false
+                }
+
                 lobby.addPlayer(player)
                 return true
             },
+            leaveLobby: { cmd, player ->
+                Lobby lobby = lobbies[cmd.name]
+                if (lobby != null) {
+                    lobby.removePlayer(player)
+                    if (lobby.name != 'General' && lobby.players.isEmpty()) {
+                        lobbies.remove(lobby.name)
+                        sendToAll([cmd: 'lobbyDestroy', name: lobby.name])
+                    }
+                }
+                return true
+            },
             msg: { cmd, player ->
-                def target = cmd.target
+                def target = player.currentChannel //cmd.target
                 if (players.containsKey(target)) {
                     Player to = players.get(target)
                     to.sendMsg(player.name, to.name, cmd.msg)
@@ -121,8 +137,16 @@ public class GGServer extends WebSocketServer {
                 }
                 return true
             },
-            createGame: { cmd, player ->
-
+            startGame: { cmd, player ->
+                def lobby = lobbies[cmd.name]
+                if (lobby.players.size() >=2 && lobby.players.size() <= 2) {
+                    def gameInstance = new GameInstance(lobby)
+                    lobby.players.each {
+                        gameInstances[it.name] = gameInstance
+                    }
+                    return true
+                }
+                return false
             },
             action: { cmd, player ->
                 gameInstance.setChoice(player, cmd.action, cmd.args?.toArray())

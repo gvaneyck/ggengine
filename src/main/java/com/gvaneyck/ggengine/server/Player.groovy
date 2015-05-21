@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat
 
 public class Player {
     def name
+    def currentChannel
     def lobbies = []
     WebSocket conn
 

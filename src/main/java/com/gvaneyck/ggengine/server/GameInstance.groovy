@@ -10,33 +10,38 @@ public class GameInstance implements Runnable, GGui {
     static gss = new GameStateSerializer()
 
     def name
+    def game
     def gameManager
     Thread gameThread
 
-    def playerIds = [:]
-    def players = [:]
+    def playerNameToId = [:]
+    def idToPlayer = [:]
 
     def actionOptions
     def choice
 
-    public GameInstance(name) {
-        this.name = name
+    public GameInstance(Lobby lobby) {
+        this.game = lobby.game
+        this.name = lobby.name
+        int i = 1
+        idToPlayer = lobby.players.collectEntries { [ i++, it ] }
+        playerNameToId = idToPlayer.collectEntries { [ it.value.name, it.key ] }
         gameThread = new Thread(this)
         gameThread.start()
     }
 
     public doReconnect(player) {
-        if (!playerIds.containsKey(player.name)) {
+        if (!playerNameToId.containsKey(player.name)) {
             return
         }
 
-        def playerId = playerIds[player.name]
-        players[playerId] = player
+        def playerId = playerNameToId[player.name]
+        idToPlayer[playerId] = player
         showChoicesToPlayer(playerId, player)
     }
 
     public setChoice(player, action, args) {
-        def playerId = playerIds[player.name]
+        def playerId = playerNameToId[player.name]
         if (playerId == null) {
             return
         }
@@ -62,7 +67,7 @@ public class GameInstance implements Runnable, GGui {
     public Action resolveChoice(List<Action> actions) {
         synchronized (gameThread) {
             actionOptions = actions
-            players.each { id, player ->
+            idToPlayer.each { id, player ->
                 showChoicesToPlayer(id, player)
             }
 
@@ -88,8 +93,8 @@ public class GameInstance implements Runnable, GGui {
 
     @Override
     void run() {
-        gameManager = new GameManager([:], this)
-        gameManager.loadGame('games', 'LostCities')
+        gameManager = new GameManager([players: playerNameToId.size()], this)
+        gameManager.loadGame('games', game)
         gameManager.gameLoop()
     }
 }

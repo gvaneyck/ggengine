@@ -26,6 +26,7 @@ var ui = {
     gameNameButton: null,
     gamePlayerLabel: null,
     gamePlayerList: null,
+    startButton: null,
     exitButton: null,
 
     chatLabel: null,
@@ -69,15 +70,20 @@ function initUi() {
 
     ui.lobbyTable = new Table(10, 38, 500);
     ui.lobbyTable.emptyText = 'No games found';
+    ui.lobbyTable.onCellClick = function(row, col) {
+        if (col == 0 && row > 0) {
+            sendCmd({cmd: 'joinLobby', name: ui.lobbyTable.elements[row][2].text })
+        }
+    };
 
     ui.gameNameLabel = new Label(10, 38, 'Game Name: ');
     ui.gameNameBox = new Textbox(ui.gameNameLabel.width + 10, 35, 200, 20);
     ui.gameNameBox.submitHandler = function(msg) {
-        createGame(msg);
+        createGameLobby(msg);
     };
     ui.gameNameButton = new Button(ui.gameNameBox.x + ui.gameNameBox.width + 10, 35, 'Create');
     ui.gameNameButton.handleMouseClick = function(x, y) {
-        createGame(ui.gameNameBox.text);
+        createGameLobby(ui.gameNameBox.text);
         return true;
     };
 
@@ -87,7 +93,13 @@ function initUi() {
     ui.exitButton = new Button(10, 10, 'Exit Game');
     ui.exitButton.handleMouseClick = function(x, y) {
         leaveGame();
-        return true;
+        return false;
+    };
+
+    ui.startButton = new Button(ui.exitButton.width + 20, 10, 'Start Game');
+    ui.startButton.handleMouseClick = function(x, y) {
+        startGame();
+        return false;
     };
 
     ui.chatLabel = new Label(550, 13, 'Chat: ');
@@ -120,6 +132,7 @@ function showLoginUI() {
     ui.gamePlayerLabel.visible = false;
     ui.gamePlayerList.visible = false;
     ui.exitButton.visible = false;
+    ui.startButton.visible = false;
     ui.chatLabel.visible = false;
     ui.chatBox.visible = false;
     ui.messagesScrollArea.visible = false;
@@ -145,19 +158,8 @@ function startCreateGame() {
     ui.exitButton.visible = true;
 }
 
-function createGame(gameName) {
-    ui.gameNameLabel.visible = false;
-    ui.gameNameBox.visible = false;
-    ui.gameNameButton.visible = false;
-
-    ui.gamePlayerLabel.visible = true;
-    ui.gamePlayerList.visible = true;
-
-    ui.gamePlayerLabel.setText('Player List for \'' + gameName + '\'');
-    ui.gameNameLabel.setText(state.playerName + '\n' + state.playerName);
-
-    sendCmd({ cmd: "createGame", name: gameName });
-    // TODO: Start game
+function createGameLobby(lobbyName) {
+    sendCmd({ cmd: "makeLobby", name: lobbyName, game: state.gameName, maxSize: 4 });
 }
 
 function leaveGame() {
@@ -167,11 +169,16 @@ function leaveGame() {
     ui.gamePlayerLabel.visible = false;
     ui.gamePlayerList.visible = false;
     ui.exitButton.visible = false;
+    ui.startButton.visible = false;
 
     ui.createButton.visible = true;
     ui.lobbyTable.visible = true;
 
-    // TODO: Leave game (if in one)
+    sendCmd({ cmd: "leaveLobby", name: state.gameName });
+}
+
+function startGame() {
+    sendCmd({ cmd: "startGame", name: state.gameName });
 }
 
 /// Web sockets ///
@@ -222,11 +229,29 @@ function onMessage(evt) {
         state.lobbies[cmd.name] = {name: cmd.name, members: []};
     }
     else if (cmd.cmd == 'lobbyDestroy') {
-        state.lobbies.remove(cmd.name);
+        delete state.lobbies[cmd.name];
     }
     else if (cmd.cmd == 'lobbyJoin') {
         var lobby = state.lobbies[cmd.name];
         lobby.members = lobby.members.concat(cmd.members);
+
+        if (cmd.name != 'General') {
+            ui.gameNameLabel.visible = false;
+            ui.gameNameBox.visible = false;
+            ui.gameNameButton.visible = false;
+            ui.createButton.visible = false;
+            ui.lobbyTable.visible = false;
+
+            ui.gamePlayerLabel.visible = true;
+            ui.gamePlayerList.visible = true;
+            ui.startButton.visible = true;
+            ui.exitButton.visible = true;
+
+            ui.gamePlayerLabel.setText('Player List for \'' + cmd.name + '\'');
+            ui.gamePlayerList.setText(lobby.members.join('\n'));
+
+            state.gameName = cmd.name;
+        }
     }
     else if (cmd.cmd == 'lobbyLeave') {
         var lobby = state.lobbies[cmd.name];
@@ -236,6 +261,7 @@ function onMessage(evt) {
         else {
             lobby.members.splice(lobby.members.indexOf(cmd.member), 1);
         }
+        ui.gamePlayerList.setText(lobby.members.join('\n'));
     }
     else if (cmd.cmd == 'chat') {
         var text = ui.messagesScrollArea.element.text;
@@ -245,6 +271,22 @@ function onMessage(evt) {
         text += formatChatLine(cmd);
         ui.messagesScrollArea.element.setText(text);
     }
+
+    if (cmd.cmd == 'lobbyList' || cmd.cmd == 'lobbyCreate' || cmd.cmd == 'lobbyDestroy') {
+        var games = [];
+        for (var name in state.lobbies) {
+            if (name != 'General') {
+                games.push([new Label('Click to Join'), new Label(state.gameName), new Label(name)])
+            }
+        }
+
+        if (games.length > 0) {
+            games.splice(0, 0, [new Label('Join'), new Label('Game'), new Label('Name')])
+        }
+
+        ui.lobbyTable.elements = games;
+    }
+
     uiManager.dirty = true;
 }
 
