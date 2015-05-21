@@ -1,6 +1,7 @@
 package Splendor
 
 import com.gvaneyck.ggengine.gamestate.GameStateFilter
+import groovy.json.JsonException
 import groovy.json.JsonOutput
 
 class GSF extends GameStateFilter {
@@ -25,6 +26,7 @@ class GSF extends GameStateFilter {
 
 //        println "Player " + player
 //        println JsonOutput.prettyPrint(JsonOutput.toJson(temp))
+//        println player + ' ' + JsonException.toJson(temp)
         return temp
     }
 }

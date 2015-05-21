@@ -304,11 +304,13 @@ function Label(x, y, text) {
         y = 0;
     }
     UIElement.call(this, x, y, 0, 0);
-    this.onSizeChange = function() { };
-    this.setText(text);
+
     this.fontSize = '12pt';
     this.font = 'Calibri';
     this.color = 'black';
+
+    this.onSizeChange = function() { };
+    this.setText(text);
 }
 
 Label.prototype = Object.create(UIElement.prototype);
@@ -943,11 +945,12 @@ function Card(data, x, y, width, height) {
     if (data != undefined) {
         if (data.value != undefined) { this.value = data.value; }
         if (data.value2 != undefined) { this.value2 = data.value2; }
+        if (data.value3 != undefined) { this.value3 = data.value3; }
         if (data.color != undefined) { this.color = data.color; }
     }
     this.curX = x;
     this.curY = y;
-    this.draggable = true;
+    this.draggable = false;
     this.cardBack = null;
 }
 
@@ -992,6 +995,18 @@ Card.prototype.draw = function(context) {
         var textWidth = context.measureText(value2).width;
         context.fillText(value2, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
         context.strokeText(value2, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
+    }
+
+    if (this.value3 != undefined) {
+        context.font = '32pt Calibri';
+        context.fillStyle = 'white';
+        context.strokeStyle = 'black';
+        context.lineWidth = 1;
+        var textWidth = context.measureText(this.value3).width;
+        var xOff = this.curX + (this.width - textWidth) / 2;
+        var yOff = this.curY + this.height / 2 + 10;
+        context.fillText(this.value3, xOff, yOff);
+        context.strokeText(this.value3, xOff, yOff);
     }
 };
 
