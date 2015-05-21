@@ -323,6 +323,24 @@ function renderTest() {
         offset += 110;
     }
 
+    offset = 10;
+    for (var tier in gs.markets) {
+        var market = gs.markets[tier];
+
+        var offset2 = 200;
+        for (var i = 0; i < 4; i++) {
+            var card = new Card({}, offset2, offset, 210, 210);
+            var img = new Picture('images/Splendor/' + market[i].id + '.png');
+            card.setCardBack(img);
+            uiManager.addElement(card);
+
+            offset2 += 220;
+        }
+        var card = new Card({value: 'Tier ' + (1 + parseInt(tier)) + ', ' + gs.decks[tier] + ' left'}, offset2, offset, 235, 210);
+        uiManager.addElement(card);
+
+        offset += 220;
+    }
 }
 
 //function gameMessage(evt) {
