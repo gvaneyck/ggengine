@@ -34,12 +34,10 @@ var ui = {
 };
 
 function setupLobby(canvasElement, gameName) {
+    uiManager = new UIManager(canvasElement);
     state.gameName = gameName;
 
     initUi();
-
-    uiManager = new UIManager(canvasElement);
-    uiManager.addElements(ui);
     //uiManager.onresize = loadGameState;
 }
 
@@ -64,7 +62,6 @@ function initUi() {
     };
 
     ui.createButton = new Button(10, 10, 'Create Game');
-    ui.createButton.visible = false;
     ui.createButton.handleMouseClick = function(x, y) {
         startCreateGame();
         return true;
@@ -72,50 +69,68 @@ function initUi() {
 
     ui.lobbyTable = new Table(10, 38, 500);
     ui.lobbyTable.emptyText = 'No games found';
-    ui.lobbyTable.visible = false;
 
     ui.gameNameLabel = new Label(10, 38, 'Game Name: ');
-    ui.gameNameLabel.visible = false;
     ui.gameNameBox = new Textbox(ui.gameNameLabel.width + 10, 35, 200, 20);
-    ui.gameNameBox.visible = false;
     ui.gameNameBox.submitHandler = function(msg) {
         createGame(msg);
     };
     ui.gameNameButton = new Button(ui.gameNameBox.x + ui.gameNameBox.width + 10, 35, 'Create');
-    ui.gameNameButton.visible = false;
     ui.gameNameButton.handleMouseClick = function(x, y) {
         createGame(ui.gameNameBox.text);
         return true;
     };
 
     ui.gamePlayerLabel = new Label(10, 38, '');
-    ui.gamePlayerLabel.visible = false;
     ui.gamePlayerList = new Label(10, 58, '');
-    ui.gamePlayerList.visible = false;
 
     ui.exitButton = new Button(10, 10, 'Exit Game');
-    ui.exitButton.visible = false;
     ui.exitButton.handleMouseClick = function(x, y) {
         leaveGame();
         return true;
     };
 
     ui.chatLabel = new Label(550, 13, 'Chat: ');
-    ui.chatLabel.visible = false;
     ui.chatBox = new Textbox(ui.chatLabel.width + 550, 10, 400 - ui.chatLabel.width, 20);
-    ui.chatBox.visible = false;
     ui.chatBox.submitHandler = function(msg) {
         sendCmd({cmd: 'msg', msg: msg, target: 'General'});
     };
 
     var messagesLabel = new FixedWidthLabel(550, 38, 384, '');
     ui.messagesScrollArea = new ScrollArea(550, 38, 400, 300, messagesLabel);
+
+    showLoginUI();
+
+    uiManager.addElements(ui);
+}
+
+function showLoginUI() {
+    ui.generalLabel.visible = true;
+    ui.nameLabel.visible = true;
+    ui.nameBox.visible = true;
+    ui.serverLabel.visible = true;
+    ui.serverBox.visible = true;
+    ui.loginButton.visible = true;
+
+    ui.createButton.visible = false;
+    ui.lobbyTable.visible = false;
+    ui.gameNameLabel.visible = false;
+    ui.gameNameBox.visible = false;
+    ui.gameNameButton.visible = false;
+    ui.gamePlayerLabel.visible = false;
+    ui.gamePlayerList.visible = false;
+    ui.exitButton.visible = false;
+    ui.chatLabel.visible = false;
+    ui.chatBox.visible = false;
     ui.messagesScrollArea.visible = false;
+
+    uiManager.dirty = true;
 }
 
 function login(nickname, host) {
     websocket = new ReconnectingWebSocket(host);
     websocket.connect();
+    websocket.onclose = onClose;
     websocket.onmessage = onMessage;
     sendCmd({cmd: 'setName', name: nickname});
 }
@@ -141,7 +156,8 @@ function createGame(gameName) {
     ui.gamePlayerLabel.setText('Player List for \'' + gameName + '\'');
     ui.gameNameLabel.setText(state.playerName + '\n' + state.playerName);
 
-    // TODO: Create game
+    sendCmd({ cmd: "createGame", name: gameName });
+    // TODO: Start game
 }
 
 function leaveGame() {
@@ -159,6 +175,19 @@ function leaveGame() {
 }
 
 /// Web sockets ///
+
+function onClose(evt) {
+    for (var key in ui) {
+        ui[key].visible = false;
+    }
+
+    ui.generalLabel.setText('You were disconnected from the server.  Reconnecting...');
+    ui.generalLabel.y = 10;
+    ui.generalLabel.visible = true;
+    uiManager.dirty = true;
+
+    sendCmd({cmd: 'setName', name: state.playerName});
+}
 
 function onMessage(evt) {
     var cmd = JSON.parse(evt.data);

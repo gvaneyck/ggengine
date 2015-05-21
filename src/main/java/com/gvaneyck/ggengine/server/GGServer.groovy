@@ -57,8 +57,13 @@ public class GGServer extends WebSocketServer {
 
         Player player = connections[webSocket]
         def cmd = new JsonSlurper().parseText(s)
-        switch (cmd.cmd) {
-            case 'setName':
+        if (commands.containsKey(cmd.cmd)) {
+            commands[cmd.cmd](cmd, player)
+        }
+    }
+
+    def commands = [
+            setName: { cmd, player ->
                 def name = cmd.name
                 name = name.trim()
                 name = name.replaceAll('[^a-zA-Z0-9 ]', '')
@@ -69,15 +74,16 @@ public class GGServer extends WebSocketServer {
                     player.send([cmd: 'lobbyList', names: lobbies.keySet()])
                     lobbies['General'].addPlayer(player)
                     gameInstance.doReconnect(player)
+                    return true
                 }
                 else {
                     player.send([cmd: 'nameSelect', success: false])
+                    return false
                 }
-                break
-
-            case 'makeLobby':
+            },
+            makeLobby: { cmd, player ->
                 if (lobbies.containsKey(cmd.name)) {
-                    break
+                    return false
                 }
 
                 Lobby lobby = new Lobby(cmd)
@@ -85,48 +91,43 @@ public class GGServer extends WebSocketServer {
                 sendToAll([cmd: 'lobbyCreate', name: lobby.name])
 
                 lobby.addPlayer(player)
-                break
-
-            case 'joinLobby':
+                return true
+            },
+            joinLobby: { cmd, player ->
                 if (!lobbies.containsKey(cmd.name)) {
-                    break
+                    return false
                 }
 
                 Lobby lobby = lobbies[cmd.name]
                 if (lobby.password && cmd.password != lobby.password) {
-                    break
+                    return false
                 }
 
                 lobby.addPlayer(player)
-                break
-
-            case 'msg':
+                return true
+            },
+            msg: { cmd, player ->
                 def target = cmd.target
                 if (players.containsKey(target)) {
                     Player to = players.get(target)
                     to.sendMsg(player.name, to.name, cmd.msg)
                     player.sendMsg(player.name, to.name, cmd.msg)
-                } else if (lobbies.containsKey(target)) {
+                }
+                else if (lobbies.containsKey(target)) {
                     lobbies[target].sendMsg(player.name, cmd.msg)
                 }
-                break
+                else {
+                    return false
+                }
+                return true
+            },
+            createGame: { cmd, player ->
 
-            case 'action':
+            },
+            action: { cmd, player ->
                 gameInstance.setChoice(player, cmd.action, cmd.args?.toArray())
-                break
-        }
-//        else if (s.startsWith("startGame")) {
-//            final GGui ggs = this
-//            Thread t = new Thread() {
-//                public void run() {
-//                    GameManager gm = new GameManager(new HashMap<String, Object>(), ggs)
-//                    gm.loadGame(gameDir, game)
-//                    gm.gameLoop()
-//                }
-//            }
-//            t.start()
-//        }
-    }
+            }
+    ]
 
     @Override
     public void onError(WebSocket webSocket, Exception e) {
