@@ -21,6 +21,7 @@ class GSF extends GameStateFilter {
                 gs.decks[2].size()
         ]
         temp.currentPlayer = gs.currentPlayer
+        temp.players = gs.players
 
 //        println "Player " + player
 //        println JsonOutput.prettyPrint(JsonOutput.toJson(temp))

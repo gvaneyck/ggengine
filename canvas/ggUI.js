@@ -12,6 +12,7 @@
 // - Dirty rectangles drawing
 // - Voice chat?
 // - If same name, reconnecting to multiple games and/or multiple players in same game
+// - Image cache
 
 
 // Event handlers:
@@ -938,10 +939,10 @@ Pile.prototype.handleMouseUp = function(x, y) {
 
 function Card(data, x, y, width, height) {
     UIElement.call(this, x, y, width, height);
-    this.value = -1;
     this.color = 'black';
     if (data != undefined) {
         if (data.value != undefined) { this.value = data.value; }
+        if (data.value2 != undefined) { this.value2 = data.value2; }
         if (data.color != undefined) { this.color = data.color; }
     }
     this.curX = x;
@@ -979,16 +980,18 @@ Card.prototype.draw = function(context) {
         context.stroke();
     }
 
-    if (this.value != -1) {
+    if (this.value != undefined) {
         context.font = '32pt Calibri';
         context.fillStyle = 'white';
         context.strokeStyle = 'black';
         context.lineWidth = 1;
         context.fillText(this.value, this.curX + 3, this.curY + 32);
         context.strokeText(this.value, this.curX + 3, this.curY + 32);
-        var textWidth = context.measureText(this.value).width;
-        context.fillText(this.value, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
-        context.strokeText(this.value, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
+
+        var value2 = (this.value2 ? this.value2 : this.value);
+        var textWidth = context.measureText(value2).width;
+        context.fillText(value2, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
+        context.strokeText(value2, this.curX + this.width - textWidth - 3, this.curY + this.height - 5);
     }
 };
 
