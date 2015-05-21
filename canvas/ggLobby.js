@@ -38,7 +38,8 @@ function setupLobby(canvasElement, gameName) {
     uiManager = new UIManager(canvasElement);
     state.gameName = gameName;
 
-    initUi();
+    renderTest();
+    //initUi();
     //uiManager.onresize = loadGameState;
 }
 
@@ -304,6 +305,24 @@ function formatChatLine(chat) {
 
 function sendCmd(cmd) {
     websocket.send(JSON.stringify(cmd));
+}
+
+function renderTest() {
+    var data = JSON.parse('{"cmd":"gs","gs":"{\\"1\\":{\\"bank\\":{\\"red\\":0,\\"green\\":0,\\"blue\\":0,\\"white\\":0,\\"black\\":0,\\"gold\\":0},\\"prod\\":{\\"red\\":0,\\"green\\":0,\\"blue\\":0,\\"white\\":0,\\"black\\":0},\\"points\\":0,\\"devs\\":[],\\"stash\\":[]},\\"2\\":{\\"bank\\":{\\"red\\":0,\\"green\\":0,\\"blue\\":0,\\"white\\":0,\\"black\\":0,\\"gold\\":0},\\"prod\\":{\\"red\\":0,\\"green\\":0,\\"blue\\":0,\\"white\\":0,\\"black\\":0},\\"points\\":0,\\"devs\\":[],\\"stash\\":[]},\\"markets\\":[[{\\"gem\\":\\"white\\",\\"points\\":0,\\"id\\":7,\\"reqs\\":{\\"red\\":0,\\"green\\":0,\\"blue\\":3,\\"white\\":0,\\"black\\":0},\\"tier\\":1},{\\"gem\\":\\"green\\",\\"points\\":0,\\"id\\":20,\\"reqs\\":{\\"red\\":3,\\"green\\":0,\\"blue\\":0,\\"white\\":0,\\"black\\":0},\\"tier\\":1},{\\"gem\\":\\"red\\",\\"points\\":0,\\"id\\":30,\\"reqs\\":{\\"red\\":0,\\"green\\":1,\\"blue\\":1,\\"white\\":1,\\"black\\":1},\\"tier\\":1},{\\"gem\\":\\"white\\",\\"points\\":0,\\"id\\":4,\\"reqs\\":{\\"red\\":1,\\"green\\":2,\\"blue\\":1,\\"white\\":0,\\"black\\":1},\\"tier\\":1}],[{\\"gem\\":\\"red\\",\\"points\\":2,\\"id\\":62,\\"reqs\\":{\\"red\\":0,\\"green\\":0,\\"blue\\":0,\\"white\\":3,\\"black\\":5},\\"tier\\":2},{\\"gem\\":\\"green\\",\\"points\\":2,\\"id\\":57,\\"reqs\\":{\\"red\\":0,\\"green\\":0,\\"blue\\":2,\\"white\\":4,\\"black\\":1},\\"tier\\":2},{\\"gem\\":\\"blue\\",\\"points\\":3,\\"id\\":48,\\"reqs\\":{\\"red\\":0,\\"green\\":0,\\"blue\\":6,\\"white\\":0,\\"black\\":0},\\"tier\\":2},{\\"gem\\":\\"red\\",\\"points\\":3,\\"id\\":60,\\"reqs\\":{\\"red\\":6,\\"green\\":0,\\"blue\\":0,\\"white\\":0,\\"black\\":0},\\"tier\\":2}],[{\\"gem\\":\\"black\\",\\"points\\":4,\\"id\\":84,\\"reqs\\":{\\"red\\":6,\\"green\\":3,\\"blue\\":0,\\"white\\":0,\\"black\\":3},\\"tier\\":3},{\\"gem\\":\\"blue\\",\\"points\\":4,\\"id\\":72,\\"reqs\\":{\\"red\\":0,\\"green\\":0,\\"blue\\":3,\\"white\\":6,\\"black\\":3},\\"tier\\":3},{\\"gem\\":\\"white\\",\\"points\\":4,\\"id\\":76,\\"reqs\\":{\\"red\\":3,\\"green\\":0,\\"blue\\":0,\\"white\\":3,\\"black\\":6},\\"tier\\":3},{\\"gem\\":\\"blue\\",\\"points\\":5,\\"id\\":82,\\"reqs\\":{\\"red\\":0,\\"green\\":0,\\"blue\\":3,\\"white\\":7,\\"black\\":0},\\"tier\\":3}]],\\"bank\\":{\\"red\\":4,\\"green\\":4,\\"blue\\":4,\\"white\\":4,\\"black\\":4,\\"gold\\":5},\\"decks\\":[36,26,16],\\"currentPlayer\\":1}"}');
+    var gs = JSON.parse(data.gs);
+
+    var offset = 10;
+    for (var color in gs.bank) {
+        var amt = gs.bank[color];
+        var card = new Card({value: amt}, 10, offset, 100, 100);
+        var img = new Picture('images/Splendor/' + color + '.png');
+        card.setCardBack(img);
+
+        uiManager.addElement(card);
+
+        offset += 110;
+    }
+
 }
 
 //function gameMessage(evt) {

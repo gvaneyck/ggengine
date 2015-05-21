@@ -97,7 +97,15 @@ UIManager.prototype.sizeWindow = function(e) {
 UIManager.prototype.onresize = function() {};
 
 UIManager.prototype.draw = function() {
-    if (!this.dirty) { return; }
+    var dirty = this.dirty;
+    for (var i = 0; i < this.elements.length; i++) {
+        if (this.elements[i].isDirty()) {
+            dirty = true;
+        }
+    }
+    if (!dirty) {
+        return;
+    }
 
     this.sortElements();
 
@@ -264,6 +272,7 @@ function UIElement(x, y, width, height) {
 UIElement.prototype.scratchPad = document.createElement('canvas').getContext('2d');
 UIElement.prototype.getChildren = function() { return []; };
 UIElement.prototype.getZLevel = function() { return this.zLevel; };
+UIElement.prototype.isDirty = function() { return false; };
 UIElement.prototype.draw = function(context) { };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; return false; };
 UIElement.prototype.setHover = function(hover) { this.hover = hover; return false; };
@@ -296,16 +305,24 @@ function Label(x, y, text) {
     UIElement.call(this, x, y, 0, 0);
     this.onSizeChange = function() { };
     this.setText(text);
+    this.fontSize = '12pt';
+    this.font = 'Calibri';
+    this.color = 'black';
 }
 
 Label.prototype = Object.create(UIElement.prototype);
 Label.prototype.constructor = Label;
 
 Label.prototype.setText = function(text) {
-    this.scratchPad.font = '12pt Calibri';
+    this.text = text;
+    this.measureText();
+};
+
+Label.prototype.measureText = function() {
+    this.scratchPad.font = this.fontSize + ' ' + this.font;
     var maxWidth = 0;
     var height = -6; // Remove padding
-    var lines = text.split("\n");
+    var lines = this.text.split("\n");
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var measure = this.scratchPad.measureText(line);
@@ -316,18 +333,16 @@ Label.prototype.setText = function(text) {
     this.width = maxWidth;
     this.height = height;
 
-    this.text = text;
-
     this.onSizeChange();
 };
 
 Label.prototype.draw = function(context) {
-    context.font = '12pt Calibri';
+    context.font = this.fontSize + ' ' + this.font;
     var lines = this.text.split("\n");
     var yPos = this.y + 12;
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
-        context.fillStyle = 'black';
+        context.fillStyle = this.color;
         context.fillText(line, this.x, yPos);
         yPos += 20;
     }
@@ -786,7 +801,54 @@ Table.prototype.draw = function(context) {
 };
 
 
+/// Picture ///
+
+function Picture(x, y, width, height, path) {
+    if (y == undefined) {
+        this.path = x;
+        UIElement.call(this, 0, 0, 0, 0);
+    }
+    else {
+        this.path = path;
+        UIElement.call(this, x, y, width, height);
+    }
+
+    var _this = this;
+    this.loaded = false;
+    this.img = new Image();
+    this.img.addEventListener('load', function() {
+        _this.loaded = true;
+        _this.dirty = true;
+    }, false);
+    this.img.src = this.path;
+}
+
+Picture.prototype = Object.create(UIElement.prototype);
+Picture.prototype.constructor = Picture;
+
+Picture.prototype.isDirty = function() {
+    return this.dirty;
+};
+
+Picture.prototype.draw = function(context) {
+    this.dirty = false;
+    if (this.loaded) {
+        context.drawImage(this.img, this.x, this.y, this.width, this.height);
+    }
+    else {
+        context.beginPath();
+        context.rect(this.x, this.y, this.width, this.height);
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+    }
+};
+
+
+
+////////////////////////
 /// Game UI elements ///
+////////////////////////
 
 
 /// Pile ///
@@ -879,25 +941,43 @@ function Card(data, x, y, width, height) {
     this.value = -1;
     this.color = 'black';
     if (data != undefined) {
-        this.value = data.value;
-        this.color = data.color;
+        if (data.value != undefined) { this.value = data.value; }
+        if (data.color != undefined) { this.color = data.color; }
     }
     this.curX = x;
     this.curY = y;
     this.draggable = true;
+    this.cardBack = null;
 }
 
 Card.prototype = Object.create(UIElement.prototype);
 Card.prototype.constructor = Card;
 
+Card.prototype.setCardBack = function(cardBack) {
+    this.cardBack = cardBack;
+    this.cardBack.x = this.x;
+    this.cardBack.y = this.y;
+    this.cardBack.width = this.width;
+    this.cardBack.height = this.height;
+};
+
+Card.prototype.isDirty = function() {
+    return (this.cardBack != null && this.cardBack.isDirty());
+};
+
 Card.prototype.draw = function(context) {
-    context.beginPath();
-    context.rect(this.curX, this.curY, this.width, this.height);
-    context.fillStyle = this.color;
-    context.fill();
-    context.lineWidth = 1;
-    context.strokeStyle = 'black';
-    context.stroke();
+    if (this.cardBack) {
+        this.cardBack.draw(context);
+    }
+    else {
+        context.beginPath();
+        context.rect(this.curX, this.curY, this.width, this.height);
+        context.fillStyle = this.color;
+        context.fill();
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+    }
 
     if (this.value != -1) {
         context.font = '32pt Calibri';
