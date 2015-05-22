@@ -12,7 +12,7 @@
 // - Dirty rectangles drawing
 // - Voice chat?
 // - If same name, reconnecting to multiple games and/or multiple players in same game
-// - Image cache
+// - Double encoding game state
 
 
 // Event handlers:
@@ -214,14 +214,19 @@ UIManager.prototype.mouseUpHandler = function(e) {
         }
         if (element.visible && element.focus && isClicked(xy.x, xy.y, element)) {
             var now = new Date().getTime();
-            if (this.lastClick.element == element && now - this.lastClick.time < 500) {
-                if (element.handleMouseDoubleClick(xy.x, xy.y)) { this.dirty = true; }
-                this.lastClick.element = null;
+            if (e.button === 2) {
+                if (element.handleMouseRightClick(xy.x, xy.y)) { this.dirty = true; }
             }
             else {
-                if (element.handleMouseClick(xy.x, xy.y)) { this.dirty = true; }
-                this.lastClick.element = element;
-                this.lastClick.time = now;
+                if (this.lastClick.element == element && now - this.lastClick.time < 500) {
+                    if (element.handleMouseDoubleClick(xy.x, xy.y)) { this.dirty = true; }
+                    this.lastClick.element = null;
+                }
+                else {
+                    if (element.handleMouseClick(xy.x, xy.y)) { this.dirty = true; }
+                    this.lastClick.element = element;
+                    this.lastClick.time = now;
+                }
             }
             handled = true;
         }
@@ -256,6 +261,19 @@ UIManager.prototype.typingHandler = function(e) {
     }
 };
 
+/// Image cache ///
+var imageCache = new function() {
+    var cache = {};
+    this.getImage = function(path) {
+        if (cache[path] == undefined) {
+            var img = new Image();
+            img.src = path;
+            cache[path] = img;
+        }
+        return cache[path];
+    }
+};
+
 
 /// Base class ///
 
@@ -282,6 +300,7 @@ UIElement.prototype.handleMouseHover = function(x, y) { return true; };
 UIElement.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) { return false; };
 UIElement.prototype.handleMouseUp = function(x, y) { return false; };
 UIElement.prototype.handleMouseClick = function(x, y) { return false; };
+UIElement.prototype.handleMouseRightClick = function(x, y) { return false; };
 UIElement.prototype.handleMouseDoubleClick = function(x, y) { return false; };
 UIElement.prototype.handleMouseWheel = function(yDelta) { return false; };
 UIElement.prototype.handleKey = function(e) { return false; };
@@ -816,14 +835,15 @@ function Picture(x, y, width, height, path) {
         UIElement.call(this, x, y, width, height);
     }
 
-    var _this = this;
-    this.loaded = false;
-    this.img = new Image();
-    this.img.addEventListener('load', function() {
-        _this.loaded = true;
-        _this.dirty = true;
-    }, false);
-    this.img.src = this.path;
+    this.img = imageCache.getImage(this.path);
+    this.loaded = this.img.complete;
+    if (!this.loaded) {
+        var _this = this;
+        this.img.addEventListener('load', function () {
+            _this.loaded = true;
+            _this.dirty = true;
+        }, false);
+    }
 }
 
 Picture.prototype = Object.create(UIElement.prototype);

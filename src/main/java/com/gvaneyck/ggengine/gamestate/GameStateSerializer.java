@@ -31,16 +31,18 @@ public class GameStateSerializer {
         Object[] entries = m.entrySet().toArray();
         for (int i = 0; i < entries.length; i++) {
             Map.Entry e = (Map.Entry)entries[i];
-
-            buffer.append('"');
-            buffer.append(e.getKey().toString());
-            buffer.append("\":");
-
             Object value = e.getValue();
-            buffer.append(serialize(value));
 
-            if (i < entries.length - 1) {
-                buffer.append(',');
+            if (value != null) {
+                buffer.append('"');
+                buffer.append(e.getKey().toString());
+                buffer.append("\":");
+
+                buffer.append(serialize(value));
+
+                if (i < entries.length - 1) {
+                    buffer.append(',');
+                }
             }
         }
 

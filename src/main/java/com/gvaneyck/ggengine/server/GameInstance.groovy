@@ -4,6 +4,7 @@ import com.gvaneyck.ggengine.Action
 import com.gvaneyck.ggengine.GameManager
 import com.gvaneyck.ggengine.gamestate.GameStateSerializer
 import com.gvaneyck.ggengine.ui.GGui
+import groovy.json.JsonOutput
 
 public class GameInstance implements Runnable, GGui {
 
@@ -87,7 +88,8 @@ public class GameInstance implements Runnable, GGui {
 
         def playerActions = actionOptions.findAll { it.playerId == id }
         if (playerActions) {
-            player.send([cmd: 'actions', actions: playerActions.toString()])
+            def formattedActions = playerActions.collect { it.toString() }
+            player.send([cmd: 'actions', actions: formattedActions])
         }
     }
 

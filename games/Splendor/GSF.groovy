@@ -8,7 +8,7 @@ class GSF extends GameStateFilter {
     public Map filterGameState(Map gs, int player) {
         def temp = [:]
         (1..gs.players).each {
-            temp[it] = gs[it]
+            temp[it] = gs[it].clone()
             if (player != it) {
                 temp[it].stash = gs[it].stash.collect { it2 -> new Card(tier: it2.tier) }
             }
@@ -23,6 +23,7 @@ class GSF extends GameStateFilter {
         ]
         temp.currentPlayer = gs.currentPlayer
         temp.players = gs.players
+        temp.me = player
 
 //        println "Player " + player
 //        println JsonOutput.prettyPrint(JsonOutput.toJson(temp))

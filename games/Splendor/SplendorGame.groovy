@@ -90,19 +90,14 @@ class SplendorGame extends Game {
         def actions = []
         gs.markets.eachWithIndex { market, i ->
             market.eachWithIndex { card, j ->
-                def reqWild = 0
-                ['red', 'green', 'blue', 'white', 'black'].each { color ->
-                    if (curp.bank[color] + curp.prod[color] < card.reqs[color]) {
-                        reqWild += card.reqs[color] - (curp.bank[color] + curp.prod[color])
+                if (card != null) {
+                    if (canBuy(curp, card)) {
+                        actions << new Action(cur, this, 'buyCard', [i, j])
                     }
-                }
 
-                if (reqWild <= curp.bank.gold) {
-                    actions << new Action(cur, this, 'buyCard', [i, j])
-                }
-
-                if (curp.stash.size() < 3) {
-                    actions << new Action(cur, this, 'stashCard', [i, j])
+                    if (curp.stash.size() < 3) {
+                        actions << new Action(cur, this, 'stashCard', [i, j])
+                    }
                 }
             }
         }
@@ -119,6 +114,12 @@ class SplendorGame extends Game {
             }
         }
 
+        curp.stash.eachWithIndex { card, idx ->
+            if (canBuy(curp, card)) {
+                actions << new Action(cur, this, 'buyReserveCard', [idx])
+            }
+        }
+
         gm.presentActions(actions)
 
         handleGemCap()
@@ -129,11 +130,52 @@ class SplendorGame extends Game {
         }
     }
 
+    def canBuy(player, card) {
+        def reqWild = 0
+        ['red', 'green', 'blue', 'white', 'black'].each { color ->
+            if (player.bank[color] + player.prod[color] < card.reqs[color]) {
+                reqWild += card.reqs[color] - (player.bank[color] + player.prod[color])
+            }
+        }
+        return (reqWild <= player.bank.gold)
+    }
+
     def buyCard(tier, idx) {
         int cur = gs.currentPlayer
         def curp = gs.get(cur)
 
         def card = gs.markets[tier][idx]
+
+        ['red', 'green', 'blue', 'white', 'black'].each { color ->
+            int cost = Math.max(0, card.reqs[color] - curp.prod[color])
+            curp.bank[color] -= cost
+            gs.bank[color] += cost
+
+            if (curp.bank[color] < 0) {
+                def goldSpent = -curp.bank[color]
+                curp.bank.gold -= goldSpent
+                gs.bank[color] -= goldSpent
+                gs.bank.gold += goldSpent
+
+                curp.bank[color] = 0
+            }
+        }
+
+        curp.devs << card
+        curp.prod[card.gem]++
+        curp.points += card.points
+
+        gs.markets[tier][idx] = null
+        if (gs.decks[tier].size() > 0) {
+            gs.markets[tier][idx] = gs.decks[tier].remove(0)
+        }
+    }
+
+    def buyReserveCard(idx) {
+        int cur = gs.currentPlayer
+        def curp = gs.get(cur)
+
+        def card = curp.stash[idx]
 
         ['red', 'green', 'blue', 'white', 'black'].each { color ->
             def cost = (card.reqs[color] - curp.prod[color])
@@ -152,12 +194,9 @@ class SplendorGame extends Game {
 
         curp.devs << card
         curp.prod[card.gem]++
-        curp.poitns += card.points
+        curp.points += card.points
 
-        gs.markets[tier][idx] = null
-        if (gs.decks[tier].size() > 0) {
-            gs.decks[tier].remove(0)
-        }
+        curp.stash.remove(idx)
     }
 
     def stashCard(tier, idx) {
@@ -173,7 +212,7 @@ class SplendorGame extends Game {
 
         gs.markets[tier][idx] = null
         if (gs.decks[tier].size() > 0) {
-            gs.decks[tier].remove(0)
+            gs.markets[tier][idx] = gs.decks[tier].remove(0)
         }
     }
 
@@ -210,20 +249,24 @@ class SplendorGame extends Game {
                     actions << new Action(cur, this, 'takeGem', [color, 2])
                 }
             }
-            gm.presentActions(actions)
+            if (!actions.isEmpty()) {
+                gm.presentActions(actions)
+            }
         }
         else if (number == 2) {
             gs.lastColor2 = pickedColor
 
-            def actions = []
             if (gs.lastColor1 != gs.lastColor2) {
+                def actions = []
                 gs.bank.each { color, amt ->
                     if (color != gs.lastColor1 && color != gs.lastColor2 && color != 'gold' && amt > 0) {
                         actions << new Action(cur, this, 'takeGem', [color, 3])
                     }
                 }
+                if (!actions.isEmpty()) {
+                    gm.presentActions(actions)
+                }
             }
-            gm.presentActions(actions)
         }
     }
 

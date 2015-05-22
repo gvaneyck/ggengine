@@ -6,7 +6,8 @@ var state = {
     playerName: null,
     lobbies: {},
     game: null,
-    loadGameState: function() {}
+    loadGameState: function() {},
+    handleActions: function() {}
 };
 
 var uiManager;
@@ -35,7 +36,7 @@ var ui = {
     messagesScrollArea: null
 };
 
-function setupLobby(canvasElement, gameName, loadGameState, renderTest) {
+function setupLobby(canvasElement, gameName, loadGameState, handleActions, renderTest) {
     uiManager = new UIManager(canvasElement);
     state.gameName = gameName;
 
@@ -46,6 +47,7 @@ function setupLobby(canvasElement, gameName, loadGameState, renderTest) {
         initUi();
         state.loadGameState = loadGameState;
         uiManager.onresize = loadGameState;
+        state.handleActions = handleActions;
     }
 }
 
@@ -281,6 +283,10 @@ function onMessage(evt) {
     else if (cmd.cmd == 'gs') {
         state.gameState = JSON.parse(cmd.gs);
         state.loadGameState();
+    }
+    else if (cmd.cmd == 'actions') {
+        state.actions = cmd.actions;
+        state.handleActions();
     }
 
     if (cmd.cmd == 'lobbyList' || cmd.cmd == 'lobbyCreate' || cmd.cmd == 'lobbyDestroy') {

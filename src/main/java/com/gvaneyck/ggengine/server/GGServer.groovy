@@ -149,7 +149,7 @@ public class GGServer extends WebSocketServer {
                 return false
             },
             action: { cmd, player ->
-                gameInstance.setChoice(player, cmd.action, cmd.args?.toArray())
+                gameInstances[player.name].setChoice(player, cmd.action, cmd.args?.toArray())
             }
     ]
 

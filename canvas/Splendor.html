@@ -12,10 +12,10 @@
     <link rel="stylesheet" type="text/css" href="Splendor.css">
 </head>
 
-<body style="margin: 0">
+<body style="margin: 0" oncontextmenu="return false;">
 
 <canvas id="splendorCanvas" width="640" height="480"></canvas>
-<script>setupLobby(document.getElementById('splendorCanvas'), 'Splendor', loadGameState);</script>
+<script>setupLobby(document.getElementById('splendorCanvas'), 'Splendor', loadGameState, handleActions);</script>
 
 </body>
 

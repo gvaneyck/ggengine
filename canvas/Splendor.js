@@ -17,6 +17,16 @@ function loadGameState() {
         var card = new Card({value: amt}, 10, offset, 75, 75);
         var img = new Picture('images/Splendor/' + color + '.png');
         card.setCardBack(img);
+        (function (color) {
+            card.handleMouseDoubleClick = function (x, y) {
+                if (state.gemAction == 'takeGem' && color != 'gold') {
+                    sendCmd({cmd: 'action', action: 'takeGem', args: [color, parseInt(state.gemIndex)]});
+                }
+                else {
+                    sendCmd({cmd: 'action', action: 'discardGem', args: [color]});
+                }
+            };
+        }(color));
 
         uiManager.addElement(card);
 
@@ -31,17 +41,34 @@ function loadGameState() {
         var offset2 = 150;
         for (var i = 0; i < 4; i++) {
             var card = new Card({}, offset2, offset, 160, 160);
-            var img = new Picture('images/Splendor/' + market[i].id + '.png');
-            card.setCardBack(img);
+            if (market[i] != null) {
+                var img = new Picture('images/Splendor/' + market[i].id + '.png');
+                card.setCardBack(img);
+                (function (tier, index) {
+                    card.handleMouseDoubleClick = function (x, y) {
+                        sendCmd({cmd: 'action', action: 'buyCard', args: [tier, index]});
+                    };
+                    card.handleMouseRightClick = function (x, y) {
+                        sendCmd({cmd: 'action', action: 'stashCard', args: [tier, index]});
+                    };
+                }(parseInt(tier), i));
+            }
+
             uiManager.addElement(card);
 
             offset2 += 170;
         }
+
         var stats = {};
         stats.value = gs.decks[tier];
         stats.value3 = 'Tier ' + (parseInt(tier) + 1);
         stats.color = (tier == '0' ? 'DarkGreen' : tier == '1' ? 'GoldenRod' : 'Navy');
         var card = new Card(stats, offset2, offset, 160, 160);
+        (function (tier) {
+            card.handleMouseRightClick = function(x, y) {
+                sendCmd({cmd: 'action', action: 'stashRandomCard', args: [tier]});
+            };
+        }(parseInt(tier)));
         uiManager.addElement(card);
 
         offset += 170;
@@ -74,6 +101,18 @@ function loadGameState() {
             var card = new Card(stats, offset2, offset, 75, 75);
             var img = new Picture('images/Splendor/' + color + '.png');
             card.setCardBack(img);
+            if (i == gs.me) {
+                (function (color) {
+                    card.handleMouseDoubleClick = function (x, y) {
+                        if (state.gemAction == 'takeGem' && color != 'gold') {
+                            sendCmd({cmd: 'action', action: 'takeGem', args: [color, parseInt(state.gemIndex)]});
+                        }
+                        else {
+                            sendCmd({cmd: 'action', action: 'discardGem', args: [color]});
+                        }
+                    };
+                }(color));
+            }
 
             uiManager.addElement(card);
 
@@ -88,19 +127,73 @@ function loadGameState() {
     }
 
     // Reserve
-    var curp = gs['' + gs.currentPlayer];
+    var me = gs['' + gs.me];
     var reserve = new Label(1080, 420, 'Reserve:');
     reserve.fontSize = '24pt';
     uiManager.addElement(reserve);
 
     offset = 1200;
-    for (var i = 0; i < curp.stash.length; i++) {
+    for (var i = 0; i < me.stash.length; i++) {
         var card = new Card({}, offset, 350, 160, 160);
-        var img = new Picture('images/Splendor/' + curp.stash[i].id + '.png');
+        var img = new Picture('images/Splendor/' + me.stash[i].id + '.png');
         card.setCardBack(img);
+        (function (idx) {
+            card.handleMouseDoubleClick = function(x, y) {
+                sendCmd({cmd: 'action', action: 'buyReserveCard', args: [idx]});
+            };
+        }(i));
 
         uiManager.addElement(card);
 
         offset += 170;
     }
+}
+
+function handleActions() {
+    var options = {};
+    for (var i = 0; i < state.actions.length; i++) {
+        var action = state.actions[i];
+
+        var dash = action.indexOf('-');
+        var dot = action.indexOf('.');
+        var openParens = action.indexOf('(');
+        var closeParens = action.indexOf(')');
+
+        var player = action.substring(0, dash);
+        var instance = action.substring(dash + 1, dot);
+        var actionName = action.substring(dot + 1, openParens);
+        var args = action.substring(openParens + 1, closeParens).split(', ');
+
+        if (actionName == 'takeGem') {
+            state.gemAction = actionName;
+            state.gemIndex = args[1];
+            if (state.gemIndex == '1') {
+                options.takeGem = 'Double click a gem to take it.';
+            }
+            else if (state.gemIndex == '2') {
+                options.takeGem = 'Double click a second gem to take it.';
+            }
+            else {
+                options.takeGem = 'Double click a third gem to take it.';
+            }
+        }
+        else if (actionName == 'stashCard' || actionName == 'stashRandomCard') {
+            options.stashCard = 'Right click a card to reserve it.'
+        }
+        else if (actionName == 'buyCard' || actionName == 'buyReserveCard') {
+            options.buyCard = 'Double click a card to buy it.'
+        }
+        else if (actionName == 'discardGem') {
+            state.gemAction = actionName;
+            options.discardGem = 'Double click a gem to discard it.'
+        }
+    }
+
+    var messages = [];
+    for (var key in options) {
+        messages.push(options[key]);
+    }
+
+    var message = new Label(1080, 520, messages.join('  '));
+    uiManager.addElement(message);
 }
