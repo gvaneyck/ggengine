@@ -1,6 +1,8 @@
 package com.gvaneyck.ggengine;
 
 
+import java.util.Map;
+
 public abstract class Game {
     abstract public void init();
 
@@ -8,5 +10,5 @@ public abstract class Game {
 
     abstract public boolean isFinished();
 
-    abstract public void end();
+    abstract public Map end();
 }

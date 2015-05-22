@@ -299,10 +299,24 @@ class SplendorGame extends Game {
     }
 
     public boolean isFinished() {
-        return (gs.currentPlayer == 1 && gs.find { key, value -> value instanceof Map && value.points != null && value.points >= 15 })
+        return (gs.currentPlayer == 1 && gs.find { key, value -> value instanceof Map && value.points != null && value.points >= 1 })
     }
 
-    public void end() {
-        println "It's a tie!"
+    public Map end() {
+        def winner = 0
+        def points = 0
+        def cards = 0
+        (1..gs.players).each {
+            def player = gs[it]
+            def pCards = 0
+            player.prod.each { color, amt -> pCards += amt }
+            if (player.points > points || (player.points == points && pCards < cards)) {
+                winner = it
+                points = player.points
+                cards = pCards
+            }
+        }
+
+        return [ winner: winner, points: points ]
     }
 }

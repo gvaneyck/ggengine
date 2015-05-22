@@ -3,11 +3,13 @@ package com.gvaneyck.ggengine.ui;
 import com.gvaneyck.ggengine.Action;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class ConsoleUI implements GGui {
     Scanner in = new Scanner(System.in);
 
+    @Override
     public Action resolveChoice(List<Action> actions) {
         for (int i = 0; i < actions.size(); i++) {
             Action a = actions.get(i);
@@ -20,5 +22,10 @@ public class ConsoleUI implements GGui {
             choice = in.nextInt();
         }
         return actions.get(choice);
+    }
+
+    @Override
+    public void resolveEnd(Map data) {
+        System.out.println(data);
     }
 }

@@ -1,5 +1,6 @@
 // Big TODOs
 // - Label - Copy text, links, emoji, onHover card images
+// - Add in full keyboard support for textboxes
 // - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
 // - Authentication/Sessions (cookie + server)
 // - Send action to clients when chosen for logging
@@ -13,6 +14,10 @@
 // - Voice chat?
 // - If same name, reconnecting to multiple games and/or multiple players in same game
 // - Double encoding game state
+// - Reconnect to lobbies
+// - Player names in games
+// - Redraw doesn't always happen when changing tabs
+// - Default visibility false?
 
 
 // Event handlers:
@@ -73,7 +78,7 @@ function UIManager(canvas) {
     document.addEventListener('mousemove', function(e) { _this.sortElements(); _this.mouseMoveHandler.call(_this, e); });
     document.addEventListener('mouseup', function(e) { _this.sortElements(); _this.mouseUpHandler.call(_this, e); });
     document.addEventListener('wheel', function(e) { _this.sortElements(); _this.mouseWheelHandler.call(_this, e); }, false);
-    document.addEventListener('keypress', function(e) { _this.sortElements(); _this.typingHandler.call(_this, e); });
+    document.addEventListener('keydown', function(e) { _this.sortElements(); _this.typingHandler.call(_this, e); });
     window.addEventListener('resize', function(e) { _this.sizeWindow(); }, false);
 
     // Start draw loop
@@ -461,39 +466,45 @@ Textbox.prototype.handleKey = function(e) {
     var oldText = this.text;
     var oldCursorPos = this.cursorPos;
 
-    if (e.charCode != 0) {
-        var keyPressed = String.fromCharCode(e.charCode);
-        this.text = this.text.substring(0, this.cursorPos) + keyPressed + this.text.substring(this.cursorPos);
-        this.cursorPos++;
+    // TODO e.ctrlKey e.shiftKey
+    var char = String.fromCharCode(e.keyCode);
+    if (e.keyCode == 8) { // Backspace
+        if (this.cursorPos > 0) {
+            this.text = this.text.substring(0, this.cursorPos - 1) + this.text.substring(this.cursorPos);
+            this.cursorPos--;
+        }
+        return true; // Back is evil
     }
-    else {
-        // TODO e.ctrlKey
-        if (e.keyCode == 8) { // Backspace
-            if (this.cursorPos > 0) {
-                this.text = this.text.substring(0, this.cursorPos - 1) + this.text.substring(this.cursorPos);
-                this.cursorPos--;
-            }
+    else if (e.keyCode == 46) { // Delete
+        if (this.cursorPos < this.text.length) {
+            this.text = this.text.substring(0, this.cursorPos) + this.text.substring(this.cursorPos + 1);
         }
-        else if (e.keyCode == 46) { // Delete
-            if (this.cursorPos < this.text.length) {
-                this.text = this.text.substring(0, this.cursorPos) + this.text.substring(this.cursorPos + 1);
-            }
+    }
+    else if (e.keyCode == 37) { // Left
+        if (this.cursorPos > 0) {
+            this.cursorPos--;
         }
-        else if (e.keyCode == 37) { // Left
-            if (this.cursorPos > 0) {
-                this.cursorPos--;
-            }
+    }
+    else if (e.keyCode == 39) { // Right
+        if (this.cursorPos < this.text.length) {
+            this.cursorPos++;
         }
-        else if (e.keyCode == 39) { // Right
-            if (this.cursorPos < this.text.length) {
-                this.cursorPos++;
-            }
+    }
+    else if (e.keyCode == 13) { // Enter
+        this.submitHandler(this.text);
+        this.cursorPos = 0;
+        this.text = '';
+    }
+    else if (char >= 'A' && char <= 'Z' || char == ' ' || char >= '0' && char <='9') {
+        var trueChar;
+        if (char >= 'A' && char <= 'Z') {
+            trueChar = (e.shiftKey ? char : String.fromCharCode(e.keyCode + 32));
         }
-        else if (e.keyCode == 13) { // Enter
-            this.submitHandler(this.text);
-            this.cursorPos = 0;
-            this.text = '';
+        else {
+            trueChar = char;
         }
+        this.text = this.text.substring(0, this.cursorPos) + trueChar + this.text.substring(this.cursorPos);
+        this.cursorPos++;
     }
 
     return (oldText != this.text || oldCursorPos != this.cursorPos);

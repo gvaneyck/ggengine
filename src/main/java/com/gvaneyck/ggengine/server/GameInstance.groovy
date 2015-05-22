@@ -21,6 +21,8 @@ public class GameInstance implements Runnable, GGui {
     def actionOptions
     def choice
 
+    def done = false
+
     public GameInstance(Lobby lobby) {
         this.game = lobby.game
         this.name = lobby.name
@@ -91,6 +93,15 @@ public class GameInstance implements Runnable, GGui {
             def formattedActions = playerActions.collect { it.toString() }
             player.send([cmd: 'actions', actions: formattedActions])
         }
+    }
+
+    @Override
+    public void resolveEnd(Map data) {
+        data.cmd = 'end'
+        idToPlayer.each { id, player ->
+            player.send(data)
+        }
+        done = true
     }
 
     @Override

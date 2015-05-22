@@ -84,7 +84,7 @@ function loadGameState() {
         playerName.fontSize = '24pt';
         uiManager.addElement(playerName);
 
-        var playerPoints = new Label(offset2 - 75, offset + 35, player.points + ' pts');
+        var playerPoints = new Label(offset2 - 85, offset + 35, player.points + ' pts');
         playerPoints.fontSize = '24pt';
         uiManager.addElement(playerPoints);
 
@@ -128,24 +128,26 @@ function loadGameState() {
 
     // Reserve
     var me = gs['' + gs.me];
-    var reserve = new Label(1080, 420, 'Reserve:');
-    reserve.fontSize = '24pt';
-    uiManager.addElement(reserve);
+    if (me.stash.length > 0) {
+        var reserve = new Label(1080, 420, 'Reserve:');
+        reserve.fontSize = '24pt';
+        uiManager.addElement(reserve);
 
-    offset = 1200;
-    for (var i = 0; i < me.stash.length; i++) {
-        var card = new Card({}, offset, 350, 160, 160);
-        var img = new Picture('images/Splendor/' + me.stash[i].id + '.png');
-        card.setCardBack(img);
-        (function (idx) {
-            card.handleMouseDoubleClick = function(x, y) {
-                sendCmd({cmd: 'action', action: 'buyReserveCard', args: [idx]});
-            };
-        }(i));
+        offset = 1200;
+        for (var i = 0; i < me.stash.length; i++) {
+            var card = new Card({}, offset, 350, 160, 160);
+            var img = new Picture('images/Splendor/' + me.stash[i].id + '.png');
+            card.setCardBack(img);
+            (function (idx) {
+                card.handleMouseDoubleClick = function (x, y) {
+                    sendCmd({cmd: 'action', action: 'buyReserveCard', args: [idx]});
+                };
+            }(i));
 
-        uiManager.addElement(card);
+            uiManager.addElement(card);
 
-        offset += 170;
+            offset += 170;
+        }
     }
 }
 

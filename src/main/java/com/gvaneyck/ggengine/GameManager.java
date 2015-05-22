@@ -143,7 +143,7 @@ public class GameManager {
         while (!game.isFinished()) {
             game.turn();
         }
-        game.end();
+        ui.resolveEnd(game.end());
     }
 
     public void presentActions(List<Action> actions) throws Exception {

@@ -74,7 +74,15 @@ public class GGServer extends WebSocketServer {
                     player.send([cmd: 'nameSelect', success: true, name: name])
                     player.send([cmd: 'lobbyList', names: lobbies.keySet()])
                     lobbies['General'].addPlayer(player)
-                    if (gameInstances.containsKey(player.name)) { gameInstances[player.name].doReconnect(player) }
+                    if (gameInstances.containsKey(player.name)) {
+                        def gameInstance = gameInstances[player.name]
+                        if (gameInstance.done) {
+                            gameInstances.remove(player.name)
+                        }
+                        else {
+                            gameInstances[player.name].doReconnect(player)
+                        }
+                    }
                     return true
                 }
                 else {
@@ -149,7 +157,13 @@ public class GGServer extends WebSocketServer {
                 return false
             },
             action: { cmd, player ->
-                gameInstances[player.name].setChoice(player, cmd.action, cmd.args?.toArray())
+                def gameInstance = gameInstances[player.name]
+                if (gameInstance.done) {
+                    gameInstances.remove(player.name)
+                }
+                else {
+                    gameInstances[player.name].setChoice(player, cmd.action, cmd.args?.toArray())
+                }
             }
     ]
 

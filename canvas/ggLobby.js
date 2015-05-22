@@ -45,14 +45,16 @@ function setupLobby(canvasElement, gameName, loadGameState, handleActions, rende
     }
     else {
         initUi();
+        showLoginUI();
         state.loadGameState = loadGameState;
         uiManager.onresize = loadGameState;
         state.handleActions = handleActions;
+        uiManager.dirty = true;
     }
 }
 
 function initUi() {
-    ui.generalLabel = new Label(10, 33, '');
+    ui.generalLabel = new Label(10, 53, '');
 
     ui.nameLabel = new Label(10, 13, 'Enter nickname: ');
     ui.nameBox = new Textbox(ui.nameLabel.width + 10, 10, 200, 20);
@@ -120,12 +122,12 @@ function initUi() {
     var messagesLabel = new FixedWidthLabel(550, 38, 384, '');
     ui.messagesScrollArea = new ScrollArea(550, 38, 400, 300, messagesLabel);
 
-    showLoginUI();
-
     uiManager.addElements(ui);
 }
 
 function showLoginUI() {
+    ui.generalLabel.x = 10;
+    ui.generalLabel.y = 53;
     ui.generalLabel.visible = true;
     ui.nameLabel.visible = true;
     ui.nameBox.visible = true;
@@ -172,6 +174,7 @@ function createGameLobby(lobbyName) {
 }
 
 function leaveGame() {
+    ui.generalLabel.visible = false;
     ui.gameNameLabel.visible = false;
     ui.gameNameBox.visible = false;
     ui.gameNameButton.visible = false;
@@ -198,6 +201,7 @@ function onClose(evt) {
     }
 
     ui.generalLabel.setText('You were disconnected from the server.  Reconnecting...');
+    ui.generalLabel.x = 10;
     ui.generalLabel.y = 10;
     ui.generalLabel.visible = true;
     uiManager.dirty = true;
@@ -245,21 +249,9 @@ function onMessage(evt) {
         lobby.members = lobby.members.concat(cmd.members);
 
         if (cmd.name != 'General') {
-            ui.gameNameLabel.visible = false;
-            ui.gameNameBox.visible = false;
-            ui.gameNameButton.visible = false;
-            ui.createButton.visible = false;
-            ui.lobbyTable.visible = false;
-
-            ui.gamePlayerLabel.visible = true;
-            ui.gamePlayerList.visible = true;
-            ui.startButton.visible = true;
-            ui.exitButton.visible = true;
-
-            ui.gamePlayerLabel.setText('Player List for \'' + cmd.name + '\'');
-            ui.gamePlayerList.setText(lobby.members.join('\n'));
-
             state.gameName = cmd.name;
+            state.lobby = lobby;
+            showLobbyUI();
         }
     }
     else if (cmd.cmd == 'lobbyLeave') {
@@ -287,6 +279,9 @@ function onMessage(evt) {
     else if (cmd.cmd == 'actions') {
         state.actions = cmd.actions;
         state.handleActions();
+    }
+    else if (cmd.cmd == 'end') {
+        handleEndGame(cmd);
     }
 
     if (cmd.cmd == 'lobbyList' || cmd.cmd == 'lobbyCreate' || cmd.cmd == 'lobbyDestroy') {
@@ -321,4 +316,41 @@ function formatChatLine(chat) {
 
 function sendCmd(cmd) {
     websocket.send(JSON.stringify(cmd));
+}
+
+function handleEndGame(cmd) {
+    uiManager.elements = [];
+
+    initUi();
+    for (var i in uiManager.elements) {
+        uiManager.elements[i].visible = false;
+    }
+
+    ui.chatBox.visible = true;
+    ui.chatLabel.visible = true;
+    ui.messagesScrollArea.visible = true;
+    showLobbyUI();
+
+    ui.generalLabel.x = ui.startButton.x + ui.startButton.width + 20;
+    ui.generalLabel.y = 13;
+    ui.generalLabel.setText('Winner is P' + cmd.winner + ' with ' + cmd.points + ' points!');
+    ui.generalLabel.visible = true;
+
+    uiManager.dirty = true;
+}
+
+function showLobbyUI() {
+    ui.gameNameLabel.visible = false;
+    ui.gameNameBox.visible = false;
+    ui.gameNameButton.visible = false;
+    ui.createButton.visible = false;
+    ui.lobbyTable.visible = false;
+
+    ui.gamePlayerLabel.visible = true;
+    ui.gamePlayerList.visible = true;
+    ui.startButton.visible = true;
+    ui.exitButton.visible = true;
+
+    ui.gamePlayerLabel.setText('Player List for \'' + state.gameName + '\'');
+    ui.gamePlayerList.setText(state.lobby.members.join('\n'));
 }
