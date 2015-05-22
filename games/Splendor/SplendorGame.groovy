@@ -8,9 +8,10 @@ class SplendorGame extends Game {
     static gs
 
     public void init() {
-        gs.decks = [[], [], []]
 
+        // Load developments
         def firstLine = true
+        gs.decks = [[], [], []]
         new File('games/Splendor/splendor.csv').eachLine { line ->
             if (firstLine) {
                 firstLine = false
@@ -35,10 +36,38 @@ class SplendorGame extends Game {
             gs.decks[card.tier - 1] << card
         }
 
+        // Load nobles
+        firstLine = true
+        def allNobles = []
+        new File('games/Splendor/nobles.csv').eachLine { line ->
+            if (firstLine) {
+                firstLine = false
+                return
+            }
+
+            def parts = line.split(',')
+            def noble = new Noble(
+                    id: parts[0].toInteger(),
+                    points: parts[1].toInteger(),
+                    reqs: [
+                            red: parts[2].toInteger(),
+                            green: parts[3].toInteger(),
+                            blue: parts[4].toInteger(),
+                            white: parts[5].toInteger(),
+                            black: parts[6].toInteger()
+                    ]
+            )
+
+            allNobles << noble
+        }
+
+        // Shuffling
         Collections.shuffle(gs.decks[0], gm.rand)
         Collections.shuffle(gs.decks[1], gm.rand)
         Collections.shuffle(gs.decks[2], gm.rand)
+        Collections.shuffle(allNobles, gm.rand)
 
+        // Setup bank
         def maxGems = (gs.players == 4 ? 7 : gs.players == 3 ? 5 : 4)
         gs.bank = [
             red: maxGems,
@@ -49,6 +78,7 @@ class SplendorGame extends Game {
             gold: 5
         ]
 
+        // Setup market
         gs.markets = [[], [], []]
         (1..4).each { it ->
             gs.markets[0] << gs.decks[0].remove(0)
@@ -56,6 +86,13 @@ class SplendorGame extends Game {
             gs.markets[2] << gs.decks[2].remove(0)
         }
 
+        // Select nobles
+        gs.nobles = []
+        (1..(gs.players + 1)).each {
+            gs.nobles << allNobles.remove(0)
+        }
+
+        // Setup players
         (1..gs.players).each {
             gs[it] = [:]
             gs[it].bank = [
@@ -77,8 +114,6 @@ class SplendorGame extends Game {
             gs[it].devs = []
             gs[it].stash = []
         }
-
-        // TODO: Nobles
 
         gs.currentPlayer = 1
     }
@@ -169,6 +204,8 @@ class SplendorGame extends Game {
         if (gs.decks[tier].size() > 0) {
             gs.markets[tier][idx] = gs.decks[tier].remove(0)
         }
+
+        checkNobles(curp)
     }
 
     def buyReserveCard(idx) {
@@ -197,6 +234,26 @@ class SplendorGame extends Game {
         curp.points += card.points
 
         curp.stash.remove(idx)
+
+        checkNobles(curp)
+    }
+
+    def checkNobles(curp) {
+        gs.nobles.eachWithIndex { noble, idx ->
+            if (noble != null) {
+                def valid = true
+                curp.prod.each { color, amt ->
+                    if (amt < noble.reqs[color]) {
+                        valid = false
+                    }
+                }
+
+                if (valid) {
+                    curp.points += noble.points
+                    gs.nobles[idx] = null
+                }
+            }
+        }
     }
 
     def stashCard(tier, idx) {
@@ -299,7 +356,7 @@ class SplendorGame extends Game {
     }
 
     public boolean isFinished() {
-        return (gs.currentPlayer == 1 && gs.find { key, value -> value instanceof Map && value.points != null && value.points >= 1 })
+        return (gs.currentPlayer == 1 && gs.find { key, value -> value instanceof Map && value.points != null && value.points >= 15 })
     }
 
     public Map end() {

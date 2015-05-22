@@ -4,6 +4,7 @@ var websocket;
 var state = {
     gameName: null,
     playerName: null,
+    lobbyName: null,
     lobbies: {},
     game: null,
     loadGameState: function() {},
@@ -186,11 +187,13 @@ function leaveGame() {
     ui.createButton.visible = true;
     ui.lobbyTable.visible = true;
 
-    sendCmd({ cmd: "leaveLobby", name: state.gameName });
+    uiManager.dirty = true;
+
+    sendCmd({ cmd: "leaveLobby", name: state.lobbyName });
 }
 
 function startGame() {
-    sendCmd({ cmd: "startGame", name: state.gameName });
+    sendCmd({ cmd: "startGame", name: state.lobbyName });
 }
 
 /// Web sockets ///
@@ -249,7 +252,7 @@ function onMessage(evt) {
         lobby.members = lobby.members.concat(cmd.members);
 
         if (cmd.name != 'General') {
-            state.gameName = cmd.name;
+            state.lobbyName = cmd.name;
             state.lobby = lobby;
             showLobbyUI();
         }
@@ -351,6 +354,6 @@ function showLobbyUI() {
     ui.startButton.visible = true;
     ui.exitButton.visible = true;
 
-    ui.gamePlayerLabel.setText('Player List for \'' + state.gameName + '\'');
+    ui.gamePlayerLabel.setText('Player List for \'' + state.lobbyName + '\'');
     ui.gamePlayerList.setText(state.lobby.members.join('\n'));
 }

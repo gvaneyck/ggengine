@@ -74,6 +74,23 @@ function loadGameState() {
         offset += 170;
     }
 
+    // Nobles
+    offset = 150;
+    for (var i in gs.nobles) {
+        var card = new Card({color: 'white'}, offset, 530, 160, 160);
+        if (gs.nobles[i] != null) {
+            var img = new Picture('images/Splendor/n' + gs.nobles[i].id + '.png');
+            card.setCardBack(img);
+        }
+        uiManager.addElement(card);
+
+        offset += 170;
+    }
+
+    var nobleLabel = new Label(40, 600, 'Nobles:');
+    nobleLabel.fontSize = '24pt';
+    uiManager.addElement(nobleLabel);
+
     // Players
     offset = 10;
     for (var i = 1; i <= gs.players; i++) {

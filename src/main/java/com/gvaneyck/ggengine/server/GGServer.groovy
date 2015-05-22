@@ -147,7 +147,7 @@ public class GGServer extends WebSocketServer {
             },
             startGame: { cmd, player ->
                 def lobby = lobbies[cmd.name]
-                if (lobby.players.size() >=2 && lobby.players.size() <= 2) {
+                if (lobby.players.size() >= 2 && lobby.players.size() <= 2) {
                     def gameInstance = new GameInstance(lobby)
                     lobby.players.each {
                         gameInstances[it.name] = gameInstance

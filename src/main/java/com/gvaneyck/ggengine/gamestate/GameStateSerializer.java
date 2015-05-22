@@ -7,7 +7,10 @@ import java.util.Map;
 
 public class GameStateSerializer {
     public String serialize(Object value) {
-        if (value instanceof Number) {
+        if (value == null) {
+            return "null";
+        }
+        else if (value instanceof Number) {
             return value.toString();
         }
         else if (value instanceof String) {

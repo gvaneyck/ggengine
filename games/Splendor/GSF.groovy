@@ -21,6 +21,7 @@ class GSF extends GameStateFilter {
                 gs.decks[1].size(),
                 gs.decks[2].size()
         ]
+        temp.nobles = gs.nobles
         temp.currentPlayer = gs.currentPlayer
         temp.players = gs.players
         temp.me = player
