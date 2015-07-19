@@ -161,6 +161,8 @@ public class GameManager {
     }
 
     public Map getGameState(int player) {
-        return gsf.filterGameState(gs, player);
+        Map gameState = gsf.filterGameState(gs, player);
+        gameState.put("me", player);
+        return gameState;
     }
 }

@@ -165,197 +165,26 @@ LostCitiesCard.prototype.draw = function(context) {
 
 /// Code begins
 
-var websocket;
-
-var gs = {me: '1', them: '2'};
-
-var name;
-
-var lobbies = {};
-
-var uiManager;
-var gameState;
-
-var generalLabel;
-
-var nameLabel;
-var nameBox;
-var loginButton;
-
-var createButton;
-var lobbyTable;
-
-var chatBox;
-var chatLabel;
-var messagesLabel;
-var messagesScrollArea;
-
-var cw = 100;
 var ch = 150;
-var board;
-
-function initGame(canvasElement) {
-    uiManager = new UIManager(canvasElement);
-    uiManager.onresize = loadGameState;
-
-    generalLabel = new Label(10, 33, '');
-
-    nameLabel = new Label(10, 13, 'Enter nickname: ');
-    nameBox = new Textbox(nameLabel.width + 10, 10, 200, 20);
-    nameBox.submitHandler = function(msg) {
-        sendCmd({cmd: 'setName', name: msg});
-    };
-
-    loginButton = new Button(nameBox.x + nameBox.width + 10, 10, 'Login');
-    loginButton.handleMouseClick = function(x, y) {
-        sendCmd({cmd: 'setName', name: nameBox.text});
-        return false;
-    };
-
-    createButton = new Button(10, 10, 'Create Game');
-    createButton.visible = false;
-
-    lobbyTable = new Table(10, 38, 500);
-    lobbyTable.emptyText = 'No games found';
-    lobbyTable.visible = false;
-
-    chatLabel = new Label(550, 13, 'Chat: ');
-    chatLabel.visible = false;
-    chatBox = new Textbox(chatLabel.width + 550, 10, 400 - chatLabel.width, 20);
-    chatBox.visible = false;
-    chatBox.submitHandler = function(msg) {
-        sendCmd({cmd: 'msg', msg: msg, target: 'General'});
-    };
-
-    messagesLabel = new FixedWidthLabel(550, 38, 384, '');
-    messagesScrollArea = new ScrollArea(550, 38, 400, 300, messagesLabel);
-    messagesScrollArea.visible = false;
-
-    uiManager.addElement(generalLabel);
-    uiManager.addElement(nameLabel);
-    uiManager.addElement(nameBox);
-    uiManager.addElement(loginButton);
-
-    uiManager.addElement(createButton);
-    uiManager.addElement(lobbyTable);
-
-    uiManager.addElement(chatLabel);
-    uiManager.addElement(chatBox);
-    uiManager.addElement(messagesScrollArea);
-
-    openWebSocket();
-    websocket.onmessage = onMessage;
-}
-
-/// Web sockets ///
-
-function openWebSocket() {
-    websocket = new ReconnectingWebSocket('127.0.0.1:9003');
-    websocket.connect();
-}
-
-function onMessage(evt) {
-    var cmd = JSON.parse(evt.data);
-    if (cmd.cmd == 'nameSelect') {
-        if (cmd.success) {
-            name = cmd.name;
-
-            generalLabel.visible = false;
-            nameBox.visible = false;
-            nameLabel.visible = false;
-            loginButton.visible = false;
-
-            createButton.visible = true;
-            lobbyTable.visible = true;
-            chatBox.visible = true;
-            chatLabel.visible = true;
-            messagesScrollArea.visible = true;
-        }
-        else {
-            generalLabel.setText('Invalid name');
-        }
-    }
-    else if (cmd.cmd == 'lobbyList') {
-        for (var i = 0; i < cmd.names.length; i++) {
-            var name = cmd.names[i];
-            lobbies[name] = {name: name, members: []};
-        }
-    }
-    else if (cmd.cmd == 'lobbyCreate') {
-        lobbies[cmd.name] = {name: cmd.name, members: []};
-    }
-    else if (cmd.cmd == 'lobbyDestroy') {
-        lobbies.remove(cmd.name);
-    }
-    else if (cmd.cmd == 'lobbyJoin') {
-        var lobby = lobbies[cmd.name];
-        lobby.members = lobby.members.concat(cmd.members);
-    }
-    else if (cmd.cmd == 'lobbyLeave') {
-        var lobby = lobbies[cmd.name];
-        if (cmd.member == name) {
-            lobby.members = [];
-        }
-        else {
-            lobby.members.splice(lobby.members.indexOf(cmd.member), 1);
-        }
-    }
-    else if (cmd.cmd == 'chat') {
-        var text = messagesLabel.text;
-        if (text.length != 0) {
-            text += '\n';
-        }
-        text += formatChatLine(cmd);
-        messagesLabel.setText(text);
-    }
-    uiManager.dirty = true;
-}
-
-function formatChatLine(chat) {
-    var date = new Date(chat.time);
-    var dateString = date.getHours()
-        + ':'
-        + (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes())
-        + ':'
-        + (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());
-    var message = dateString + ' [' + chat.to + '] ' + chat.from + ': ' + chat.msg;
-
-    return message;
-}
-
-function sendCmd(cmd) {
-    websocket.send(JSON.stringify(cmd));
-}
-
-function renderTest(canvasElement) {
-    uiManager = new UIManager(canvasElement);
-    uiManager.onresize = loadGameState;
-
-    board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
-    generalLabel = new Label(board.width + 20, board.y - 10, '');
-    uiManager.addElement(board);
-    uiManager.addElement(generalLabel);
-
-    gameState = JSON.parse('{"1":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"hand":[{"value":8,"color":"green"},{"value":10,"color":"red"},{"value":0,"color":"white"},{"value":4,"color":"white"},{"value":6,"color":"white"},{"value":10,"color":"white"},{"value":0,"color":"yellow"},{"value":9,"color":"yellow"}]},"2":{"table":{"red":[],"white":[{"value":7,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]}},"discard":{"red":[],"white":[{"value":2,"color":"white"},{"value":8,"color":"white"}],"blue":[],"green":[],"yellow":[]},"deck":44,"currentPlayer":1}');
-    loadGameState();
-}
+var cw = 100;
 
 function loadGameState() {
-    if (gameState == undefined) {
+    if (state.gameState == undefined) {
         return;
     }
+    var gs = state.gameState;
+    var me = gs.me;
+    var them = (me == 1 ? 2 : 1);
 
     // Clean old elements from uiManager
-    for (var i = uiManager.elements.length - 1; i >= 0; i--) {
-        var element = uiManager.elements[i];
-        if (element instanceof Card) {
-            uiManager.elements.splice(i, 1);
-        }
-    }
+    uiManager.elements = [];
+
+    var board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
 
     // Set global game state stuff
-    var cardsInHand = gameState[gs.me].hand.length;
-    if (gameState.currentPlayer != gs.me) {
+    var generalLabel = new Label(board.width + 20, board.y - 10, '');
+    var cardsInHand = gs[me].hand.length;
+    if (gs.currentPlayer != me) {
         gs.state = 'NOT_MY_TURN';
         generalLabel.setText('Opponent\'s turn');
     }
@@ -377,7 +206,7 @@ function loadGameState() {
     var xOffset = board.width + 160;
 
     for (var i = 0; i < cardsInHand; i++) {
-        var cardData = gameState[gs.me].hand[i];
+        var cardData = gs[me].hand[i];
 
         var card = new LostCitiesCard(cardData, xOffset, yOffset, cw, ch);
         card.location = 'hand';
@@ -391,8 +220,8 @@ function loadGameState() {
 
     // Handle board
     board.resetPiles();
-    for (var color in gameState.discard) {
-        var pile = gameState.discard[color];
+    for (var color in gs.discard) {
+        var pile = gs.discard[color];
         for (var i = 0; i < pile.length; i++) {
             var card = new LostCitiesCard(pile[i]);
             card.location = 'discard';
@@ -401,16 +230,16 @@ function loadGameState() {
     }
 
     // Handle player tableau
-    for (var color in gameState[gs.them].table) {
-        var pile = gameState[gs.them].table[color];
+    for (var color in gs[them].table) {
+        var pile = gs[them].table[color];
         for (var i = 0; i < pile.length; i++) {
             var card = new LostCitiesCard(pile[i]);
             card.location = 'myTable';
             board.p1[color].addCard(card);
         }
     }
-    for (var color in gameState[gs.me].table) {
-        var pile = gameState[gs.me].table[color];
+    for (var color in gs[me].table) {
+        var pile = gs[me].table[color];
         for (var i = 0; i < pile.length; i++) {
             var card = new LostCitiesCard(pile[i]);
             card.location = 'theirTable';
@@ -419,7 +248,7 @@ function loadGameState() {
     }
 
     // Handle deck
-    var deck = new LostCitiesCard({color: 'black', value: gameState.deck}, board.width + 20, board.y + 10, 100, 150);
+    var deck = new LostCitiesCard({color: 'black', value: gs.deck}, board.width + 20, board.y + 10, 100, 150);
     deck.location = 'deck';
     deck.draggable = false;
     deck.handleMouseDoubleClick = function(x, y) {
@@ -433,30 +262,6 @@ function loadGameState() {
     uiManager.dirty = true;
 }
 
-function gameTest(canvasElement, p) {
-    uiManager = new UIManager(canvasElement);
-    uiManager.onresize = loadGameState;
+function handleActions() {
 
-    board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
-    generalLabel = new Label(board.width + 20, board.y - 10, '');
-    uiManager.addElement(board);
-    uiManager.addElement(generalLabel);
-
-    gs.me = p;
-    gs.them = (p == 1 ? 2 : 1);
-
-    openWebSocket();
-    //websocket = new WebSocket('ws://127.0.0.1:9003');
-    websocket.onmessage = gameMessage;
-    websocket.onopen = function(e) {
-        sendCmd({cmd: 'setName', name: 'Jabe' + p});
-    };
-}
-
-function gameMessage(evt) {
-    var cmd = JSON.parse(evt.data);
-    if (cmd.cmd == 'gs') {
-        gameState = JSON.parse(cmd.gs);
-        loadGameState();
-    }
 }

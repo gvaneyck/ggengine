@@ -7,6 +7,7 @@
     <script src="reconnectingWebSocket.js"></script>
     <script src="requestAnimationFrame.js"></script>
     <script src="ggUI.js"></script>
+    <script src="ggLobby.js"></script>
     <script src="LostCities.js"></script>
     <link rel="stylesheet" type="text/css" href="LostCities.css">
 </head>
@@ -14,7 +15,7 @@
 <body style="margin: 0">
 
 <canvas id="lostCitiesCanvas" width="640" height="480"></canvas>
-<script>initGame(document.getElementById('lostCitiesCanvas'));</script>
+<script>setupLobby(document.getElementById('lostCitiesCanvas'), 'LostCities', loadGameState, handleActions);</script>
 
 </body>
 

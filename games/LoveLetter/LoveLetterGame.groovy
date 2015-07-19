@@ -77,7 +77,7 @@ class LoveLetterGame extends Game {
         return (gs.remainingPlayers == 1 || gs.deck.size() == 0)
     }
 
-    public void end() {
+    public Map end() {
         def winner
         def highest = 0
         def tiebreaker = 0
@@ -90,5 +90,7 @@ class LoveLetterGame extends Game {
                 tiebreaker = tb
             }
         }
+
+        return [:]
     }
 }

@@ -109,7 +109,7 @@ class LostCitiesGame extends Game {
         return (gs.deck.isEmpty())
     }
 
-    public void end() {
+    public Map end() {
         def scores = []
         (1..2).each {
             def total = 0
@@ -143,5 +143,7 @@ class LostCitiesGame extends Game {
         else {
             println "It's a tie!"
         }
+
+        return [:]
     }
 }

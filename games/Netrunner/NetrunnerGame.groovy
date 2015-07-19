@@ -166,7 +166,9 @@ class NetrunnerGame extends Game {
         return false
     }
 
-    public void end() {
+    public Map end() {
         println "WTF"
+
+        return [:]
     }
 }

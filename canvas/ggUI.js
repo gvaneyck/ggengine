@@ -283,15 +283,20 @@ var imageCache = new function() {
 /// Base class ///
 
 function UIElement(x, y, width, height) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
+    this.setX(x);
+    this.setY(y);
+    this.setWidth(width);
+    this.setHeight(height);
     this.zLevel = 0;
     this.focus = false;
     this.hover = false;
     this.visible = true;
 }
+
+UIElement.prototype.setX = function(x) { this.x = Math.floor(x); };
+UIElement.prototype.setY = function(y) { this.y = Math.floor(y); };
+UIElement.prototype.setWidth = function(width) { this.width = Math.ceil(width); };
+UIElement.prototype.setHeight = function(height) { this.height = Math.ceil(height); };
 
 UIElement.prototype.scratchPad = document.createElement('canvas').getContext('2d');
 UIElement.prototype.getChildren = function() { return []; };
@@ -322,6 +327,7 @@ UIElement.prototype.highlight = function(context) {
 /// Label ///
 
 function Label(x, y, text) {
+    // Label without position
     if (y == undefined) {
         text = x;
         x = 0;
@@ -357,8 +363,8 @@ Label.prototype.measureText = function() {
         height += 20;
     }
 
-    this.width = maxWidth;
-    this.height = height;
+    this.setWidth(maxWidth);
+    this.setHeight(height);
 
     this.onSizeChange();
 };
@@ -380,7 +386,7 @@ Label.prototype.draw = function(context) {
 
 function FixedWidthLabel(x, y, width, text) {
     Label.call(this, x, y, '');
-    this.width = width;
+    this.setWidth(width);
     this.setText(text);
 }
 
@@ -400,7 +406,7 @@ FixedWidthLabel.prototype.setText = function(text) {
     }
 
     this.text = newLines.join("\n");
-    this.height = height;
+    this.setHeight(height);
     this.onSizeChange();
 };
 
@@ -520,7 +526,7 @@ Textbox.prototype.draw = function(context) {
     context.beginPath();
 
     if (this.focus) {
-        var cursorXpos = this.x + context.measureText(this.text.substring(0, this.cursorPos)).width + 3 + this.xScroll;
+        var cursorXpos = Math.ceil(this.x + context.measureText(this.text.substring(0, this.cursorPos)).width + 3 + this.xScroll);
 
         // Adjust cursor if it's out of the box
         if (cursorXpos > this.x + this.width - 3) {
@@ -542,7 +548,7 @@ Textbox.prototype.draw = function(context) {
         context.lineTo(cursorXpos, this.y + this.height - 3);
     }
 
-    context.lineWidth = 1;
+    context.lineWidth = 2;
     context.strokeStyle = 'black';
     context.stroke();
 
@@ -554,7 +560,7 @@ Textbox.prototype.draw = function(context) {
     // Draw border
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
-    context.lineWidth = 1;
+    context.lineWidth = 2;
     context.strokeStyle = 'black';
     context.stroke();
 };
@@ -643,8 +649,8 @@ ScrollArea.prototype.draw = function(context) {
     context.clip();
 
     // Draw child
-    this.element.x = this.x + 3;
-    this.element.y = this.y + 3 - this.scrollBar.yScroll;
+    this.element.setX(this.x + 3);
+    this.element.setY(this.y + 3 - this.scrollBar.yScroll);
     this.element.draw(context);
 
     // Restore
@@ -653,7 +659,7 @@ ScrollArea.prototype.draw = function(context) {
     // Draw border + scrollbar
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
-    context.lineWidth = 1;
+    context.lineWidth = 2;
     context.strokeStyle = 'black';
     context.stroke();
 
@@ -662,7 +668,7 @@ ScrollArea.prototype.draw = function(context) {
         context.rect(this.x + this.width - 10, this.y, 10, this.height);
         context.fillStyle = '#cccccc';
         context.fill();
-        context.lineWidth = 1;
+        context.lineWidth = 2;
         context.strokeStyle = 'black';
         context.stroke();
 
@@ -670,7 +676,7 @@ ScrollArea.prototype.draw = function(context) {
         context.rect(this.scrollBar.x, this.scrollBar.y, this.scrollBar.width, this.scrollBar.height);
         context.fillStyle = 'black';
         context.fill();
-        context.lineWidth = 1;
+        context.lineWidth = 2;
         context.strokeStyle = 'black';
         context.stroke();
     }
@@ -715,7 +721,7 @@ Button.prototype.draw = function(context) {
 
     context.beginPath();
     context.rect(this.x, this.y, this.width + 6, this.height + 6);
-    context.lineWidth = 1;
+    context.lineWidth = 2;
     context.strokeStyle = 'black';
     context.stroke();
 };
@@ -772,9 +778,9 @@ Table.prototype.handleMouseClick = function(x, y) {
 };
 
 Table.prototype.draw = function(context) {
-    this.height = this.elements.length * 20;
+    this.setHeight(this.elements.length * 20);
     if (this.elements.length == 0) {
-        this.height = 20;
+        this.setHeight(20);
         context.font = '12pt Calibri';
         context.fillText(this.emptyText, this.x + 3, this.y + 15);
     }
@@ -782,7 +788,7 @@ Table.prototype.draw = function(context) {
     // Draw border
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
-    context.lineWidth = 1;
+    context.lineWidth = 2;
     context.strokeStyle = 'black';
     context.stroke();
 
@@ -820,8 +826,8 @@ Table.prototype.draw = function(context) {
             context.rect(xPos - 2, yPos - 2, maxWidths[j] + 4, 18);
             context.clip();
 
-            row[j].x = xPos;
-            row[j].y = yPos;
+            row[j].setX(xPos);
+            row[j].setY(yPos);
             row[j].draw(context);
             xPos += maxWidths[j] + 6;
 
@@ -872,7 +878,7 @@ Picture.prototype.draw = function(context) {
     else {
         context.beginPath();
         context.rect(this.x, this.y, this.width, this.height);
-        context.lineWidth = 1;
+        context.lineWidth = 2;
         context.strokeStyle = 'black';
         context.stroke();
     }
@@ -927,7 +933,7 @@ Pile.prototype.drawEmpty = function(context) {
     context.rect(this.x, this.y, this.cw, this.ch);
     context.fillStyle = 'grey';
     context.fill();
-    context.lineWidth = 1;
+    context.lineWidth = 2;
     context.strokeStyle = 'grey';
     context.stroke();
 };
@@ -990,10 +996,10 @@ Card.prototype.constructor = Card;
 
 Card.prototype.setCardBack = function(cardBack) {
     this.cardBack = cardBack;
-    this.cardBack.x = this.x;
-    this.cardBack.y = this.y;
-    this.cardBack.width = this.width;
-    this.cardBack.height = this.height;
+    this.cardBack.setX(this.x);
+    this.cardBack.setY(this.y);
+    this.cardBack.setWidth(this.width);
+    this.cardBack.setHeight(this.height);
 };
 
 Card.prototype.isDirty = function() {
@@ -1009,7 +1015,7 @@ Card.prototype.draw = function(context) {
         context.rect(this.curX, this.curY, this.width, this.height);
         context.fillStyle = this.color;
         context.fill();
-        context.lineWidth = 1;
+        context.lineWidth = 2;
         context.strokeStyle = 'black';
         context.stroke();
     }
@@ -1018,7 +1024,7 @@ Card.prototype.draw = function(context) {
         context.font = '32pt Calibri';
         context.fillStyle = 'white';
         context.strokeStyle = 'black';
-        context.lineWidth = 1;
+        context.lineWidth = 2;
         context.fillText(this.value, this.curX + 3, this.curY + 32);
         context.strokeText(this.value, this.curX + 3, this.curY + 32);
 
@@ -1032,7 +1038,7 @@ Card.prototype.draw = function(context) {
         context.font = '32pt Calibri';
         context.fillStyle = 'white';
         context.strokeStyle = 'black';
-        context.lineWidth = 1;
+        context.lineWidth = 2;
         var textWidth = context.measureText(this.value3).width;
         var xOff = this.curX + (this.width - textWidth) / 2;
         var yOff = this.curY + this.height / 2 + 10;

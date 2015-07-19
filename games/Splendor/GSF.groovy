@@ -24,7 +24,6 @@ class GSF extends GameStateFilter {
         temp.nobles = gs.nobles
         temp.currentPlayer = gs.currentPlayer
         temp.players = gs.players
-        temp.me = player
 
 //        println "Player " + player
 //        println JsonOutput.prettyPrint(JsonOutput.toJson(temp))

@@ -65,7 +65,7 @@ function initUi() {
 
     ui.serverLabel = new Label(10, 38, 'Server: ');
     ui.serverBox = new Textbox(ui.nameLabel.width + 10, 35, 200, 20);
-    ui.serverBox.text = 'gvane1wd2:9003';
+    ui.serverBox.text = 'localhost:9003';
     ui.serverLabel.x = ui.nameLabel.width + 10 - ui.serverLabel.width;
 
     ui.loginButton = new Button(ui.nameBox.x + ui.nameBox.width + 10, 10, 'Login');

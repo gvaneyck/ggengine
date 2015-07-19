@@ -40,8 +40,10 @@ class TicTacToeGame extends Game {
         return (getWinner() != 0)
     }
 
-    public void end() {
+    public Map end() {
         System.out.println(getWinner())
+
+        return [:]
     }
 
     def getWinner() {

@@ -10,23 +10,18 @@ import org.java_websocket.server.WebSocketServer
 
 public class GGServer extends WebSocketServer {
 
-    def gameDir
-    def game
-
     def connections = [:] // WebSocket -> Player
     def players = [:] // String -> Player
     def lobbies = [:] // String -> Lobby
 
     def gameInstances = [:]
 
-    public GGServer(String gameDir, String game) throws UnknownHostException {
-        this(gameDir, game, 9003, new Draft_17())
+    public GGServer() throws UnknownHostException {
+        this(9003, new Draft_17())
     }
 
-    public GGServer(String gameDir, String game, int port, Draft d) throws UnknownHostException {
+    public GGServer(int port, Draft d) throws UnknownHostException {
         super(new InetSocketAddress(port), Collections.singletonList(d))
-        this.gameDir = gameDir
-        this.game = game
 
         lobbies['General'] = new Lobby(name: 'General')
     }
@@ -60,6 +55,22 @@ public class GGServer extends WebSocketServer {
         def cmd = new JsonSlurper().parseText(s)
         if (commands.containsKey(cmd.cmd)) {
             commands[cmd.cmd](cmd, player)
+        }
+    }
+
+    @Override
+    public void onError(WebSocket webSocket, Exception e) {
+        println webSocket.getRemoteSocketAddress().getAddress().getHostAddress() + ' ERROR'
+        e.printStackTrace()
+    }
+
+    private void sendToAll(Map data) {
+        Collection<WebSocket> con = connections()
+        String dataString = new JsonBuilder(data).toString()
+        synchronized (con) {
+            for (WebSocket c : con) {
+                c.send(dataString)
+            }
         }
     }
 
@@ -166,33 +177,4 @@ public class GGServer extends WebSocketServer {
                 }
             }
     ]
-
-    @Override
-    public void onError(WebSocket webSocket, Exception e) {
-        println webSocket.getRemoteSocketAddress().getAddress().getHostAddress() + ' ERROR'
-        e.printStackTrace()
-    }
-
-    private Player getPlayer(int playerId) {
-        def p = null
-        while (p == null) {
-            players.each { name, player ->
-                if (player.id == playerId) {
-                    p = player
-                }
-            }
-            Thread.sleep(1000)
-        }
-        return p
-    }
-
-    private void sendToAll(Map data) {
-        Collection<WebSocket> con = connections()
-        String dataString = new JsonBuilder(data).toString()
-        synchronized (con) {
-            for (WebSocket c : con) {
-                c.send(dataString)
-            }
-        }
-    }
 }
