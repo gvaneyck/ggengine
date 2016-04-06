@@ -10,14 +10,14 @@ import org.java_websocket.server.WebSocketServer
 
 public class GGServer extends WebSocketServer {
 
-    def connections = [:] // WebSocket -> Player
-    def players = [:] // String -> Player
-    def lobbies = [:] // String -> Lobby
+    Map<WebSocket, Player> connections = [:] // WebSocket -> Player
+    Map<String, Player> players = [:] // String -> Player
+    Map<String, Lobby> lobbies = [:] // String -> Lobby
 
     def gameInstances = [:]
 
-    public GGServer() throws UnknownHostException {
-        this(9003, new Draft_17())
+    public GGServer(int port) throws UnknownHostException {
+        this(port, new Draft_17())
     }
 
     public GGServer(int port, Draft d) throws UnknownHostException {

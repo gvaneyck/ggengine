@@ -10,13 +10,12 @@ class Priest extends Card {
     }
 
     def playCard() {
-        def actions = []
         (1..gs.maxPlayers).each {
             if (!gs[it].eliminated && it != gs.currentPlayer) {
-                actions << new Action(this, 'priestEffect', [it])
+                gm.addAction(new Action(gs.currentPlayer, this, 'priestEffect', [it]))
             }
         }
-        Card.gm.presentActions(actions)
+        gm.resolveActions()
     }
 
     def priestEffect(int target) {

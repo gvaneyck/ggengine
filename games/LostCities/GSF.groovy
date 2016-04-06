@@ -2,7 +2,7 @@ package LostCities
 
 import com.gvaneyck.ggengine.gamestate.GameStateFilter
 
-class GSF extends GameStateFilter {
+class GSF implements GameStateFilter {
     public Map filterGameState(Map gs, int player) {
         def temp = [:]
         temp[1] = [table: gs[1].table]

@@ -10,13 +10,12 @@ class Prince extends Card {
     }
 
     def playCard() {
-        def actions = []
         (1..gs.maxPlayers).each {
             if (!gs[it].eliminated) {
-                actions << new Action(this, 'princeEffect', [it])
+                gm.addAction(new Action(gs.currentPlayer, this, 'princeEffect', [it]))
             }
         }
-        Card.gm.presentActions(actions)
+        gm.resolveActions()
     }
 
     def princeEffect(int target) {

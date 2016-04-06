@@ -39,23 +39,23 @@ class LoveLetterGame extends Game {
     }
 
     public void turn() {
-        def cur = gs.currentPlayer
+        int cur = gs.currentPlayer
 
         def card1 = gs[cur].hand
         def card2 = gs.deck.remove(0)
         gs[cur].hand2 = card2
 
-        def actions = []
         if ((card1.value == 7 || card2.value == 7)
         	&& (card1.value == 6 || card1.value == 5 || card2.value == 6 || card2.value == 5)) {
-            actions << (card1.value == 7 ? new Action(card1, 'play') : new Action(card2, 'play'))
+            // Forced Duchess play
+            gm.addAction(card1.value == 7 ? new Action(cur, card1, 'play') : new Action(cur, card2, 'play'))
         }
         else {
-            actions << new Action(card1, 'play')
-            actions << new Action(card2, 'play')
+            // Play either card
+            gm.addAction(new Action(cur, card1, 'play'))
+            gm.addAction(new Action(cur, card2, 'play'))
         }
-
-        gm.presentActions(actions)
+        gm.resolveActions()
 
         if (gs.remainingPlayers > 1) {
             changeTurn()

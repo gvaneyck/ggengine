@@ -4,7 +4,6 @@ import com.gvaneyck.ggengine.Action
 import com.gvaneyck.ggengine.GameManager
 import com.gvaneyck.ggengine.gamestate.GameStateSerializer
 import com.gvaneyck.ggengine.ui.GGui
-import groovy.json.JsonOutput
 
 public class GameInstance implements Runnable, GGui {
 

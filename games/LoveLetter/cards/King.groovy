@@ -10,13 +10,12 @@ class King extends Card {
     }
 
     def playCard() {
-        def actions = []
         (1..gs.maxPlayers).each {
             if (!gs[it].eliminated && it != gs.currentPlayer) {
-                actions << new Action(this, 'kingEffect', [it])
+                gm.addAction(new Action(gs.currentPlayer, this, 'kingEffect', [it]))
             }
         }
-        Card.gm.presentActions(actions)
+        gm.resolveActions()
     }
 
     def kingEffect(int target) {

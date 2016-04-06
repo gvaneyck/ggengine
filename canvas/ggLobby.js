@@ -65,7 +65,7 @@ function initUi() {
 
     ui.serverLabel = new Label(10, 38, 'Server: ');
     ui.serverBox = new Textbox(ui.nameLabel.width + 10, 35, 200, 20);
-    ui.serverBox.text = 'localhost:9003';
+    ui.serverBox.text = 'gvane1wl1:9998';
     ui.serverLabel.x = ui.nameLabel.width + 10 - ui.serverLabel.width;
 
     ui.loginButton = new Button(ui.nameBox.x + ui.nameBox.width + 10, 10, 'Login');
@@ -128,7 +128,7 @@ function initUi() {
 
 function showLoginUI() {
     ui.generalLabel.x = 10;
-    ui.generalLabel.y = 53;
+    ui.generalLabel.y = 60;
     ui.generalLabel.visible = true;
     ui.nameLabel.visible = true;
     ui.nameBox.visible = true;
@@ -153,6 +153,10 @@ function showLoginUI() {
 }
 
 function login(nickname, host) {
+    ui.generalLabel.setText("Connecting...");
+    ui.generalLabel.visible = true;
+    uiManager.dirty = true;
+
     websocket = new ReconnectingWebSocket(host);
     websocket.connect();
     websocket.onclose = onClose;

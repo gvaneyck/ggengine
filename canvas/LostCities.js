@@ -168,18 +168,21 @@ LostCitiesCard.prototype.draw = function(context) {
 var ch = 150;
 var cw = 100;
 
+var board;
+var gs;
+
 function loadGameState() {
     if (state.gameState == undefined) {
         return;
     }
-    var gs = state.gameState;
+    gs = state.gameState;
     var me = gs.me;
     var them = (me == 1 ? 2 : 1);
 
     // Clean old elements from uiManager
     uiManager.elements = [];
 
-    var board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
+    board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
 
     // Set global game state stuff
     var generalLabel = new Label(board.width + 20, board.y - 10, '');

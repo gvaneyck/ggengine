@@ -122,40 +122,43 @@ class SplendorGame extends Game {
         int cur = gs.currentPlayer
         def curp = gs.get(cur)
 
-        def actions = []
+        // Buy & Stash
         gs.markets.eachWithIndex { market, i ->
             market.eachWithIndex { card, j ->
                 if (card != null) {
                     if (canBuy(curp, card)) {
-                        actions << new Action(cur, this, 'buyCard', [i, j])
+                        gm.addAction(new Action(cur, this, 'buyCard', [i, j]))
                     }
 
                     if (curp.stash.size() < 3) {
-                        actions << new Action(cur, this, 'stashCard', [i, j])
+                        gm.addAction(new Action(cur, this, 'stashCard', [i, j]))
                     }
                 }
             }
         }
 
+        // Stash random card
         if (curp.stash.size() < 3) {
-            if (gs.decks[0].size() > 0) { actions << new Action(cur, this, 'stashRandomCard', [0]) }
-            if (gs.decks[1].size() > 0) { actions << new Action(cur, this, 'stashRandomCard', [1]) }
-            if (gs.decks[2].size() > 0) { actions << new Action(cur, this, 'stashRandomCard', [2]) }
+            if (gs.decks[0].size() > 0) { gm.addAction(new Action(cur, this, 'stashRandomCard', [0])) }
+            if (gs.decks[1].size() > 0) { gm.addAction(new Action(cur, this, 'stashRandomCard', [1])) }
+            if (gs.decks[2].size() > 0) { gm.addAction(new Action(cur, this, 'stashRandomCard', [2])) }
         }
 
+        // Take a gem
         gs.bank.each { color, amt ->
             if (color != 'gold' && amt > 0) {
-                actions << new Action(cur, this, 'takeGem', [color, 1])
+                gm.addAction(new Action(cur, this, 'takeGem', [color, 1]))
             }
         }
 
+        // Buy from stash
         curp.stash.eachWithIndex { card, idx ->
             if (canBuy(curp, card)) {
-                actions << new Action(cur, this, 'buyReserveCard', [idx])
+                gm.addAction(new Action(cur, this, 'buyStashCard', [idx]))
             }
         }
 
-        gm.presentActions(actions)
+        gm.resolveActions()
 
         handleGemCap()
 
@@ -208,7 +211,7 @@ class SplendorGame extends Game {
         checkNobles(curp)
     }
 
-    def buyReserveCard(idx) {
+    def buyStashCard(idx) {
         int cur = gs.currentPlayer
         def curp = gs.get(cur)
 
@@ -295,34 +298,28 @@ class SplendorGame extends Game {
         if (number == 1) {
             gs.lastColor1 = pickedColor
 
-            def actions = []
             gs.bank.each { color, amt ->
                 if (color == gs.lastColor1) {
                     if (amt >= 3) {
-                        actions << new Action(cur, this, 'takeGem', [color, 2])
+                        gm.addAction(new Action(cur, this, 'takeGem', [color, 2]))
                     }
                 }
                 else if (color != 'gold' && amt > 0) {
-                    actions << new Action(cur, this, 'takeGem', [color, 2])
+                    gm.addAction(new Action(cur, this, 'takeGem', [color, 2]))
                 }
             }
-            if (!actions.isEmpty()) {
-                gm.presentActions(actions)
-            }
+            gm.resolveActions()
         }
         else if (number == 2) {
             gs.lastColor2 = pickedColor
 
             if (gs.lastColor1 != gs.lastColor2) {
-                def actions = []
                 gs.bank.each { color, amt ->
                     if (color != gs.lastColor1 && color != gs.lastColor2 && color != 'gold' && amt > 0) {
-                        actions << new Action(cur, this, 'takeGem', [color, 3])
+                        gm.addAction(new Action(cur, this, 'takeGem', [color, 3]))
                     }
                 }
-                if (!actions.isEmpty()) {
-                    gm.presentActions(actions)
-                }
+                gm.resolveActions()
             }
         }
     }
@@ -335,13 +332,12 @@ class SplendorGame extends Game {
         curp.bank.each { color, amt -> totalGems += amt }
 
         if (totalGems > 10) {
-            def actions = []
             curp.bank.each { color, amt ->
                 if (amt > 0) {
-                    actions << new Action(cur, this, 'discardGem', [color])
+                    gm.addAction(new Action(cur, this, 'discardGem', [color]))
                 }
             }
-            gm.presentActions(actions)
+            gm.resolveActions()
         }
     }
 

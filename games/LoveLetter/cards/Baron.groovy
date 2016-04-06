@@ -10,13 +10,12 @@ class Baron extends Card {
     }
 
     def playCard() {
-        def actions = []
         (1..gs.maxPlayers).each {
             if (!gs[it].eliminated && it != gs.currentPlayer) {
-                actions << new Action(this, 'baronEffect', [it])
+                gm.addAction(new Action(gs.currentPlayer, this, 'baronEffect', [it]))
             }
         }
-        gm.presentActions(actions)
+        gm.resolveActions()
     }
 
     def baronEffect(int target) {

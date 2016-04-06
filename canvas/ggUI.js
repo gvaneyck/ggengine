@@ -480,28 +480,25 @@ Textbox.prototype.handleKey = function(e) {
             this.cursorPos--;
         }
         return true; // Back is evil
-    }
-    else if (e.keyCode == 46) { // Delete
+    } else if (e.keyCode == 46) { // Delete
         if (this.cursorPos < this.text.length) {
             this.text = this.text.substring(0, this.cursorPos) + this.text.substring(this.cursorPos + 1);
         }
-    }
-    else if (e.keyCode == 37) { // Left
+    } else if (e.keyCode == 37) { // Left
         if (this.cursorPos > 0) {
             this.cursorPos--;
         }
-    }
-    else if (e.keyCode == 39) { // Right
+    } else if (e.keyCode == 39) { // Right
         if (this.cursorPos < this.text.length) {
             this.cursorPos++;
         }
-    }
-    else if (e.keyCode == 13) { // Enter
+    } else if (e.keyCode == 13) { // Enter
         this.submitHandler(this.text);
         this.cursorPos = 0;
         this.text = '';
-    }
-    else if (char >= 'A' && char <= 'Z' || char == ' ' || char >= '0' && char <='9') {
+    } else if (e.ctrlKey) {
+        return false;
+    } else if (char >= 'A' && char <= 'Z' || char == ' ' || char >= '0' && char <='9') {
         var trueChar;
         if (char >= 'A' && char <= 'Z') {
             trueChar = (e.shiftKey ? char : String.fromCharCode(e.keyCode + 32));
@@ -553,7 +550,7 @@ Textbox.prototype.draw = function(context) {
     context.stroke();
 
     context.font = '12pt Calibri';
-    context.fillText(this.text, this.x + 3 + this.xScroll, this.y + this.height - 3);
+    context.fillText(this.text, this.x + 3 + this.xScroll, this.y + this.height - 4);
 
     context.restore();
 

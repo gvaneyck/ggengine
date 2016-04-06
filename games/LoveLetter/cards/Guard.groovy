@@ -10,25 +10,22 @@ class Guard extends Card {
     }
 
     def playCard() {
-        def actions = []
         (1..gs.maxPlayers).each {
             if (!gs[it].eliminated && it != gs.currentPlayer) {
-                actions << new Action(this, 'makeGuess', [it])
+                gm.addAction(new Action(gs.currentPlayer, this, 'makeGuess', [it]))
             }
         }
-        Card.gm.presentActions(actions)
+        gm.resolveActions()
     }
 
     def makeGuess(int target) {
-        def actions = []
         (2..8).each {
-            actions << new Action(this, 'guardEffect', [target, it])
+            gm.addAction(new Action(gs.currentPlayer, this, 'guardEffect', [target, it]))
         }
-        Card.gm.presentActions(actions)
+        gm.resolveActions()
     }
 
     def guardEffect(int target, int card) {
-        def cur = gs.currentPlayer
         def them = gs[target]
 
         if (them.immune) {

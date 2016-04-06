@@ -4,7 +4,7 @@ import com.gvaneyck.ggengine.gamestate.GameStateFilter
 import groovy.json.JsonException
 import groovy.json.JsonOutput
 
-class GSF extends GameStateFilter {
+class GSF implements GameStateFilter {
     public Map filterGameState(Map gs, int player) {
         def temp = [:]
         (1..gs.players).each {

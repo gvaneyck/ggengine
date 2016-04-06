@@ -44,9 +44,10 @@ class LostCitiesGame extends Game {
     }
 
     public void turn() {
-        def cur = gs.currentPlayer
+        int cur = gs.currentPlayer
         def curp = gs[cur]
 
+        // Sort hand
         curp.hand.sort { a, b ->
             def result = a.color.compareTo(b.color)
             if (result == 0) {
@@ -55,29 +56,28 @@ class LostCitiesGame extends Game {
             return result
         }
 
-        def actions = []
+        // Play or discard
         curp.hand.eachWithIndex { card, i ->
             def pile = curp.table[card.color]
             if (pile.isEmpty() || pile.last().value <= card.value) {
-                actions << new Action(cur, this, 'playCard', [i])
+                gm.addAction(new Action(cur, this, 'playCard', [i]))
             }
         }
         curp.hand.eachWithIndex { card, i ->
-            actions << new Action(cur, this, 'discardCard', [i])
+            gm.addAction(new Action(cur, this, 'discardCard', [i]))
         }
+        gm.resolveActions()
 
-        gm.presentActions(actions)
-
-        actions = []
-        actions << new Action(cur, this, 'drawDeck')
+        // Draw or take card
+        gm.addAction(new Action(cur, this, 'drawDeck'))
         gs.discard.each { color, pile ->
             if (!pile.isEmpty() && color != gs.lastDiscard) {
-                actions << new Action(cur, this, 'drawPile', color)
+                gm.addAction(new Action(cur, this, 'drawPile', color))
             }
         }
+        gm.resolveActions()
 
-        gm.presentActions(actions)
-
+        // Change current player
         gs.currentPlayer = (cur == 1 ? 2 : 1)
     }
 

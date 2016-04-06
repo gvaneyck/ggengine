@@ -1,6 +1,7 @@
 package com.gvaneyck.ggengine;
 
 import com.gvaneyck.ggengine.gamestate.GameStateFilter;
+import com.gvaneyck.ggengine.gamestate.PublicGSF;
 import com.gvaneyck.ggengine.ui.ConsoleUI;
 import com.gvaneyck.ggengine.ui.GGui;
 import groovy.lang.GroovyClassLoader;
@@ -8,7 +9,9 @@ import groovy.lang.GroovyClassLoader;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -17,11 +20,11 @@ public class GameManager {
     private Map<String, Object> gs;
     private Map<String, Class> clazzes = new HashMap<String, Class>();
     private GroovyClassLoader loader = null;
-    private GameStateFilter gsf = new GameStateFilter();
+    private GameStateFilter gsf = new PublicGSF();
 
     private Game game;
-
     private GGui ui;
+    private List<Action> pendingActions = new ArrayList<Action>();
 
     private AccessibleRandom internalRand = new AccessibleRandom();
     public Random rand = internalRand.getRand();
@@ -40,7 +43,7 @@ public class GameManager {
     }
 
     public void loadGame(String baseDir, String game) {
-        loadClasses(baseDir + "/" + game, game);
+        loadClasses(baseDir, game);
     }
 
     public void loadClasses(String dir, String pkg) {
@@ -50,7 +53,7 @@ public class GameManager {
             loader.addClasspath(dir);
         }
 
-        File sourceDir = new File(dir);
+        File sourceDir = new File(dir + "/" + pkg);
         if (!sourceDir.exists() || !sourceDir.isDirectory()) {
             System.err.println("Source directory does not exist: " + dir);
             return;
@@ -132,7 +135,7 @@ public class GameManager {
                 }
             }
             catch (Exception e) {
-                System.err.println("Error when injecting for " + clazz.getName());
+                System.err.println("Error during injection for " + clazz.getName());
                 e.printStackTrace();
             }
         }
@@ -146,16 +149,27 @@ public class GameManager {
         ui.resolveEnd(game.end());
     }
 
-    public void presentActions(List<Action> actions) throws Exception {
-        if (actions.isEmpty()) {
-            throw new Exception("No actions to choose from");
-        }
-        else if (actions.size() == 1) {
-            actions.get(0).invoke();
-        }
-        else {
-//            getGameState(1);
-            Action action = ui.resolveChoice(actions);
+    public void addAction(Action action) {
+        pendingActions.add(action);
+    }
+
+    public void addActions(List<Action> actions) {
+        pendingActions.addAll(actions);
+    }
+
+    public void resolveActions() {
+        while (!pendingActions.isEmpty()) {
+            Action action = ui.resolveChoice(pendingActions);
+
+            // Remove player's actions from pending in case resolveActions is called during action resolution
+            // TODO: Unroll recursion
+            Iterator<Action> it = pendingActions.iterator();
+            while (it.hasNext()) {
+                if (it.next().playerId == action.playerId) {
+                    it.remove();
+                }
+            }
+
             action.invoke();
         }
     }
