@@ -175,7 +175,7 @@ function startCreateGame() {
 }
 
 function createGameLobby(lobbyName) {
-    sendCmd({ cmd: "makeLobby", name: lobbyName, game: state.gameName, maxSize: 4 });
+    sendCmd({ cmd: 'makeLobby', name: lobbyName, game: state.gameName, maxSize: 4 });
 }
 
 function leaveGame() {
@@ -193,11 +193,11 @@ function leaveGame() {
 
     uiManager.dirty = true;
 
-    sendCmd({ cmd: "leaveLobby", name: state.lobbyName });
+    sendCmd({ cmd: 'leaveLobby', name: state.lobbyName });
 }
 
 function startGame() {
-    sendCmd({ cmd: "startGame", name: state.lobbyName });
+    sendCmd({ cmd: 'startGame', name: state.lobbyName });
 }
 
 /// Web sockets ///
@@ -280,7 +280,7 @@ function onMessage(evt) {
         ui.messagesScrollArea.element.setText(text);
     }
     else if (cmd.cmd == 'gs') {
-        state.gameState = JSON.parse(cmd.gs);
+        state.gameState = cmd.gs;
         state.loadGameState();
     }
     else if (cmd.cmd == 'actions') {

@@ -2,12 +2,9 @@ package com.gvaneyck.ggengine.server
 
 import com.gvaneyck.ggengine.Action
 import com.gvaneyck.ggengine.GameManager
-import com.gvaneyck.ggengine.gamestate.GameStateSerializer
 import com.gvaneyck.ggengine.ui.GGui
 
 public class GameInstance implements Runnable, GGui {
-
-    static gss = new GameStateSerializer()
 
     def name
     def game
@@ -85,12 +82,11 @@ public class GameInstance implements Runnable, GGui {
     }
 
     private showChoicesToPlayer(id, player) {
-        player.send([cmd: 'gs', gs: gss.serialize(gameManager.getGameState(id))])
+        player.send([cmd: 'gs', gs: gameManager.getGameState(id)])
 
-        def playerActions = actionOptions.findAll { it.playerId == id }
+        def playerActions = actionOptions.findAll { it.getPlayerId() == id }
         if (playerActions) {
-            def formattedActions = playerActions.collect { it.toString() }
-            player.send([cmd: 'actions', actions: formattedActions])
+            player.send([cmd: 'actions', actions: playerActions])
         }
     }
 

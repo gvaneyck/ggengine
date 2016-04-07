@@ -165,7 +165,7 @@ public class GameManager {
             // TODO: Unroll recursion
             Iterator<Action> it = pendingActions.iterator();
             while (it.hasNext()) {
-                if (it.next().playerId == action.playerId) {
+                if (it.next().getPlayerId() == action.getPlayerId()) {
                     it.remove();
                 }
             }

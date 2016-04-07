@@ -4,10 +4,11 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 public class Action {
-    public int playerId;
-    public Object instance;
-    public String method;
-    public Object[] args;
+
+    private int playerId;
+    private Object instance;
+    private String method;
+    private Object[] args;
 
     public Action(int playerId, Object instance, String method) {
         this.playerId = playerId;
@@ -24,6 +25,22 @@ public class Action {
         this.instance = instance;
         this.method = method;
         this.args = args;
+    }
+
+    public int getPlayerId() {
+        return playerId;
+    }
+
+    public String getClazz() {
+        return instance.getClass().getSimpleName();
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public Object[] getArgs() {
+        return args;
     }
 
     public boolean matches(int playerId, String name, Object[] args) {
@@ -61,37 +78,8 @@ public class Action {
             }
         }
         catch (Exception e) {
-            System.err.println("Error invoking method " + this.toString());
+            System.err.println("Error invoking method " + method);
             e.printStackTrace();
         }
-    }
-
-    public String toString() {
-        Class iClass = instance.getClass();
-        String clazz = iClass.getSimpleName();
-        try {
-            if (iClass.getMethod("toString", null).getDeclaringClass().equals(iClass)) {
-                clazz = instance.toString();
-            }
-        }
-        catch (Exception e) { }
-
-        StringBuilder buffer = new StringBuilder();
-        buffer.append(playerId);
-        buffer.append('-');
-        buffer.append(clazz);
-        buffer.append('.');
-        buffer.append(method);
-        buffer.append('(');
-        if (args != null) {
-            for (int i = 0; i < args.length; i++) {
-                buffer.append(args[i]);
-                if (i < args.length - 1) {
-                    buffer.append(", ");
-                }
-            }
-        }
-        buffer.append(')');
-        return buffer.toString();
     }
 }

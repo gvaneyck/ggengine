@@ -8,7 +8,7 @@ class VoidPoroGame extends Game {
     static GameManager gm
     static gs
 
-    def champions = [ 'Ahri', 'Master Yi', 'Caitlyn', 'Nautilus' ]
+    def champions = [ 'Ahri', 'Master Yi', 'Caitlyn', 'Rammus' ]
 
     public void init() {
         gs.player = [:]
@@ -18,22 +18,21 @@ class VoidPoroGame extends Game {
                 gm.addAction(new Action(i, this, 'initPlayer', [ i, champ ]))
             }
         }
-
         gm.resolveActions()
     }
 
     public void initPlayer(int i, String champion) {
-
+        gs.player[i].champion = champion
     }
 
     public void turn() {
     }
 
     public boolean isFinished() {
-        return false
+        return true
     }
 
     public Map end() {
-        return [:]
+        return gs
     }
 }
