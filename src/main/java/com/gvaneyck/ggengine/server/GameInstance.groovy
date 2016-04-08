@@ -9,7 +9,7 @@ public class GameInstance implements Runnable, GGui {
     def name
     def game
     def gameManager
-    Thread gameThread
+    final Thread gameThread
 
     def playerNameToId = [:]
     def idToPlayer = [:]
@@ -19,17 +19,17 @@ public class GameInstance implements Runnable, GGui {
 
     def done = false
 
-    public GameInstance(Lobby lobby) {
-        this.game = lobby.game
-        this.name = lobby.name
+    public GameInstance(GameRoom room) {
+        this.game = room.game
+        this.name = room.name
         int i = 1
-        idToPlayer = lobby.players.collectEntries { [ i++, it ] }
+        idToPlayer = room.users.collectEntries { [ i++, it ] }
         playerNameToId = idToPlayer.collectEntries { [ it.value.name, it.key ] }
         gameThread = new Thread(this)
         gameThread.start()
     }
 
-    public doReconnect(player) {
+    public doReconnect(User player) {
         if (!playerNameToId.containsKey(player.name)) {
             return
         }
@@ -39,7 +39,7 @@ public class GameInstance implements Runnable, GGui {
         showChoicesToPlayer(playerId, player)
     }
 
-    public setChoice(player, action, args) {
+    public setChoice(User player, action, args) {
         def playerId = playerNameToId[player.name]
         if (playerId == null) {
             return
@@ -60,6 +60,11 @@ public class GameInstance implements Runnable, GGui {
                 gameThread.notify()
             }
         }
+    }
+
+    @Override
+    public void sendMessage(int player, String message) {
+        idToPlayer[player].send([cmd: 'message', message: message])
     }
 
     @Override
@@ -92,9 +97,12 @@ public class GameInstance implements Runnable, GGui {
 
     @Override
     public void resolveEnd(Map data) {
-        data.cmd = 'end'
+        def cmd = [
+                cmd: 'end',
+                message: 'Winner is P' + data.winner + ' with ' + data.points + ' points!'
+        ]
         idToPlayer.each { id, player ->
-            player.send(data)
+            player.send(cmd)
         }
         done = true
     }

@@ -3,46 +3,40 @@ package com.gvaneyck.ggengine.server
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.java_websocket.WebSocket
-import org.java_websocket.drafts.Draft
 import org.java_websocket.drafts.Draft_17
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 
 public class GGServer extends WebSocketServer {
 
-    Map<WebSocket, Player> connections = [:] // WebSocket -> Player
-    Map<String, Player> players = [:] // String -> Player
-    Map<String, Lobby> lobbies = [:] // String -> Lobby
-
-    def gameInstances = [:]
+    Map<WebSocket, User> connections = [:]
+    Map<String, User> users = [:]
+    Map<String, Map<String, Room>> rooms = [
+            'lobby': [ 'General': new LobbyRoom('General') ],
+            'game': [:],
+            'direct': [:],
+    ]
 
     public GGServer(int port) throws UnknownHostException {
-        this(port, new Draft_17())
-    }
-
-    public GGServer(int port, Draft d) throws UnknownHostException {
-        super(new InetSocketAddress(port), Collections.singletonList(d))
-
-        lobbies['General'] = new Lobby(name: 'General')
+        super(new InetSocketAddress(port), Collections.singletonList(new Draft_17()))
     }
 
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
         println webSocket.getRemoteSocketAddress().getAddress().getHostAddress() + ' CONNECTED'
-        connections[webSocket] = new Player(webSocket)
+        connections[webSocket] = new User(webSocket)
     }
 
     @Override
     public void onClose(WebSocket webSocket, int i, String s, boolean b) {
         println webSocket.getRemoteSocketAddress().getAddress().getHostAddress() + ' DISCONNECTED'
 
-        Player player = connections.remove(webSocket)
-        players.remove(player.name)
-        player.lobbies.each {
-            it.removePlayer(player)
-            if (it.name != 'General' && it.players.isEmpty()) {
-                lobbies.remove(it.name)
-                sendToAll([cmd: 'lobbyDestroy', name: it.name])
+        User user = connections.remove(webSocket)
+        while (!user.rooms.isEmpty()) {
+            Room room = user.rooms[0]
+            room.leave(user)
+            if (room.users.isEmpty() && room.type != 'lobby') {
+                sendToAll([cmd: 'roomDestroy', type: room.type, name: room.name])
             }
         }
     }
@@ -51,10 +45,10 @@ public class GGServer extends WebSocketServer {
     public void onMessage(WebSocket webSocket, String s) {
         println webSocket.getRemoteSocketAddress().getAddress().getHostAddress() + ' ' + s
 
-        Player player = connections[webSocket]
+        User user = connections[webSocket]
         def cmd = new JsonSlurper().parseText(s)
         if (commands.containsKey(cmd.cmd)) {
-            commands[cmd.cmd](cmd, player)
+            commands[cmd.cmd](cmd, user)
         }
     }
 
@@ -75,105 +69,95 @@ public class GGServer extends WebSocketServer {
     }
 
     def commands = [
-            setName: { cmd, player ->
-                def name = cmd.name
+            login: { cmd, user ->
+                if (user.name != null || cmd.name == null) {
+                    return
+                }
+
+                String name = cmd.name
                 name = name.trim()
                 name = name.replaceAll('[^a-zA-Z0-9 ]', '')
-                if (player.name == null && !players.containsKey(name)) {
-                    player.name = name
-                    players.put(name, player)
-                    player.send([cmd: 'nameSelect', success: true, name: name])
-                    player.send([cmd: 'lobbyList', names: lobbies.keySet()])
-                    lobbies['General'].addPlayer(player)
-                    if (gameInstances.containsKey(player.name)) {
-                        def gameInstance = gameInstances[player.name]
-                        if (gameInstance.done) {
-                            gameInstances.remove(player.name)
-                        }
-                        else {
-                            gameInstances[player.name].doReconnect(player)
-                        }
-                    }
-                    return true
-                }
-                else {
-                    player.send([cmd: 'nameSelect', success: false])
-                    return false
-                }
-            },
-            makeLobby: { cmd, player ->
-                if (lobbies.containsKey(cmd.name)) {
-                    return false
+
+                if (users.containsKey(name)) {
+                    // Handle existing users
+                    def newConn = user.conn
+                    user = users[name]
+                    user.setConn(newConn)
+                    connections.put(newConn, user)
+                } else {
+                    // Handle new users
+                    user.name = name
+                    users.put(name, user)
                 }
 
-                Lobby lobby = new Lobby(cmd)
-                lobbies[lobby.name] = lobby
-                sendToAll([cmd: 'lobbyCreate', name: lobby.name])
-
-                lobby.addPlayer(player)
-                return true
-            },
-            joinLobby: { cmd, player ->
-                if (!lobbies.containsKey(cmd.name)) {
-                    return false
-                }
-
-                Lobby lobby = lobbies[cmd.name]
-                if (lobby.password && cmd.password != lobby.password) {
-                    return false
-                }
-
-                if (lobby.maxSize == lobby.players.size()) {
-                    return false
-                }
-
-                lobby.addPlayer(player)
-                return true
-            },
-            leaveLobby: { cmd, player ->
-                Lobby lobby = lobbies[cmd.name]
-                if (lobby != null) {
-                    lobby.removePlayer(player)
-                    if (lobby.name != 'General' && lobby.players.isEmpty()) {
-                        lobbies.remove(lobby.name)
-                        sendToAll([cmd: 'lobbyDestroy', name: lobby.name])
+                user.send([cmd: 'login', success: true, name: name])
+                user.send([cmd: 'gameList', names: rooms.game.keySet()])
+                rooms.lobby['General'].join(user)
+                if (user.gameInstance) {
+                    if (user.gameInstance.done) {
+                        user.gameInstance = null
+                    } else {
+                        user.gameInstance.doReconnect(user)
                     }
                 }
-                return true
+                return
             },
-            msg: { cmd, player ->
-                def target = player.currentChannel //cmd.target
-                if (players.containsKey(target)) {
-                    Player to = players.get(target)
-                    to.sendMsg(player.name, to.name, cmd.msg)
-                    player.sendMsg(player.name, to.name, cmd.msg)
+            joinRoom: { cmd, user ->
+                if (rooms.game.containsKey(cmd.name)) {
+                    rooms.game[cmd.name] = new GameRoom(cmd)
+                    sendToAll([cmd: 'roomCreate', type: 'game', name: cmd.name])
                 }
-                else if (lobbies.containsKey(target)) {
-                    lobbies[target].sendMsg(player.name, cmd.msg)
+
+                GameRoom room = rooms.game[cmd.name]
+                if (room.password && cmd.password != room.password) {
+                    return
                 }
-                else {
-                    return false
+
+                if (room.maxSize == room.users.size()) {
+                    return
                 }
-                return true
+
+                room.join(user)
+                return
             },
-            startGame: { cmd, player ->
-                def lobby = lobbies[cmd.name]
-                if (lobby.players.size() >= 2 && lobby.players.size() <= 2) {
+            leaveRoom: { cmd, user ->
+                if (!rooms.game.containsKey(cmd.name)) {
+                    return
+                }
+
+                GameRoom room = rooms.game[cmd.name]
+                room.leave(user)
+                if (room.users.isEmpty()) {
+                    rooms.game.remove(room.name)
+                    sendToAll([cmd: 'roomDestroy', type: 'game', name: room.name])
+                }
+                return
+            },
+            msg: { cmd, user ->
+                // TODO: DM handling
+                def room = (rooms[cmd.type] ? rooms[cmd.type][cmd.target] : null)
+                if (room) {
+                    room.send(new Message(cmd.msg, user.name))
+                }
+                return
+            },
+            startGame: { cmd, user ->
+                def lobby = lobbyRooms[cmd.name]
+                if (lobby.users.size() >= 2 && lobby.users.size() <= 2) {
                     def gameInstance = new GameInstance(lobby)
-                    lobby.players.each {
+                    lobby.users.each {
                         gameInstances[it.name] = gameInstance
                     }
-                    return true
+                    return
                 }
-                return false
+                return
             },
-            action: { cmd, player ->
-                def gameInstance = gameInstances[player.name]
-                if (gameInstance.done) {
-                    gameInstances.remove(player.name)
+            action: { cmd, user ->
+                if (user.gameInstance.done) {
+                    user.game = null
                 }
                 else {
-                    gameInstances[player.name].setChoice(player, cmd.action, cmd.args?.toArray())
+                    user.gameInstance.setChoice(user, cmd.action, cmd.args?.toArray())
                 }
             }
     ]

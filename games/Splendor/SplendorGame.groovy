@@ -68,7 +68,7 @@ class SplendorGame extends Game {
         Collections.shuffle(allNobles, gm.rand)
 
         // Setup bank
-        def maxGems = (gs.players == 4 ? 7 : gs.players == 3 ? 5 : 4)
+        def maxGems = (gs.users == 4 ? 7 : gs.users == 3 ? 5 : 4)
         gs.bank = [
             red: maxGems,
             green: maxGems,
@@ -88,12 +88,12 @@ class SplendorGame extends Game {
 
         // Select nobles
         gs.nobles = []
-        (1..(gs.players + 1)).each {
+        (1..(gs.users + 1)).each {
             gs.nobles << allNobles.remove(0)
         }
 
         // Setup players
-        (1..gs.players).each {
+        (1..gs.users).each {
             gs[it] = [:]
             gs[it].bank = [
                     red: 0,
@@ -163,7 +163,7 @@ class SplendorGame extends Game {
         handleGemCap()
 
         gs.currentPlayer++
-        if (gs.currentPlayer > gs.players) {
+        if (gs.currentPlayer > gs.users) {
             gs.currentPlayer = 1
         }
     }
@@ -359,7 +359,7 @@ class SplendorGame extends Game {
         def winner = 0
         def points = 0
         def cards = 0
-        (1..gs.players).each {
+        (1..gs.users).each {
             def player = gs[it]
             def pCards = 0
             player.prod.each { color, amt -> pCards += amt }

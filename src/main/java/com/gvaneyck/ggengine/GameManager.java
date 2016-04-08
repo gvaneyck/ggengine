@@ -2,7 +2,6 @@ package com.gvaneyck.ggengine;
 
 import com.gvaneyck.ggengine.gamestate.GameStateFilter;
 import com.gvaneyck.ggengine.gamestate.PublicGSF;
-import com.gvaneyck.ggengine.ui.ConsoleUI;
 import com.gvaneyck.ggengine.ui.GGui;
 import groovy.lang.GroovyClassLoader;
 
@@ -28,14 +27,6 @@ public class GameManager {
 
     private AccessibleRandom internalRand = new AccessibleRandom();
     public Random rand = internalRand.getRand();
-
-    public GameManager() {
-        this(new HashMap<String, Object>(), new ConsoleUI());
-    }
-
-    public GameManager(Map<String, Object> gs) {
-        this(gs, new ConsoleUI());
-    }
 
     public GameManager(Map<String, Object> gs, GGui ui) {
         this.gs = gs;
@@ -172,6 +163,16 @@ public class GameManager {
 
             action.invoke();
         }
+    }
+
+    public void sendMessage(String message) {
+        for (int i = 1; i < (Integer)gs.get("players"); i++) {
+            sendMessage(i, message);
+        }
+    }
+
+    public void sendMessage(int player, String message) {
+        ui.sendMessage(player, message);
     }
 
     public Map getGameState(int player) {

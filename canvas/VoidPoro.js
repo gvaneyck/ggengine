@@ -19,9 +19,16 @@ function handleActions() {
     for (var idx in state.actions) {
         var action = state.actions[idx];
         var image = new Picture(xPos, 33, 100, 100, 'icons/' + action.args[1] + '.png');
-        xPos += 110;
+        image.handleMouseUp = makeSendCmd(action);
         uiManager.addElement(image);
+        xPos += 110;
     }
 
     uiManager.dirty = true;
+}
+
+function makeSendCmd(action) {
+    return function() {
+        sendCmd({cmd: 'action', action: action.method, args: action.args});
+    }
 }

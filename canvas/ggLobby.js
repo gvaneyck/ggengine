@@ -4,8 +4,8 @@ var websocket;
 var state = {
     gameName: null,
     playerName: null,
-    lobbyName: null,
-    lobbies: {},
+    activeRoom: null,
+    rooms: { lobby: {}, game: {}, direct: {} },
     game: null,
     loadGameState: function() {},
     handleActions: function() {}
@@ -114,14 +114,14 @@ function initUi() {
         return false;
     };
 
-    ui.chatLabel = new Label(550, 13, 'Chat: ');
-    ui.chatBox = new Textbox(ui.chatLabel.width + 550, 10, 400 - ui.chatLabel.width, 20);
+    ui.chatLabel = new Label(550, 318, 'Chat: ');
+    ui.chatBox = new Textbox(ui.chatLabel.width + 550, 315, 400 - ui.chatLabel.width, 20);
     ui.chatBox.submitHandler = function(msg) {
-        sendCmd({cmd: 'msg', msg: msg, target: 'General'});
+        sendCmd({cmd: 'msg', msg: msg, type: state.activeRoom.type, target: state.activeRoom.name});
     };
 
-    var messagesLabel = new FixedWidthLabel(550, 38, 384, '');
-    ui.messagesScrollArea = new ScrollArea(550, 38, 400, 300, messagesLabel);
+    var messagesLabel = new FixedWidthLabel(550, 10, 384, '');
+    ui.messagesScrollArea = new ScrollArea(550, 10, 400, 300, messagesLabel);
 
     uiManager.addElements(ui);
 }
@@ -161,7 +161,8 @@ function login(nickname, host) {
     websocket.connect();
     websocket.onclose = onClose;
     websocket.onmessage = onMessage;
-    sendCmd({cmd: 'setName', name: nickname});
+    state.playerName = nickname;
+    sendCmd({cmd: 'login', name: nickname});
 }
 
 function startCreateGame() {
@@ -193,11 +194,11 @@ function leaveGame() {
 
     uiManager.dirty = true;
 
-    sendCmd({ cmd: 'leaveLobby', name: state.lobbyName });
+    sendCmd({ cmd: 'leaveLobby', name: state.activeRoom });
 }
 
 function startGame() {
-    sendCmd({ cmd: 'startGame', name: state.lobbyName });
+    sendCmd({ cmd: 'startGame', name: state.activeRoom });
 }
 
 /// Web sockets ///
@@ -213,12 +214,12 @@ function onClose(evt) {
     ui.generalLabel.visible = true;
     uiManager.dirty = true;
 
-    sendCmd({cmd: 'setName', name: state.playerName});
+    sendCmd({cmd: 'login', name: state.playerName});
 }
 
 function onMessage(evt) {
     var cmd = JSON.parse(evt.data);
-    if (cmd.cmd == 'nameSelect') {
+    if (cmd.cmd == 'login') {
         if (cmd.success) {
             state.playerName = cmd.name;
 
@@ -234,64 +235,75 @@ function onMessage(evt) {
             ui.chatBox.visible = true;
             ui.chatLabel.visible = true;
             ui.messagesScrollArea.visible = true;
-        }
-        else {
+        } else {
             ui.generalLabel.setText('Invalid name');
         }
-    }
-    else if (cmd.cmd == 'lobbyList') {
-        for (var i = 0; i < cmd.names.length; i++) {
-            var name = cmd.names[i];
-            state.lobbies[name] = {name: name, members: []};
+    } else if (cmd.cmd == 'roomJoin') {
+        var room = state.rooms[cmd.type][cmd.name];
+        if (room == undefined) {
+            room = { type: cmd.type, name: cmd.name };
+            state.rooms[cmd.type][cmd.name] = room;
         }
-    }
-    else if (cmd.cmd == 'lobbyCreate') {
-        state.lobbies[cmd.name] = {name: cmd.name, members: []};
-    }
-    else if (cmd.cmd == 'lobbyDestroy') {
-        delete state.lobbies[cmd.name];
-    }
-    else if (cmd.cmd == 'lobbyJoin') {
-        var lobby = state.lobbies[cmd.name];
-        lobby.members = lobby.members.concat(cmd.members);
 
-        if (cmd.name != 'General') {
-            state.lobbyName = cmd.name;
-            state.lobby = lobby;
-            showLobbyUI();
+        if (cmd.members != undefined) {
+            room.members = cmd.members;
         }
-    }
-    else if (cmd.cmd == 'lobbyLeave') {
-        var lobby = state.lobbies[cmd.name];
-        if (cmd.member == name) {
-            lobby.members = [];
+        if (cmd.member != undefined) {
+            room.members = room.members.concat(cmd.members)
         }
-        else {
-            lobby.members.splice(lobby.members.indexOf(cmd.member), 1);
+        if (cmd.messages != undefined) {
+            room.messages = cmd.messages;
+            updateChat(room.messages);
         }
-        ui.gamePlayerList.setText(lobby.members.join('\n'));
-    }
-    else if (cmd.cmd == 'chat') {
-        var text = ui.messagesScrollArea.element.text;
-        if (text.length != 0) {
-            text += '\n';
+
+        state.activeRoom = room;
+        if (cmd.type == 'game') {
+            showGameLobbyUI();
         }
-        text += formatChatLine(cmd);
-        ui.messagesScrollArea.element.setText(text);
-    }
-    else if (cmd.cmd == 'gs') {
-        state.gameState = cmd.gs;
-        state.loadGameState();
-    }
-    else if (cmd.cmd == 'actions') {
-        state.actions = cmd.actions;
-        state.handleActions();
-    }
-    else if (cmd.cmd == 'end') {
-        handleEndGame(cmd);
+//    } else if (cmd.cmd == 'roomCreate') {
+//        state.lobbies[cmd.name] = {name: cmd.name, members: []};
+//    } else if (cmd.cmd == 'roomDestroy') {
+//        delete state.lobbies[cmd.name];
+//    } else if (cmd.cmd == 'roomJoin') {
+//        var lobby = state.lobbies[cmd.name];
+//        lobby.members = lobby.members.concat(cmd.members);
+//
+//        if (cmd.name != 'General') {
+//            state.lobbyName = cmd.name;
+//            state.lobby = lobby;
+//            showGameLobbyUI();
+//        }
+//    } else if (cmd.cmd == 'roomLeave') {
+//        var lobby = state.lobbies[cmd.name];
+//        if (cmd.member == name) {
+//            lobby.members = [];
+//        } else {
+//            lobby.members.splice(lobby.members.indexOf(cmd.member), 1);
+//        }
+//        ui.gamePlayerList.setText(lobby.members.join('\n'));
+    } else if (cmd.cmd == 'chat') {
+        var room = state.rooms[cmd.type][cmd.room];
+        room.messages = room.messages.concat({ time: cmd.time, message: cmd.message, from: cmd.from });
+        if (room == state.activeRoom) {
+            updateChat(room.messages);
+        }
+//    } else if (cmd.cmd == 'message') {
+//        if (text.length != 0) {
+//            text += '\n';
+//        }
+//        text += cmd.message;
+//        ui.messagesScrollArea.element.setText(text);
+//    } else if (cmd.cmd == 'gs') {
+//        state.gameState = cmd.gs;
+//        state.loadGameState();
+//    } else if (cmd.cmd == 'actions') {
+//        state.actions = cmd.actions;
+//        state.handleActions();
+//    } else if (cmd.cmd == 'end') {
+//        handleEndGame(cmd);
     }
 
-    if (cmd.cmd == 'lobbyList' || cmd.cmd == 'lobbyCreate' || cmd.cmd == 'lobbyDestroy') {
+    if (cmd.cmd == 'roomCreate' || cmd.cmd == 'roomDestroy') {
         var games = [];
         for (var name in state.lobbies) {
             if (name != 'General') {
@@ -309,16 +321,25 @@ function onMessage(evt) {
     uiManager.dirty = true;
 }
 
-function formatChatLine(chat) {
-    var date = new Date(chat.time);
-    var dateString = date.getHours()
-        + ':'
-        + (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes())
-        + ':'
-        + (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());
-    var message = dateString + ' [' + chat.to + '] ' + chat.from + ': ' + chat.msg;
+function updateChat(messages) {
+    var text = '';
+    for (var i in messages) {
+        var message = messages[i];
 
-    return message;
+        var date = new Date(message.time);
+        var dateString = date.getHours()
+            + ':'
+            + (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes())
+            + ':'
+            + (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());
+
+        text += dateString + ' ';
+        if (message.from != undefined) {
+            text += message.from + ': ';
+        }
+        text += message.message + '\n';
+    }
+    ui.messagesScrollArea.element.setText(text);
 }
 
 function sendCmd(cmd) {
@@ -336,17 +357,17 @@ function handleEndGame(cmd) {
     ui.chatBox.visible = true;
     ui.chatLabel.visible = true;
     ui.messagesScrollArea.visible = true;
-    showLobbyUI();
+    showGameLobbyUI();
 
     ui.generalLabel.x = ui.startButton.x + ui.startButton.width + 20;
     ui.generalLabel.y = 13;
-    ui.generalLabel.setText('Winner is P' + cmd.winner + ' with ' + cmd.points + ' points!');
+    ui.generalLabel.setText(cmd.message);
     ui.generalLabel.visible = true;
 
     uiManager.dirty = true;
 }
 
-function showLobbyUI() {
+function showGameLobbyUI() {
     ui.gameNameLabel.visible = false;
     ui.gameNameBox.visible = false;
     ui.gameNameButton.visible = false;
@@ -358,6 +379,6 @@ function showLobbyUI() {
     ui.startButton.visible = true;
     ui.exitButton.visible = true;
 
-    ui.gamePlayerLabel.setText('Player List for \'' + state.lobbyName + '\'');
+    ui.gamePlayerLabel.setText('Player List for \'' + state.activeRoom + '\'');
     ui.gamePlayerList.setText(state.lobby.members.join('\n'));
 }
