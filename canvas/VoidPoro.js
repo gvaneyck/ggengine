@@ -19,10 +19,14 @@ function handleActions() {
     for (var idx in state.actions) {
         var action = state.actions[idx];
         var image = new Picture(xPos, 33, 100, 100, 'icons/' + action.args[1] + '.png');
-        image.handleMouseUp = makeSendCmd(action);
+        image.handleMouseClick = makeSendCmd(action);
         uiManager.addElement(image);
         xPos += 110;
     }
+    uiManager.addElement(ui.roomLabel);
+    uiManager.addElement(ui.chatLabel);
+    uiManager.addElement(ui.chatBox);
+    uiManager.addElement(ui.messagesScrollArea);
 
     uiManager.dirty = true;
 }

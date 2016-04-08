@@ -12,7 +12,7 @@ class VoidPoroGame extends Game {
 
     public void init() {
         gs.player = [:]
-        (1..gs.users).each { i ->
+        (1..gs.players).each { i ->
             gs.player[i] = [:]
             champions.each { champ ->
                 gm.addAction(new Action(i, this, 'initPlayer', [ i, champ ]))

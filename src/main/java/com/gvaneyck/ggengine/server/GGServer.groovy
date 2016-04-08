@@ -100,7 +100,6 @@ public class GGServer extends WebSocketServer {
                         user.gameInstance.doReconnect(user)
                     }
                 }
-                return
             },
             joinRoom: { cmd, user ->
                 if (!rooms.game.containsKey(cmd.name)) {
@@ -118,7 +117,6 @@ public class GGServer extends WebSocketServer {
                 }
 
                 room.join(user)
-                return
             },
             leaveRoom: { cmd, user ->
                 if (!rooms.game.containsKey(cmd.name)) {
@@ -131,7 +129,6 @@ public class GGServer extends WebSocketServer {
                     rooms.game.remove(room.name)
                     sendToAll([cmd: 'roomDestroy', type: 'game', name: room.name])
                 }
-                return
             },
             msg: { cmd, user ->
                 // TODO: DM handling
@@ -139,24 +136,20 @@ public class GGServer extends WebSocketServer {
                 if (room) {
                     room.send(new Message(cmd.msg, user.name))
                 }
-                return
             },
             startGame: { cmd, user ->
-                def lobby = lobbyRooms[cmd.name]
-                if (lobby.users.size() >= 2 && lobby.users.size() <= 2) {
-                    def gameInstance = new GameInstance(lobby)
-                    lobby.users.each {
-                        gameInstances[it.name] = gameInstance
+                GameRoom room = rooms.game[cmd.name]
+                if (room?.canStart()) {
+                    room.gameInstance = new GameInstance(room)
+                    room.users.each {
+                        it.gameInstance = room.gameInstance
                     }
-                    return
                 }
-                return
             },
             action: { cmd, user ->
                 if (user.gameInstance.done) {
                     user.game = null
-                }
-                else {
+                } else {
                     user.gameInstance.setChoice(user, cmd.action, cmd.args?.toArray())
                 }
             }

@@ -49,8 +49,7 @@ function getCursorPosition(e, bounds) {
     if (e.pageX != undefined && e.pageY != undefined) {
         data.x = e.pageX;
         data.y = e.pageY;
-    }
-    else {
+    } else {
         data.x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
         data.y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
     }
@@ -146,8 +145,7 @@ UIManager.prototype.addElements = function(elements) {
     for (var key in elements) {
         if (key instanceof UIElement) {
             this.addElement(key);
-        }
-        else if (elements[key] instanceof UIElement) {
+        } else if (elements[key] instanceof UIElement) {
             this.addElement(elements[key]);
         }
     }
@@ -168,8 +166,7 @@ UIManager.prototype.mouseDownHandler = function(e) {
             if (element.setFocus(true)) { this.dirty = true; }
             if (element.handleMouseDown(xy.x, xy.y)) { this.dirty = true; }
             handled = true;
-        }
-        else {
+        } else {
             if (element.setFocus(false)) { this.dirty = true; }
         }
     }
@@ -185,8 +182,7 @@ UIManager.prototype.mouseMoveHandler = function(e) {
         if (!handled && element.visible && isClicked(xy.x, xy.y, element)) {
             if (element.setHover(true)) { this.dirty = true; }
             if (element.handleMouseHover(xy.x, xy.y)) { handled = true; }
-        }
-        else {
+        } else {
             if (element.setHover(false)) { this.dirty = true; }
         }
     }
@@ -221,13 +217,11 @@ UIManager.prototype.mouseUpHandler = function(e) {
             var now = new Date().getTime();
             if (e.button === 2) {
                 if (element.handleMouseRightClick(xy.x, xy.y)) { this.dirty = true; }
-            }
-            else {
+            } else {
                 if (this.lastClick.element == element && now - this.lastClick.time < 500) {
                     if (element.handleMouseDoubleClick(xy.x, xy.y)) { this.dirty = true; }
                     this.lastClick.element = null;
-                }
-                else {
+                } else {
                     if (element.handleMouseClick(xy.x, xy.y)) { this.dirty = true; }
                     this.lastClick.element = element;
                     this.lastClick.time = now;
@@ -706,6 +700,7 @@ ScrollArea.prototype.handleMouseWheel = function(yDelta) {
 
 function Button(x, y, text) {
     Label.call(this, x, y, text);
+    this.disabled = false;
 }
 
 Button.prototype = Object.create(Label.prototype);

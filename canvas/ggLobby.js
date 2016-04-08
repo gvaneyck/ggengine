@@ -205,7 +205,7 @@ function leaveGame() {
 }
 
 function startGame() {
-    sendCmd({ cmd: 'startGame', name: state.activeRoom });
+    sendCmd({ cmd: 'startGame', name: state.activeRoom.name });
 }
 
 /// Web sockets ///
@@ -269,47 +269,29 @@ function onMessage(evt) {
         if (cmd.type == 'game') {
             showGameLobbyUI();
         }
-//    } else if (cmd.cmd == 'roomCreate') {
-//        state.lobbies[cmd.name] = {name: cmd.name, members: []};
-//    } else if (cmd.cmd == 'roomDestroy') {
-//        delete state.lobbies[cmd.name];
-//    } else if (cmd.cmd == 'roomJoin') {
-//        var lobby = state.lobbies[cmd.name];
-//        lobby.members = lobby.members.concat(cmd.members);
-//
-//        if (cmd.name != 'General') {
-//            state.lobbyName = cmd.name;
-//            state.lobby = lobby;
-//            showGameLobbyUI();
-//        }
-//    } else if (cmd.cmd == 'roomLeave') {
-//        var lobby = state.lobbies[cmd.name];
-//        if (cmd.member == name) {
-//            lobby.members = [];
-//        } else {
-//            lobby.members.splice(lobby.members.indexOf(cmd.member), 1);
-//        }
-//        ui.gamePlayerList.setText(lobby.members.join('\n'));
+    } else if (cmd.cmd == 'roomLeave') {
+        var room = state.rooms[cmd.type][cmd.name];
+        room.members.splice(room.members.indexOf(cmd.member), 1);
+        ui.gamePlayerList.setText(room.members.join('\n'));
+    } else if (cmd.cmd == 'roomDestroy') {
+        delete state.rooms[cmd.type][cmd.name];
     } else if (cmd.cmd == 'chat') {
         var room = state.rooms[cmd.type][cmd.room];
         room.messages = room.messages.concat({ time: cmd.time, message: cmd.message, from: cmd.from });
         if (room == state.activeRoom) {
             updateChat();
         }
-//    } else if (cmd.cmd == 'message') {
-//        if (text.length != 0) {
-//            text += '\n';
-//        }
-//        text += cmd.message;
-//        ui.messagesScrollArea.element.setText(text);
-//    } else if (cmd.cmd == 'gs') {
-//        state.gameState = cmd.gs;
-//        state.loadGameState();
-//    } else if (cmd.cmd == 'actions') {
-//        state.actions = cmd.actions;
-//        state.handleActions();
-//    } else if (cmd.cmd == 'end') {
-//        handleEndGame(cmd);
+    } else if (cmd.cmd == 'message') {
+        state.activeRoom = state.activeRoom.messages.concat({ time: cmd.time, message: cmd.message });
+        updateChat();
+    } else if (cmd.cmd == 'gs') {
+        state.gameState = cmd.gs;
+        state.loadGameState();
+    } else if (cmd.cmd == 'actions') {
+        state.actions = cmd.actions;
+        state.handleActions();
+    } else if (cmd.cmd == 'end') {
+        handleEndGame(cmd);
     }
 
     if (cmd.cmd == 'roomCreate' || cmd.cmd == 'roomDestroy') {

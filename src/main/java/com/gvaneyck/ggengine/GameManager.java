@@ -166,7 +166,7 @@ public class GameManager {
     }
 
     public void sendMessage(String message) {
-        for (int i = 1; i < (Integer)gs.get("players"); i++) {
+        for (int i = 1; i <= (Integer)gs.get("players"); i++) {
             sendMessage(i, message);
         }
     }

@@ -21,4 +21,10 @@ public class GameRoom extends Room {
         this.minSize = minSize
         this.maxSize = maxSize
     }
+
+    public boolean canStart() {
+        return (!gameInstance
+                && (!minSize || minSize <= users.size())
+                && (!maxSize || maxSize >= users.size()))
+    }
 }
