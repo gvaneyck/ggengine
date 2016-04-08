@@ -4,8 +4,8 @@ public class GameRoom extends Room {
 
     String game
     String password
-    int minSize
-    int maxSize
+    Integer minSize
+    Integer maxSize
     GameInstance gameInstance
 
     public GameRoom(Map args) {

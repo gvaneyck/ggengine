@@ -103,7 +103,7 @@ public class GGServer extends WebSocketServer {
                 return
             },
             joinRoom: { cmd, user ->
-                if (rooms.game.containsKey(cmd.name)) {
+                if (!rooms.game.containsKey(cmd.name)) {
                     rooms.game[cmd.name] = new GameRoom(cmd)
                     sendToAll([cmd: 'roomCreate', type: 'game', name: cmd.name])
                 }
