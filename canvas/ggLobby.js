@@ -39,7 +39,8 @@ var ui = {
 };
 
 function setupLobby(canvasElement, gameName, loadGameState, handleActions, renderTest) {
-    mainContainer = new Container(canvasElement);
+    mainContainer = new Container();
+    initRootContainer(mainContainer, canvasElement);
     state.gameName = gameName;
 
     if (renderTest == true) {
@@ -66,26 +67,24 @@ function initUi() {
 
     ui.serverLabel = new Label(10, 38, 'Server: ');
     ui.serverBox = new Textbox(ui.nameLabel.width + 10, 35, 200, 20);
-    ui.serverBox.text = 'gvane1wl1:9998';
+    ui.serverBox.text = 'gvane1wd2:9998';
     ui.serverLabel.x = ui.nameLabel.width + 10 - ui.serverLabel.width;
 
     ui.loginButton = new Button(ui.nameBox.x + ui.nameBox.width + 10, 10, 'Login');
     ui.loginButton.handleMouseClick = function(x, y) {
         login(ui.nameBox.text, ui.serverBox.text);
-        return false;
     };
 
     ui.createButton = new Button(10, 10, 'Create Game');
     ui.createButton.handleMouseClick = function(x, y) {
         startCreateGame();
-        return true;
     };
 
     ui.lobbyTable = new Table(10, 38, 500);
     ui.lobbyTable.emptyText = 'No games found';
     ui.lobbyTable.onCellClick = function(row, col) {
         if (col == 0 && row > 0) {
-            sendCmd({cmd: 'joinLobby', name: ui.lobbyTable.elements[row][2].text })
+            sendCmd({cmd: 'joinRoom', type: 'game', name: ui.lobbyTable.elements[row][2].text })
         }
     };
 
@@ -97,7 +96,6 @@ function initUi() {
     ui.gameNameButton = new Button(ui.gameNameBox.x + ui.gameNameBox.width + 10, 35, 'Create');
     ui.gameNameButton.handleMouseClick = function(x, y) {
         createGameLobby(ui.gameNameBox.text);
-        return true;
     };
 
     ui.gamePlayerLabel = new Label(10, 38, '');
@@ -106,13 +104,11 @@ function initUi() {
     ui.exitButton = new Button(10, 10, 'Exit Game');
     ui.exitButton.handleMouseClick = function(x, y) {
         leaveGame();
-        return false;
     };
 
     ui.startButton = new Button(ui.exitButton.width + 20, 10, 'Start Game');
     ui.startButton.handleMouseClick = function(x, y) {
         startGame();
-        return false;
     };
 
     ui.roomLabel = new Label(550, 13, '');
@@ -176,6 +172,8 @@ function startCreateGame() {
     ui.gameNameBox.visible = true;
     ui.gameNameButton.visible = true;
     ui.exitButton.visible = true;
+
+    mainContainer.dirty = true;
 }
 
 function createGameLobby(lobbyName) {
@@ -195,6 +193,7 @@ function leaveGame() {
     ui.createButton.visible = true;
     ui.lobbyTable.visible = true;
 
+    console.log(state.activeRoom);
     if (state.activeRoom.type == 'game') {
         sendCmd({ cmd: 'leaveRoom', type: 'game', name: state.activeRoom.name });
         state.activeRoom = state.rooms.lobby['General'];
@@ -269,6 +268,12 @@ function onMessage(evt) {
         if (cmd.type == 'game') {
             showGameLobbyUI();
         }
+    } else if (cmd.cmd == 'gameList') {
+        state.rooms.game = {};
+        for (var i in cmd.names) {
+            var name = cmd.names[i];
+            state.rooms.game[name] = { type: 'game', name: name, members: [], messages: [] };
+        }
     } else if (cmd.cmd == 'roomLeave') {
         var room = state.rooms[cmd.type][cmd.name];
         room.members.splice(room.members.indexOf(cmd.member), 1);
@@ -294,12 +299,10 @@ function onMessage(evt) {
         handleEndGame(cmd);
     }
 
-    if (cmd.cmd == 'roomCreate' || cmd.cmd == 'roomDestroy') {
+    if (cmd.cmd == 'gameList' || cmd.cmd == 'roomCreate' || cmd.cmd == 'roomDestroy') {
         var games = [];
-        for (var name in state.lobbies) {
-            if (name != 'General') {
-                games.push([new Label('Click to Join'), new Label(state.gameName), new Label(name)])
-            }
+        for (var name in state.rooms.game) {
+            games.push([new Label('Click to Join'), new Label(state.gameName), new Label(name)])
         }
 
         if (games.length > 0) {
