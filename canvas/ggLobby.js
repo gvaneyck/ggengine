@@ -11,7 +11,7 @@ var state = {
     handleActions: function() {}
 };
 
-var uiManager;
+var mainContainer;
 
 var ui = {
     generalLabel: null,
@@ -39,7 +39,7 @@ var ui = {
 };
 
 function setupLobby(canvasElement, gameName, loadGameState, handleActions, renderTest) {
-    uiManager = new UIManager(canvasElement);
+    mainContainer = new Container(canvasElement);
     state.gameName = gameName;
 
     if (renderTest == true) {
@@ -49,9 +49,9 @@ function setupLobby(canvasElement, gameName, loadGameState, handleActions, rende
         initUi();
         showLoginUI();
         state.loadGameState = loadGameState;
-        uiManager.onresize = loadGameState;
+        mainContainer.onresize = loadGameState;
         state.handleActions = handleActions;
-        uiManager.dirty = true;
+        mainContainer.dirty = true;
     }
 }
 
@@ -125,7 +125,7 @@ function initUi() {
     var messagesLabel = new FixedWidthLabel(550, 35, 384, '');
     ui.messagesScrollArea = new ScrollArea(550, 35, 400, 300, messagesLabel);
 
-    uiManager.addElements(ui);
+    mainContainer.addElements(ui);
 }
 
 function showLoginUI() {
@@ -152,13 +152,13 @@ function showLoginUI() {
     ui.chatBox.visible = false;
     ui.messagesScrollArea.visible = false;
 
-    uiManager.dirty = true;
+    mainContainer.dirty = true;
 }
 
 function login(nickname, host) {
     ui.generalLabel.setText("Connecting...");
     ui.generalLabel.visible = true;
-    uiManager.dirty = true;
+    mainContainer.dirty = true;
 
     websocket = new ReconnectingWebSocket(host);
     websocket.connect();
@@ -201,7 +201,7 @@ function leaveGame() {
         updateChat();
     }
 
-    uiManager.dirty = true;
+    mainContainer.dirty = true;
 }
 
 function startGame() {
@@ -219,7 +219,7 @@ function onClose(evt) {
     ui.generalLabel.x = 10;
     ui.generalLabel.y = 10;
     ui.generalLabel.visible = true;
-    uiManager.dirty = true;
+    mainContainer.dirty = true;
 
     sendCmd({cmd: 'login', name: state.playerName});
 }
@@ -309,7 +309,7 @@ function onMessage(evt) {
         ui.lobbyTable.elements = games;
     }
 
-    uiManager.dirty = true;
+    mainContainer.dirty = true;
 }
 
 function updateChat() {
@@ -340,11 +340,11 @@ function sendCmd(cmd) {
 }
 
 function handleEndGame(cmd) {
-    uiManager.elements = [];
+    mainContainer.elements = [];
 
     initUi();
-    for (var i in uiManager.elements) {
-        uiManager.elements[i].visible = false;
+    for (var i in mainContainer.elements) {
+        mainContainer.elements[i].visible = false;
     }
 
     ui.roomLabel.visible = true;
@@ -358,7 +358,7 @@ function handleEndGame(cmd) {
     ui.generalLabel.setText(cmd.message);
     ui.generalLabel.visible = true;
 
-    uiManager.dirty = true;
+    mainContainer.dirty = true;
 }
 
 function showGameLobbyUI() {

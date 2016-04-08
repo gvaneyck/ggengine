@@ -6,29 +6,29 @@ function loadGameState() {
     }
     console.log(state.gameState);
 
-    uiManager.elements = [];
+    mainContainer.elements = [];
 }
 
 function handleActions() {
     console.log(state.actions);
 
     var label = new Label(10, 10, 'Select your champion');
-    uiManager.addElement(label);
+    mainContainer.addElement(label);
 
     var xPos = 10;
     for (var idx in state.actions) {
         var action = state.actions[idx];
         var image = new Picture(xPos, 33, 100, 100, 'icons/' + action.args[1] + '.png');
         image.handleMouseClick = makeSendCmd(action);
-        uiManager.addElement(image);
+        mainContainer.addElement(image);
         xPos += 110;
     }
-    uiManager.addElement(ui.roomLabel);
-    uiManager.addElement(ui.chatLabel);
-    uiManager.addElement(ui.chatBox);
-    uiManager.addElement(ui.messagesScrollArea);
+    mainContainer.addElement(ui.roomLabel);
+    mainContainer.addElement(ui.chatLabel);
+    mainContainer.addElement(ui.chatBox);
+    mainContainer.addElement(ui.messagesScrollArea);
 
-    uiManager.dirty = true;
+    mainContainer.dirty = true;
 }
 
 function makeSendCmd(action) {

@@ -7,8 +7,8 @@ function loadGameState() {
     }
     var gs = state.gameState;
 
-    // Clean old elements from uiManager
-    uiManager.elements = [];
+    // Clean old elements from mainContainer
+    mainContainer.elements = [];
 
     // Bank
     var offset = 10;
@@ -28,7 +28,7 @@ function loadGameState() {
             };
         }(color));
 
-        uiManager.addElement(card);
+        mainContainer.addElement(card);
 
         offset += 85;
     }
@@ -54,7 +54,7 @@ function loadGameState() {
                 }(parseInt(tier), i));
             }
 
-            uiManager.addElement(card);
+            mainContainer.addElement(card);
 
             offset2 += 170;
         }
@@ -69,7 +69,7 @@ function loadGameState() {
                 sendCmd({cmd: 'action', action: 'stashRandomCard', args: [tier]});
             };
         }(parseInt(tier)));
-        uiManager.addElement(card);
+        mainContainer.addElement(card);
 
         offset += 170;
     }
@@ -82,14 +82,14 @@ function loadGameState() {
             var img = new Picture('images/Splendor/n' + gs.nobles[i].id + '.png');
             card.setCardBack(img);
         }
-        uiManager.addElement(card);
+        mainContainer.addElement(card);
 
         offset += 170;
     }
 
     var nobleLabel = new Label(40, 600, 'Nobles:');
     nobleLabel.fontSize = '24pt';
-    uiManager.addElement(nobleLabel);
+    mainContainer.addElement(nobleLabel);
 
     // Players
     offset = 10;
@@ -99,16 +99,16 @@ function loadGameState() {
         var offset2 = 1200;
         var playerName = new Label(offset2 - 135, offset + 35, 'P' + i);
         playerName.fontSize = '24pt';
-        uiManager.addElement(playerName);
+        mainContainer.addElement(playerName);
 
         var playerPoints = new Label(offset2 - 85, offset + 35, player.points + ' pts');
         playerPoints.fontSize = '24pt';
-        uiManager.addElement(playerPoints);
+        mainContainer.addElement(playerPoints);
 
         if (gs.currentPlayer == i) {
             var asterisk = new Label(offset2 - 150, offset + 40, '*');
             asterisk.fontSize = '24pt';
-            uiManager.addElement(asterisk);
+            mainContainer.addElement(asterisk);
         }
 
         for (var color in player.bank) {
@@ -131,14 +131,14 @@ function loadGameState() {
                 }(color));
             }
 
-            uiManager.addElement(card);
+            mainContainer.addElement(card);
 
             offset2 += 85;
         }
 
         var reserveCards = new Label(offset2 + 10, offset + 35, player.stash.length + ' reserved');
         reserveCards.fontSize = '18pt';
-        uiManager.addElement(reserveCards);
+        mainContainer.addElement(reserveCards);
 
         offset += 85;
     }
@@ -148,7 +148,7 @@ function loadGameState() {
     if (me.stash.length > 0) {
         var reserve = new Label(1080, 420, 'Reserve:');
         reserve.fontSize = '24pt';
-        uiManager.addElement(reserve);
+        mainContainer.addElement(reserve);
 
         offset = 1200;
         for (var i = 0; i < me.stash.length; i++) {
@@ -161,7 +161,7 @@ function loadGameState() {
                 };
             }(i));
 
-            uiManager.addElement(card);
+            mainContainer.addElement(card);
 
             offset += 170;
         }
@@ -214,5 +214,5 @@ function handleActions() {
     }
 
     var message = new Label(1080, 520, messages.join('  '));
-    uiManager.addElement(message);
+    mainContainer.addElement(message);
 }

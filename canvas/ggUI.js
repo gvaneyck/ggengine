@@ -37,6 +37,18 @@
 
 /// Helper functions ///
 
+var imageCache = new function() {
+    var cache = {};
+    this.getImage = function(path) {
+        if (cache[path] == undefined) {
+            var img = new Image();
+            img.src = path;
+            cache[path] = img;
+        }
+        return cache[path];
+    }
+};
+
 function isClicked(x, y, element) {
     return (element.x <= x
         && element.y <= y
@@ -58,220 +70,36 @@ function getCursorPosition(e, bounds) {
     return data;
 }
 
+function initRootContainer(container, canvas) {
+    document.addEventListener('mousedown', function(e) { if (container.mouseDownHandler.call(container, e)) { e.preventDefault(); } });
+    document.addEventListener('mousemove', function(e) { if (container.mouseMoveHandler.call(container, e)) { e.preventDefault(); } });
+    document.addEventListener('mouseup', function(e) { if (container.mouseUpHandler.call(container, e)) { e.preventDefault(); } });
+    document.addEventListener('wheel', function(e) { if (container.mouseWheelHandler.call(container, e)) { e.preventDefault(); } }, false);
+    document.addEventListener('keydown', function(e) { if (container.typingHandler.call(container, e)) { e.preventDefault(); } });
 
-/// UI Manager ///
-function UIManager(canvas) {
-    this.canvas = canvas;
-    this.elements = [];
-    this.dirty = false;
-    this.sizeWindow();
+    var sizeWindow = function() {
+        // TODO: Figure out why opening console sometimes wipes canvas w/out redraw
+        // Resize current canvas
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-    // State vars
-    this.isMouseDown = false;
-    this.lastMousePos = { };
-    this.lastClick = { element: null, time: 0 };
-
-    // Attach events
-    var _this = this;
-    document.addEventListener('mousedown', function(e) { _this.sortElements(); _this.mouseDownHandler.call(_this, e); });
-    document.addEventListener('mousemove', function(e) { _this.sortElements(); _this.mouseMoveHandler.call(_this, e); });
-    document.addEventListener('mouseup', function(e) { _this.sortElements(); _this.mouseUpHandler.call(_this, e); });
-    document.addEventListener('wheel', function(e) { _this.sortElements(); _this.mouseWheelHandler.call(_this, e); }, false);
-    document.addEventListener('keydown', function(e) { _this.sortElements(); _this.typingHandler.call(_this, e); });
-    window.addEventListener('resize', function(e) { _this.sizeWindow(); }, false);
+        // Chain call for things like re-doing layout
+        container.onresize();
+        container.dirty = true;
+        container.draw(canvas);
+    };
+    window.addEventListener('resize', sizeWindow, false);
+    sizeWindow();
 
     // Start draw loop
     var drawLoop = function() {
         requestAnimationFrame(drawLoop);
-        _this.draw();
+        if (container.isDirty()) {
+            container.draw(canvas);
+        }
     };
     drawLoop();
 }
-
-UIManager.prototype.sizeWindow = function(e) {
-    // Resize current canvas
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-
-    // Chain call for things like re-doing layout
-    this.onresize();
-    this.dirty = true;
-    this.draw(); // Must explicitly call draw
-};
-
-UIManager.prototype.onresize = function() {};
-
-UIManager.prototype.draw = function() {
-    var dirty = this.dirty;
-    for (var i = 0; i < this.elements.length; i++) {
-        if (this.elements[i].isDirty()) {
-            dirty = true;
-        }
-    }
-    if (!dirty) {
-        return;
-    }
-
-    this.sortElements();
-
-    var context = this.canvas.getContext('2d');
-    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    for (var i = 0; i < this.elements.length; i++) {
-        var element = this.elements[i];
-        if (element.visible) {
-            element.draw(context);
-        }
-    }
-
-    this.dirty = false;
-};
-
-UIManager.prototype.sortElements = function() {
-    // Sort by z order
-    this.elements.sort(function(a, b) {
-        return a.getZLevel() - b.getZLevel();
-    });
-};
-
-UIManager.prototype.addElement = function(element) {
-    this.elements.push(element);
-    this.elements = this.elements.concat(element.getChildren());
-    this.dirty = true;
-};
-
-
-UIManager.prototype.addElements = function(elements) {
-    for (var key in elements) {
-        if (key instanceof UIElement) {
-            this.addElement(key);
-        } else if (elements[key] instanceof UIElement) {
-            this.addElement(elements[key]);
-        }
-    }
-};
-
-
-UIManager.prototype.mouseDownHandler = function(e) {
-    e.preventDefault();
-    var xy = getCursorPosition(e, this.canvas);
-
-    this.isMouseDown = true;
-    this.lastMousePos = xy;
-
-    var handled = false;
-    for (var i = this.elements.length - 1; i >= 0; i--) {
-        var element = this.elements[i];
-        if (!handled && element.visible && isClicked(xy.x, xy.y, element)) {
-            if (element.setFocus(true)) { this.dirty = true; }
-            if (element.handleMouseDown(xy.x, xy.y)) { this.dirty = true; }
-            handled = true;
-        } else {
-            if (element.setFocus(false)) { this.dirty = true; }
-        }
-    }
-};
-
-UIManager.prototype.mouseMoveHandler = function(e) {
-    var xy = getCursorPosition(e, this.canvas);
-
-    // Hover
-    var handled = false;
-    for (var i = this.elements.length - 1; i >= 0; i--) {
-        var element = this.elements[i];
-        if (!handled && element.visible && isClicked(xy.x, xy.y, element)) {
-            if (element.setHover(true)) { this.dirty = true; }
-            if (element.handleMouseHover(xy.x, xy.y)) { handled = true; }
-        } else {
-            if (element.setHover(false)) { this.dirty = true; }
-        }
-    }
-
-    // Drag
-    if (this.isMouseDown) {
-        for (var i = this.elements.length - 1; i >= 0; i--) {
-            var element = this.elements[i];
-            if (element.visible && element.focus) {
-                e.preventDefault();
-                var xDelta = xy.x - this.lastMousePos.x;
-                var yDelta = xy.y - this.lastMousePos.y;
-                if (element.handleMouseDrag(xy.x, xy.y, xDelta, yDelta)) { this.dirty = true; }
-                break;
-            }
-        }
-        this.lastMousePos = xy;
-    }
-};
-
-UIManager.prototype.mouseUpHandler = function(e) {
-    this.isMouseDown = false;
-    var xy = getCursorPosition(e, this.canvas);
-    for (var i = this.elements.length - 1; i >= 0; i--) {
-        var element = this.elements[i];
-        var handled = false;
-        if (element.visible && element.focus) {
-            if (element.handleMouseUp(xy.x, xy.y)) { this.dirty = true; }
-            handled = true;
-        }
-        if (element.visible && element.focus && isClicked(xy.x, xy.y, element)) {
-            var now = new Date().getTime();
-            if (e.button === 2) {
-                if (element.handleMouseRightClick(xy.x, xy.y)) { this.dirty = true; }
-            } else {
-                if (this.lastClick.element == element && now - this.lastClick.time < 500) {
-                    if (element.handleMouseDoubleClick(xy.x, xy.y)) { this.dirty = true; }
-                    this.lastClick.element = null;
-                } else {
-                    if (element.handleMouseClick(xy.x, xy.y)) { this.dirty = true; }
-                    this.lastClick.element = element;
-                    this.lastClick.time = now;
-                }
-            }
-            handled = true;
-        }
-        if (handled) {
-            e.preventDefault();
-            break;
-        }
-    }
-};
-
-UIManager.prototype.mouseWheelHandler = function(e) {
-    for (var i = this.elements.length - 1; i >= 0; i--) {
-        var element = this.elements[i];
-        if (element.visible && element.focus) {
-            e.preventDefault();
-            if (element.handleMouseWheel(e.deltaY)) { this.dirty = true; }
-            break;
-        }
-    }
-};
-
-UIManager.prototype.typingHandler = function(e) {
-    for (var i = this.elements.length - 1; i >= 0; i--) {
-        var element = this.elements[i];
-        if (element.visible && element.focus) {
-            if (element.handleKey(e)) {
-                e.preventDefault();
-                this.dirty = true;
-            }
-            break;
-        }
-    }
-};
-
-/// Image cache ///
-var imageCache = new function() {
-    var cache = {};
-    this.getImage = function(path) {
-        if (cache[path] == undefined) {
-            var img = new Image();
-            img.src = path;
-            cache[path] = img;
-        }
-        return cache[path];
-    }
-};
 
 
 /// Base class ///
@@ -285,6 +113,7 @@ function UIElement(x, y, width, height) {
     this.focus = false;
     this.hover = false;
     this.visible = true;
+    this.dirty = false;
 }
 
 UIElement.prototype.setX = function(x) { this.x = Math.floor(x); };
@@ -293,9 +122,8 @@ UIElement.prototype.setWidth = function(width) { this.width = Math.ceil(width); 
 UIElement.prototype.setHeight = function(height) { this.height = Math.ceil(height); };
 
 UIElement.prototype.scratchPad = document.createElement('canvas').getContext('2d');
-UIElement.prototype.getChildren = function() { return []; };
 UIElement.prototype.getZLevel = function() { return this.zLevel; };
-UIElement.prototype.isDirty = function() { return false; };
+UIElement.prototype.isDirty = function() { return this.dirty; };
 UIElement.prototype.draw = function(context) { };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; return false; };
 UIElement.prototype.setHover = function(hover) { this.hover = hover; return false; };
@@ -315,6 +143,227 @@ UIElement.prototype.highlight = function(context) {
     context.lineWidth = 3;
     context.strokeStyle = 'black';
     context.stroke();
+};
+
+
+/// Container ///
+
+function Container(x, y) {
+    UIElement.call(this, x, y, 0, 0);
+    this.elements = [];
+    this.dirty = false;
+
+    // State vars
+    this.isMouseDown = false;
+    this.lastMousePos = { };
+    this.lastClick = { element: null, time: 0 };
+}
+
+Container.prototype = Object.create(UIElement.prototype);
+Container.prototype.constructor = Container;
+
+Container.prototype.onresize = function() {
+    // TODO: Chain
+};
+
+Container.prototype.isDirty = function() {
+    var dirty = this.dirty;
+    for (var i = 0; i < this.elements.length; i++) {
+        if (this.elements[i].isDirty()) {
+            dirty = true;
+        }
+    }
+    return dirty;
+};
+
+Container.prototype.draw = function(canvas) {
+    this.sortElements();
+
+    var context = this.canvas.getContext('2d');
+    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    for (var i = 0; i < this.elements.length; i++) {
+        var element = this.elements[i];
+        if (element.visible) {
+            element.draw(context);
+        }
+    }
+
+    this.dirty = false;
+};
+
+Container.prototype.sortElements = function() {
+    // Sort by z order ascending
+    this.elements.sort(function(a, b) {
+        return a.getZLevel() - b.getZLevel();
+    });
+};
+
+Container.prototype.addElement = function(element) {
+    this.elements.push(element);
+    this.elements = this.elements.concat(element.getChildren());
+    this.dirty = true;
+};
+
+Container.prototype.addElements = function(elements) {
+    for (var key in elements) {
+        if (key instanceof UIElement) {
+            this.addElement(key);
+        } else if (elements[key] instanceof UIElement) {
+            this.addElement(elements[key]);
+        }
+    }
+};
+
+Container.prototype.mouseDownHandler = function(e) {
+    this.sortElements();
+    e.preventDefault();
+    var xy = getCursorPosition(e, this.canvas);
+
+    // TODO: UPDATE
+    this.isMouseDown = true;
+    this.lastMousePos = xy;
+
+    var handled = false;
+    for (var i = this.elements.length - 1; i >= 0; i--) {
+        var element = this.elements[i];
+        if (!handled && element.visible && isClicked(xy.x, xy.y, element)) {
+            if (element.setFocus(true)) { this.dirty = true; }
+            if (element.handleMouseDown(xy.x, xy.y)) { this.dirty = true; }
+            handled = true;
+        } else {
+            if (element.setFocus(false)) { this.dirty = true; }
+        }
+    }
+};
+
+Container.prototype.mouseMoveHandler = function(e) {
+    this.sortElements();
+    var xy = getCursorPosition(e, this.canvas);
+    var handled = false;
+
+    // Hover
+    var hoverHandled = false;
+    for (var i = this.elements.length - 1; i >= 0; i--) {
+        var element = this.elements[i];
+        if (element instanceof Container) {
+            // TODO: FIX ME
+            handled = element.mouseMoveHandler()
+        } else if (!hoverHandled && element.visible && isClicked(xy.x, xy.y, element)) {
+            hoverHandled = true;
+            element.setHover(true);
+            element.handleMouseHover(xy.x, xy.y); // TODO: Hover multiple elements?
+        } else {
+            element.setHover(false);
+        }
+    }
+
+    // Drag
+    if (this.isMouseDown) {
+        for (var i = this.elements.length - 1; i >= 0; i--) {
+            var element = this.elements[i];
+            if (element.visible && element.focus) {
+                handled = true;
+                var xDelta = xy.x - this.lastMousePos.x;
+                var yDelta = xy.y - this.lastMousePos.y;
+                if (element.handleMouseDrag(xy.x, xy.y, xDelta, yDelta)) { this.dirty = true; }
+                break;
+            }
+        }
+        this.lastMousePos = xy;
+    }
+
+    return handled;
+};
+
+Container.prototype.mouseUpHandler = function(e) {
+    this.sortElements();
+    this.isMouseDown = false;
+    var xy = getCursorPosition(e, this.canvas);
+    var handled = false;
+
+    for (var i = this.elements.length - 1; i >= 0; i--) {
+        var element = this.elements[i];
+        if (!element.visible) {
+            continue;
+        }
+
+        if (element instanceof Container) {
+            handled = element.mouseUpHandler.call(element, e);
+        } else if (element.focus) {
+            handled = true;
+            element.handleMouseUp(xy.x, xy.y);
+            if (isClicked(xy.x, xy.y, element)) {
+                var now = new Date().getTime();
+                if (e.button === 2) {
+                    element.handleMouseRightClick(xy.x, xy.y);
+                } else if (this.lastClick.element == element && now - this.lastClick.time < 500) {
+                    element.handleMouseDoubleClick(xy.x, xy.y);
+                    this.lastClick.element = null;
+                } else {
+                    element.handleMouseClick(xy.x, xy.y);
+                    this.lastClick.element = element;
+                    this.lastClick.time = now;
+                }
+            }
+        }
+
+        if (handled) {
+            break;
+        }
+    }
+
+    return handled;
+};
+
+Container.prototype.mouseWheelHandler = function(e) {
+    this.sortElements();
+    var handled = false;
+
+    for (var i = this.elements.length - 1; i >= 0; i--) {
+        var element = this.elements[i];
+        if (!element.visible) {
+            continue;
+        }
+
+        if (element instanceof Container) {
+            handled = element.mouseWheelHandler.call(element, e);
+        } else if (element.focus) {
+            handled = true;
+            element.handleMouseWheel(e.deltaY);
+        }
+
+        if (handled) {
+            break;
+        }
+    }
+
+    return handled;
+};
+
+Container.prototype.typingHandler = function(e) {
+    this.sortElements();
+    var handled = false;
+
+    for (var i = this.elements.length - 1; i >= 0; i--) {
+        var element = this.elements[i];
+        if (!element.visible) {
+            continue;
+        }
+
+        if (element instanceof Container) {
+            handled = element.typingHandler.call(element, e);
+        } else if (element.focus) {
+            handled = true;
+            element.handleKey(e);
+        }
+
+        if (handled) {
+            break;
+        }
+    }
+
+    return handled;
 };
 
 

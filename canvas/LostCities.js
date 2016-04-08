@@ -179,10 +179,10 @@ function loadGameState() {
     var me = gs.me;
     var them = (me == 1 ? 2 : 1);
 
-    // Clean old elements from uiManager
-    uiManager.elements = [];
+    // Clean old elements from mainContainer
+    mainContainer.elements = [];
 
-    board = new LostCitiesBoard(10, (uiManager.canvas.height - (ch + 20)) / 2, cw, ch);
+    board = new LostCitiesBoard(10, (mainContainer.canvas.height - (ch + 20)) / 2, cw, ch);
 
     // Set global game state stuff
     var generalLabel = new Label(board.width + 20, board.y - 10, '');
@@ -205,7 +205,7 @@ function loadGameState() {
 
     // Handle hand
     var yOffset = 10;
-    var yIncr = (uiManager.canvas.height - 20 - ch) / (cardsInHand - 1);
+    var yIncr = (mainContainer.canvas.height - 20 - ch) / (cardsInHand - 1);
     var xOffset = board.width + 160;
 
     for (var i = 0; i < cardsInHand; i++) {
@@ -216,7 +216,7 @@ function loadGameState() {
         card.handIdx = i;
         card.zLevel = yOffset;
 
-        uiManager.addElement(card);
+        mainContainer.addElement(card);
 
         yOffset += yIncr;
     }
@@ -259,10 +259,10 @@ function loadGameState() {
             sendCmd({cmd: 'action', action: 'drawDeck'});
         }
     };
-    uiManager.addElement(deck);
+    mainContainer.addElement(deck);
 
     // Mark dirty
-    uiManager.dirty = true;
+    mainContainer.dirty = true;
 }
 
 function handleActions() {
