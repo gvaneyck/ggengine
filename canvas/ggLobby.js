@@ -15,23 +15,41 @@ var mainContainer;
 
 var ui = {
     generalLabel: null,
+    loginContainer: null,
+    gameBrowseContainer: null,
+    gameCreateContainer: null,
+    gameLobbyContainer: null,
+    chatContainer: null
+};
+
+var loginUI = {
     nameLabel: null,
     nameBox: null,
     serverLabel: null,
     serverBox: null,
-    loginButton: null,
+    loginButton: null
+};
 
+var gameBrowseUI = {
     createButton: null,
-    lobbyTable: null,
+    lobbyTable: null
+};
 
+var gameCreateUI = {
     gameNameLabel: null,
     gameNameBox: null,
     gameNameButton: null,
+    exitButton: null
+};
+
+var gameLobbyUI = {
     gamePlayerLabel: null,
     gamePlayerList: null,
     startButton: null,
-    exitButton: null,
+    exitButton: null
+};
 
+var chatUI = {
     roomLabel: null,
     chatLabel: null,
     chatBox: null,
@@ -57,69 +75,80 @@ function setupLobby(canvasElement, gameName, loadGameState, handleActions, rende
 }
 
 function initUi() {
-    ui.generalLabel = new Label(10, 53, '');
-
-    ui.nameLabel = new Label(10, 13, 'Enter nickname: ');
-    ui.nameBox = new Textbox(ui.nameLabel.width + 10, 10, 200, 20);
-    ui.nameBox.submitHandler = function(msg) {
-        login(msg, ui.serverBox.text);
+    loginUI.nameLabel = new Label(10, 13, 'Enter nickname: ');
+    loginUI.nameBox = new Textbox(loginUI.nameLabel.width + 10, 10, 200, 20);
+    loginUI.nameBox.submitHandler = function(msg) {
+        login(msg, loginUI.serverBox.text);
+    };
+    loginUI.serverLabel = new Label(10, 38, 'Server: ');
+    loginUI.serverBox = new Textbox(loginUI.nameLabel.width + 10, 35, 200, 20);
+    loginUI.serverBox.text = 'localhost:9998';
+    loginUI.serverLabel.x = loginUI.nameLabel.width + 10 - loginUI.serverLabel.width;
+    loginUI.loginButton = new Button(loginUI.nameBox.x + loginUI.nameBox.width + 10, 10, 'Login');
+    loginUI.loginButton.handleMouseClick = function(x, y) {
+        login(loginUI.nameBox.text, loginUI.serverBox.text);
+        return true;
     };
 
-    ui.serverLabel = new Label(10, 38, 'Server: ');
-    ui.serverBox = new Textbox(ui.nameLabel.width + 10, 35, 200, 20);
-    ui.serverBox.text = 'gvane1wd2:9998';
-    ui.serverLabel.x = ui.nameLabel.width + 10 - ui.serverLabel.width;
-
-    ui.loginButton = new Button(ui.nameBox.x + ui.nameBox.width + 10, 10, 'Login');
-    ui.loginButton.handleMouseClick = function(x, y) {
-        login(ui.nameBox.text, ui.serverBox.text);
-    };
-
-    ui.createButton = new Button(10, 10, 'Create Game');
-    ui.createButton.handleMouseClick = function(x, y) {
+    gameBrowseUI.createButton = new Button(10, 10, 'Create Game');
+    gameBrowseUI.createButton.handleMouseClick = function(x, y) {
         startCreateGame();
+        return true;
     };
-
-    ui.lobbyTable = new Table(10, 38, 500);
-    ui.lobbyTable.emptyText = 'No games found';
-    ui.lobbyTable.onCellClick = function(row, col) {
+    gameBrowseUI.lobbyTable = new Table(10, 38, 500);
+    gameBrowseUI.lobbyTable.emptyText = 'No games found';
+    gameBrowseUI.lobbyTable.onCellClick = function(row, col) {
         if (col == 0 && row > 0) {
-            sendCmd({cmd: 'joinRoom', type: 'game', name: ui.lobbyTable.elements[row][2].text })
+            sendCmd({cmd: 'joinRoom', type: 'game', name: gameBrowseUI.lobbyTable.elements[row][2].text })
         }
     };
 
-    ui.gameNameLabel = new Label(10, 38, 'Game Name: ');
-    ui.gameNameBox = new Textbox(ui.gameNameLabel.width + 10, 35, 200, 20);
-    ui.gameNameBox.submitHandler = function(msg) {
+    var exitButton = new Button(10, 10, 'Exit Game');
+    exitButton.handleMouseClick = function(x, y) {
+        leaveGame();
+        return true;
+    };
+
+    gameCreateUI.gameNameLabel = new Label(10, 38, 'Game Name: ');
+    gameCreateUI.gameNameBox = new Textbox(gameCreateUI.gameNameLabel.width + 10, 35, 200, 20);
+    gameCreateUI.gameNameBox.submitHandler = function(msg) {
         createGameLobby(msg);
     };
-    ui.gameNameButton = new Button(ui.gameNameBox.x + ui.gameNameBox.width + 10, 35, 'Create');
-    ui.gameNameButton.handleMouseClick = function(x, y) {
-        createGameLobby(ui.gameNameBox.text);
+    gameCreateUI.gameNameButton = new Button(gameCreateUI.gameNameBox.x + gameCreateUI.gameNameBox.width + 10, 35, 'Create');
+    gameCreateUI.gameNameButton.handleMouseClick = function(x, y) {
+        createGameLobby(gameCreateUI.gameNameBox.text);
+        return true;
     };
+    gameCreateUI.exitButton = exitButton;
 
-    ui.gamePlayerLabel = new Label(10, 38, '');
-    ui.gamePlayerList = new Label(10, 58, '');
-
-    ui.exitButton = new Button(10, 10, 'Exit Game');
-    ui.exitButton.handleMouseClick = function(x, y) {
-        leaveGame();
-    };
-
-    ui.startButton = new Button(ui.exitButton.width + 20, 10, 'Start Game');
-    ui.startButton.handleMouseClick = function(x, y) {
+    gameLobbyUI.gamePlayerLabel = new Label(10, 38, '');
+    gameLobbyUI.gamePlayerList = new Label(10, 58, '');
+    gameLobbyUI.startButton = new Button(exitButton.width + 20, 10, 'Start Game');
+    gameLobbyUI.startButton.handleMouseClick = function(x, y) {
         startGame();
+        return true;
     };
+    gameLobbyUI.exitButton = exitButton;
 
-    ui.roomLabel = new Label(550, 13, '');
-    ui.chatLabel = new Label(550, 343, 'Chat: ');
-    ui.chatBox = new Textbox(ui.chatLabel.width + 550, 340, 400 - ui.chatLabel.width, 20);
-    ui.chatBox.submitHandler = function(msg) {
+    chatUI.roomLabel = new Label(550, 13, '');
+    chatUI.chatLabel = new Label(550, 343, 'Chat: ');
+    chatUI.chatBox = new Textbox(chatUI.chatLabel.width + 550, 340, 400 - chatUI.chatLabel.width, 20);
+    chatUI.chatBox.submitHandler = function(msg) {
         sendCmd({cmd: 'msg', msg: msg, type: state.activeRoom.type, target: state.activeRoom.name});
     };
+    chatUI.messagesScrollArea = new ScrollArea(550, 35, 400, 300, new FixedWidthLabel(550, 35, 384, ''));
 
-    var messagesLabel = new FixedWidthLabel(550, 35, 384, '');
-    ui.messagesScrollArea = new ScrollArea(550, 35, 400, 300, messagesLabel);
+    ui.generalLabel = new Label(10, 53, '');
+    ui.loginContainer = new Container(0, 0);
+    ui.loginContainer.addElements(loginUI);
+    ui.gameBrowseContainer = new Container(0, 0);
+    ui.gameBrowseContainer.addElements(gameBrowseUI);
+    ui.gameCreateContainer = new Container(0, 0);
+    ui.gameCreateContainer.addElements(gameCreateUI);
+    ui.gameLobbyContainer = new Container(0, 0);
+    ui.gameLobbyContainer.addElements(gameLobbyUI);
+    ui.chatContainer = new Container(550, 0);
+    ui.chatContainer.addElements(chatUI);
 
     mainContainer.addElements(ui);
 }
@@ -128,25 +157,12 @@ function showLoginUI() {
     ui.generalLabel.x = 10;
     ui.generalLabel.y = 60;
     ui.generalLabel.visible = true;
-    ui.nameLabel.visible = true;
-    ui.nameBox.visible = true;
-    ui.serverLabel.visible = true;
-    ui.serverBox.visible = true;
-    ui.loginButton.visible = true;
+    ui.loginContainer.visible = true;
 
-    ui.createButton.visible = false;
-    ui.lobbyTable.visible = false;
-    ui.gameNameLabel.visible = false;
-    ui.gameNameBox.visible = false;
-    ui.gameNameButton.visible = false;
-    ui.gamePlayerLabel.visible = false;
-    ui.gamePlayerList.visible = false;
-    ui.exitButton.visible = false;
-    ui.startButton.visible = false;
-    ui.roomLabel.visible = false;
-    ui.chatLabel.visible = false;
-    ui.chatBox.visible = false;
-    ui.messagesScrollArea.visible = false;
+    ui.gameBrowseContainer.visible = false;
+    ui.gameCreateContainer.visible = false;
+    ui.gameLobbyContainer.visible = false;
+    ui.chatContainer.visible = false;
 
     mainContainer.dirty = true;
 }
@@ -165,13 +181,9 @@ function login(nickname, host) {
 }
 
 function startCreateGame() {
-    ui.createButton.visible = false;
-    ui.lobbyTable.visible = false;
+    ui.gameBrowseContainer.visible = false;
 
-    ui.gameNameLabel.visible = true;
-    ui.gameNameBox.visible = true;
-    ui.gameNameButton.visible = true;
-    ui.exitButton.visible = true;
+    ui.gameCreateContainer.visible = true;
 
     mainContainer.dirty = true;
 }
@@ -182,18 +194,11 @@ function createGameLobby(lobbyName) {
 
 function leaveGame() {
     ui.generalLabel.visible = false;
-    ui.gameNameLabel.visible = false;
-    ui.gameNameBox.visible = false;
-    ui.gameNameButton.visible = false;
-    ui.gamePlayerLabel.visible = false;
-    ui.gamePlayerList.visible = false;
-    ui.exitButton.visible = false;
-    ui.startButton.visible = false;
+    ui.gameCreateContainer.visible = false;
+    ui.gameLobbyContainer.visible = false;
 
-    ui.createButton.visible = true;
-    ui.lobbyTable.visible = true;
+    ui.gameBrowseContainer.visible = true;
 
-    console.log(state.activeRoom);
     if (state.activeRoom.type == 'game') {
         sendCmd({ cmd: 'leaveRoom', type: 'game', name: state.activeRoom.name });
         state.activeRoom = state.rooms.lobby['General'];
@@ -230,18 +235,10 @@ function onMessage(evt) {
             state.playerName = cmd.name;
 
             ui.generalLabel.visible = false;
-            ui.nameBox.visible = false;
-            ui.nameLabel.visible = false;
-            ui.serverBox.visible = false;
-            ui.serverLabel.visible = false;
-            ui.loginButton.visible = false;
+            ui.loginContainer.visible = false;
 
-            ui.createButton.visible = true;
-            ui.lobbyTable.visible = true;
-            ui.roomLabel.visible = true;
-            ui.chatLabel.visible = true;
-            ui.chatBox.visible = true;
-            ui.messagesScrollArea.visible = true;
+            ui.gameBrowseContainer.visible = true;
+            ui.chatContainer.visible = true;
         } else {
             ui.generalLabel.setText('Invalid name');
         }
@@ -277,7 +274,7 @@ function onMessage(evt) {
     } else if (cmd.cmd == 'roomLeave') {
         var room = state.rooms[cmd.type][cmd.name];
         room.members.splice(room.members.indexOf(cmd.member), 1);
-        ui.gamePlayerList.setText(room.members.join('\n'));
+        gameLobbyUI.gamePlayerList.setText(room.members.join('\n'));
     } else if (cmd.cmd == 'roomDestroy') {
         delete state.rooms[cmd.type][cmd.name];
     } else if (cmd.cmd == 'chat') {
@@ -309,7 +306,7 @@ function onMessage(evt) {
             games.splice(0, 0, [new Label('Join'), new Label('Game'), new Label('Name')])
         }
 
-        ui.lobbyTable.elements = games;
+        gameBrowseUI.lobbyTable.elements = games;
     }
 
     mainContainer.dirty = true;
@@ -333,9 +330,9 @@ function updateChat() {
         }
         text += message.message + '\n';
     }
-    ui.messagesScrollArea.element.setText(text);
+    chatUI.messagesScrollArea.element.setText(text);
 
-    ui.roomLabel.setText(state.activeRoom.name);
+    chatUI.roomLabel.setText(state.activeRoom.name);
 }
 
 function sendCmd(cmd) {
@@ -350,13 +347,10 @@ function handleEndGame(cmd) {
         mainContainer.elements[i].visible = false;
     }
 
-    ui.roomLabel.visible = true;
-    ui.chatLabel.visible = true;
-    ui.chatBox.visible = true;
-    ui.messagesScrollArea.visible = true;
+    ui.chatContainer.visible = true;
     showGameLobbyUI();
 
-    ui.generalLabel.x = ui.startButton.x + ui.startButton.width + 20;
+    ui.generalLabel.x = gameLobbyUI.startButton.x + gameLobbyUI.startButton.width + 20;
     ui.generalLabel.y = 13;
     ui.generalLabel.setText(cmd.message);
     ui.generalLabel.visible = true;
@@ -365,17 +359,11 @@ function handleEndGame(cmd) {
 }
 
 function showGameLobbyUI() {
-    ui.gameNameLabel.visible = false;
-    ui.gameNameBox.visible = false;
-    ui.gameNameButton.visible = false;
-    ui.createButton.visible = false;
-    ui.lobbyTable.visible = false;
+    ui.gameBrowseContainer.visible = false;
+    ui.gameCreateContainer.visible = false;
 
-    ui.gamePlayerLabel.visible = true;
-    ui.gamePlayerList.visible = true;
-    ui.startButton.visible = true;
-    ui.exitButton.visible = true;
+    ui.gameLobbyContainer.visible = true;
 
-    ui.gamePlayerLabel.setText('Player List for \'' + state.activeRoom.name + '\'');
-    ui.gamePlayerList.setText(state.activeRoom.members.join('\n'));
+    gameLobbyUI.gamePlayerLabel.setText('Player List for \'' + state.activeRoom.name + '\'');
+    gameLobbyUI.gamePlayerList.setText(state.activeRoom.members.join('\n'));
 }

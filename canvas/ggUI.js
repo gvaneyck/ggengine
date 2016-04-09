@@ -22,7 +22,7 @@
 
 // Event handlers:
 // handleMouseDown = Hit element + Mouse down (automatically gain focus via setFocus)
-// handleMouseHover = All Hit elements + Mouse move (automatically gain hover via setHover)
+// handleMouseHover = Hit element + Mouse move (automatically gain hover via setHover)
 // handleMouseDrag = Focused element + Mouse move while mouse is down
 // handleMouseUp = Focused element + Mouse up
 // handleMouseClick = Hit element + Focused element + Mouse up
@@ -30,9 +30,10 @@
 // handleMouseWheel = Focused element + Mouse scroll
 // handleKey = Focused element + Key press
 
-// handleMouseHover is special where a true return value means "stop handling hover" instead of the usual "redraw"
-// This is to support things like dragging cards when you want to highlight something beneath the card (like a pile)
-// If you need redraw on hover and you're not triggering it on handleMouseDrag, you need to return true from setHover
+// Notes:
+// - True is the default return value, with the exception of MouserHover & Key
+// - Returning true stops event propogation, including prevent default
+// - If you want to redraw, you should set dirty during the event handler
 
 
 /// Helper functions ///
@@ -128,15 +129,15 @@ UIElement.prototype.isDirty = function() { return this.dirty; };
 UIElement.prototype.draw = function(context) { };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; };
 UIElement.prototype.setHover = function(hover) { this.hover = hover; };
-UIElement.prototype.handleMouseDown = function(x, y) { };
-UIElement.prototype.handleMouseHover = function(x, y) { };
-UIElement.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) { };
-UIElement.prototype.handleMouseUp = function(x, y) { };
-UIElement.prototype.handleMouseClick = function(x, y) { };
-UIElement.prototype.handleMouseRightClick = function(x, y) { };
-UIElement.prototype.handleMouseDoubleClick = function(x, y) { };
-UIElement.prototype.handleMouseWheel = function(yDelta) { };
-UIElement.prototype.handleKey = function(e) { };
+UIElement.prototype.handleMouseDown = function(x, y) { return true; };
+UIElement.prototype.handleMouseHover = function(x, y) { return false; };
+UIElement.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) { return true; };
+UIElement.prototype.handleMouseUp = function(x, y) { return true; };
+UIElement.prototype.handleMouseClick = function(x, y) { return true; };
+UIElement.prototype.handleMouseRightClick = function(x, y) { return true; };
+UIElement.prototype.handleMouseDoubleClick = function(x, y) { return true; };
+UIElement.prototype.handleMouseWheel = function(yDelta) { return true; };
+UIElement.prototype.handleKey = function(e) { return false; };
 
 UIElement.prototype.highlight = function(context) {
     context.beginPath();
@@ -150,6 +151,10 @@ UIElement.prototype.highlight = function(context) {
 /// Container ///
 
 function Container(x, y) {
+    if (x == undefined) {
+        x = 0;
+        y = 0;
+    }
     UIElement.call(this, x, y, 0, 0);
     this.elements = [];
     this.dirty = false;
@@ -174,8 +179,12 @@ Container.prototype.isDirty = function() {
     }
 
     for (var i = 0; i < this.elements.length; i++) {
-        if (this.elements[i].isDirty()) {
-            return true;
+        try {
+            if (this.elements[i].isDirty()) {
+                return true;
+            }
+        }catch (e) {
+            console.log(this.elements[i]);
         }
     }
 
@@ -204,8 +213,10 @@ Container.prototype.sortElements = function() {
 };
 
 Container.prototype.addElement = function(element) {
-    this.elements.push(element);
-    this.dirty = true;
+    if (element != undefined && element instanceof UIElement) {
+        this.elements.push(element);
+        this.dirty = true;
+    }
 };
 
 Container.prototype.addElements = function(elements) {
@@ -227,12 +238,11 @@ Container.prototype.mouseDownHandler = function(e, xy) {
 
     for (var i = this.elements.length - 1; i >= 0; i--) {
         var element = this.elements[i];
-        if (element.visible && element instanceof Container) {
-            element.mouseDownHandler.call(element, e, xy);
+        if (!handled && element.visible && element instanceof Container) {
+            handled = element.mouseDownHandler.call(element, e, xy);
         } else if (!handled && element.visible && isClicked(xy.x, xy.y, element)) {
             element.setFocus(true);
-            element.handleMouseDown(xy.x, xy.y);
-            handled = true;
+            handled = element.handleMouseDown(xy.x, xy.y);
         } else {
             element.setFocus(false);
         }
@@ -242,11 +252,13 @@ Container.prototype.mouseDownHandler = function(e, xy) {
 };
 
 Container.prototype.mouseMoveHandler = function(e, xy) {
-    this.mouseHoverHandler(e, xy);
+    var hoverHandled = this.mouseHoverHandler(e, xy);
+    var dragHandled = false;
     if (Container.state.isMouseDown) {
-        return this.mouseDragHandler(e, xy);
+        dragHandled = this.mouseDragHandler(e, xy);
+        Container.state.lastMousePos = xy;
     }
-    return false;
+    return (hoverHandled || dragHandled);
 };
 
 Container.prototype.mouseHoverHandler = function(e, xy) {
@@ -255,12 +267,11 @@ Container.prototype.mouseHoverHandler = function(e, xy) {
 
     for (var i = this.elements.length - 1; i >= 0; i--) {
         var element = this.elements[i];
-        if (element.visible && element instanceof Container) {
-            element.mouseMoveHandler.call(element, e, xy);
+        if (!handled && element.visible && element instanceof Container) {
+            handled = element.mouseMoveHandler.call(element, e, xy);
         } else if (!handled && element.visible && isClicked(xy.x, xy.y, element)) {
-            handled = true;
             element.setHover(true);
-            element.handleMouseHover(xy.x, xy.y); // TODO: Hover multiple elements?
+            handled = element.handleMouseHover(xy.x, xy.y);
         } else {
             element.setHover(false);
         }
@@ -282,17 +293,15 @@ Container.prototype.mouseDragHandler = function(e, xy) {
         if (element instanceof Container) {
             handled = element.mouseDragHandler.call(element, e, xy);
         } else if (element.focus) {
-            handled = true;
             var xDelta = xy.x - Container.state.lastMousePos.x;
             var yDelta = xy.y - Container.state.lastMousePos.y;
-            element.handleMouseDrag(xy.x, xy.y, xDelta, yDelta);
+            handled = element.handleMouseDrag(xy.x, xy.y, xDelta, yDelta);
         }
 
         if (handled) {
             break;
         }
     }
-    Container.state.lastMousePos = xy;
 
     return handled;
 };
@@ -311,19 +320,24 @@ Container.prototype.mouseUpHandler = function(e, xy) {
         if (element instanceof Container) {
             handled = element.mouseUpHandler.call(element, e, xy);
         } else if (element.focus) {
-            handled = true;
-            element.handleMouseUp(xy.x, xy.y);
+            handled = element.handleMouseUp(xy.x, xy.y);
             if (isClicked(xy.x, xy.y, element)) {
+                var clickHandled = false;
+
                 var now = new Date().getTime();
                 if (e.button === 2) {
-                    element.handleMouseRightClick(xy.x, xy.y);
+                    clickHandled = element.handleMouseRightClick(xy.x, xy.y);
                 } else if (Container.state.lastClick.element == element && now - Container.state.lastClick.time < 500) {
-                    element.handleMouseDoubleClick(xy.x, xy.y);
+                    clickHandled = element.handleMouseDoubleClick(xy.x, xy.y);
                     Container.state.lastClick.element = null;
                 } else {
-                    element.handleMouseClick(xy.x, xy.y);
+                    clickHandled = element.handleMouseClick(xy.x, xy.y);
                     Container.state.lastClick.element = element;
                     Container.state.lastClick.time = now;
+                }
+
+                if (clickHandled) {
+                    handled = true;
                 }
             }
         }
@@ -349,8 +363,7 @@ Container.prototype.mouseWheelHandler = function(e) {
         if (element instanceof Container) {
             handled = element.mouseWheelHandler.call(element, e);
         } else if (element.focus) {
-            handled = true;
-            element.handleMouseWheel(e.deltaY);
+            handled = element.handleMouseWheel(e.deltaY);
         }
 
         if (handled) {
@@ -374,8 +387,7 @@ Container.prototype.typingHandler = function(e) {
         if (element instanceof Container) {
             handled = element.typingHandler.call(element, e);
         } else if (element.focus) {
-            handled = true;
-            element.handleKey(e);
+            handled = element.handleKey(e);
         }
 
         if (handled) {
@@ -572,6 +584,7 @@ Textbox.prototype.handleKey = function(e) {
     }
 
     this.dirty = (oldText != this.text || oldCursorPos != this.cursorPos);
+    return this.dirty;
 };
 
 Textbox.prototype.draw = function(context) {
@@ -743,6 +756,7 @@ ScrollArea.prototype.handleMouseDown = function(x, y) {
     if (this.scrollBar.visible) {
         this.scrollBar.focus = isClicked(x, y, this.scrollBar)
     }
+    return true;
 };
 
 ScrollArea.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) {
@@ -750,12 +764,14 @@ ScrollArea.prototype.handleMouseDrag = function(x, y, xDelta, yDelta) {
     if (this.scrollBar.focus) {
         this.updateScrollBarForScroll(yDelta);
     }
+    return true;
 };
 
 ScrollArea.prototype.handleMouseWheel = function(yDelta) {
     if (this.scrollBar.visible) {
         this.updateScrollBarForScroll(yDelta * 2);
     }
+    return true;
 };
 
 
@@ -830,6 +846,7 @@ Table.prototype.handleMouseClick = function(x, y) {
     }
 
     this.onCellClick(row, col);
+    return true;
 };
 
 Table.prototype.draw = function(context) {

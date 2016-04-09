@@ -34,5 +34,6 @@ function handleActions() {
 function makeSendCmd(action) {
     return function() {
         sendCmd({cmd: 'action', action: action.method, args: action.args});
+        return true;
     }
 }
