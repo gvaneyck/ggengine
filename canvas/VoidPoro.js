@@ -12,13 +12,13 @@ function loadGameState() {
 function handleActions() {
     console.log(state.actions);
 
-    var label = new Label(10, 10, 'Select your champion');
+    var label = new Label(10, 10, "Select your champion");
     mainContainer.addElement(label);
 
     var xPos = 10;
     for (var idx in state.actions) {
         var action = state.actions[idx];
-        var image = new Picture(xPos, 33, 100, 100, 'icons/' + action.args[1] + '.png');
+        var image = new Picture(xPos, 33, 100, 100, "icons/" + action.args[1] + ".png");
         image.handleMouseClick = makeSendCmd(action);
         mainContainer.addElement(image);
         xPos += 110;
@@ -33,7 +33,7 @@ function handleActions() {
 
 function makeSendCmd(action) {
     return function() {
-        sendCmd({cmd: 'action', action: action.method, args: action.args});
+        sendCmd({cmd: "action", action: action.method, args: action.args});
         return true;
     }
 }

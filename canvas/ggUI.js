@@ -1,10 +1,10 @@
 // Big TODOs
 // - Label - Copy text, links, emoji, onHover card images
 // - Add in full keyboard support for textboxes
-// - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
+// - Text box - control key, shift selection, copy/paste, don"t scroll left until off left side
 // - Authentication/Sessions (cookie + server)
 // - Send action to clients when chosen for logging
-// - Don't send gamestate if it hasn't changed for a player (hide decision timing)
+// - Don"t send gamestate if it hasn"t changed for a player (hide decision timing)
 // - Deal with half pixels
 // - Redo temp context shenanigans in resize to actually create an element and destroy it on draw
 // - Add set pos methods for cascading to children, as well as for empty constructors for dynamically positioned elements
@@ -16,7 +16,7 @@
 // - Double encoding game state
 // - Reconnect to lobbies
 // - Player names in games
-// - Redraw doesn't always happen when changing tabs
+// - Redraw doesn"t always happen when changing tabs
 // - Default visibility false?
 
 
@@ -72,11 +72,11 @@ function getCursorPosition(e, bounds) {
 }
 
 function initRootContainer(container, canvas) {
-    document.addEventListener('mousedown', function(e) { if (container.mouseDownHandler.call(container, e, getCursorPosition(e, canvas))) { e.preventDefault(); } });
-    document.addEventListener('mousemove', function(e) { if (container.mouseMoveHandler.call(container, e, getCursorPosition(e, canvas))) { e.preventDefault(); } });
-    document.addEventListener('mouseup', function(e) { if (container.mouseUpHandler.call(container, e, getCursorPosition(e, canvas))) { e.preventDefault(); } });
-    document.addEventListener('wheel', function(e) { if (container.mouseWheelHandler.call(container, e)) { e.preventDefault(); } }, false);
-    document.addEventListener('keydown', function(e) { if (container.typingHandler.call(container, e)) { e.preventDefault(); } });
+    document.addEventListener("mousedown", function(e) { if (container.mouseDownHandler.call(container, e, getCursorPosition(e, canvas))) { e.preventDefault(); } });
+    document.addEventListener("mousemove", function(e) { if (container.mouseMoveHandler.call(container, e, getCursorPosition(e, canvas))) { e.preventDefault(); } });
+    document.addEventListener("mouseup", function(e) { if (container.mouseUpHandler.call(container, e, getCursorPosition(e, canvas))) { e.preventDefault(); } });
+    document.addEventListener("wheel", function(e) { if (container.mouseWheelHandler.call(container, e)) { e.preventDefault(); } }, false);
+    document.addEventListener("keydown", function(e) { if (container.typingHandler.call(container, e)) { e.preventDefault(); } });
 
     var sizeWindow = function() {
         // TODO: Figure out why opening console sometimes wipes canvas w/out redraw
@@ -88,14 +88,14 @@ function initRootContainer(container, canvas) {
         container.onresize();
         container.dirty = true;
     };
-    window.addEventListener('resize', sizeWindow, false);
+    window.addEventListener("resize", sizeWindow, false);
     sizeWindow();
 
     // Start draw loop
     var drawLoop = function() {
         requestAnimationFrame(drawLoop);
         if (container.isDirty()) {
-            var context = canvas.getContext('2d');
+            var context = canvas.getContext("2d");
             context.clearRect(0, 0, canvas.width, canvas.height);
             container.draw(context);
         }
@@ -118,12 +118,13 @@ function UIElement(x, y, width, height) {
     this.dirty = false;
 }
 
-UIElement.prototype.setX = function(x) { this.x = Math.floor(x); };
-UIElement.prototype.setY = function(y) { this.y = Math.floor(y); };
-UIElement.prototype.setWidth = function(width) { this.width = Math.ceil(width); };
-UIElement.prototype.setHeight = function(height) { this.height = Math.ceil(height); };
+UIElement.prototype.setX = function(x) { if (this.x != Math.floor(x)) { this.x = Math.floor(x); this.dirty = true; } };
+UIElement.prototype.setY = function(y) { if (this.y != Math.floor(y)) { this.y = Math.floor(y); this.dirty = true; } };
+UIElement.prototype.setWidth = function(width) { if (this.width != Math.ceil(width)) { this.width = Math.ceil(width); this.dirty = true; } };
+UIElement.prototype.setHeight = function(height) { if (this.height != Math.ceil(height)) { this.height = Math.ceil(height); this.dirty = true; } };
+UIElement.prototype.setVisible = function(visible) { if (this.visible != visible) { this.visible = visible; this.dirty = true; } };
 
-UIElement.prototype.scratchPad = document.createElement('canvas').getContext('2d');
+UIElement.prototype.scratchPad = document.createElement("canvas").getContext("2d");
 UIElement.prototype.getZLevel = function() { return this.zLevel; };
 UIElement.prototype.isDirty = function() { return this.dirty; };
 UIElement.prototype.draw = function(context) { };
@@ -143,7 +144,7 @@ UIElement.prototype.highlight = function(context) {
     context.beginPath();
     context.rect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
     context.lineWidth = 3;
-    context.strokeStyle = 'black';
+    context.strokeStyle = "black";
     context.stroke();
 };
 
@@ -179,12 +180,8 @@ Container.prototype.isDirty = function() {
     }
 
     for (var i = 0; i < this.elements.length; i++) {
-        try {
-            if (this.elements[i].isDirty()) {
-                return true;
-            }
-        }catch (e) {
-            console.log(this.elements[i]);
+        if (this.elements[i].isDirty()) {
+            return true;
         }
     }
 
@@ -194,6 +191,9 @@ Container.prototype.isDirty = function() {
 Container.prototype.draw = function(context) {
     this.sortElements();
 
+    context.save();
+    context.translate(this.x, this.y);
+
     for (var i = 0; i < this.elements.length; i++) {
         var element = this.elements[i];
         if (element.visible) {
@@ -201,6 +201,8 @@ Container.prototype.draw = function(context) {
             element.dirty = false;
         }
     }
+
+    context.restore();
 
     this.dirty = false;
 };
@@ -240,9 +242,9 @@ Container.prototype.mouseDownHandler = function(e, xy) {
         var element = this.elements[i];
         if (!handled && element.visible && element instanceof Container) {
             handled = element.mouseDownHandler.call(element, e, xy);
-        } else if (!handled && element.visible && isClicked(xy.x, xy.y, element)) {
+        } else if (!handled && element.visible && isClicked(xy.x - this.x, xy.y - this.y, element)) {
             element.setFocus(true);
-            handled = element.handleMouseDown(xy.x, xy.y);
+            handled = element.handleMouseDown(xy.x - this.x, xy.y - this.y);
         } else {
             element.setFocus(false);
         }
@@ -269,9 +271,9 @@ Container.prototype.mouseHoverHandler = function(e, xy) {
         var element = this.elements[i];
         if (!handled && element.visible && element instanceof Container) {
             handled = element.mouseMoveHandler.call(element, e, xy);
-        } else if (!handled && element.visible && isClicked(xy.x, xy.y, element)) {
+        } else if (!handled && element.visible && isClicked(xy.x - this.x, xy.y - this.y, element)) {
             element.setHover(true);
-            handled = element.handleMouseHover(xy.x, xy.y);
+            handled = element.handleMouseHover(xy.x - this.x, xy.y - this.y);
         } else {
             element.setHover(false);
         }
@@ -295,7 +297,7 @@ Container.prototype.mouseDragHandler = function(e, xy) {
         } else if (element.focus) {
             var xDelta = xy.x - Container.state.lastMousePos.x;
             var yDelta = xy.y - Container.state.lastMousePos.y;
-            handled = element.handleMouseDrag(xy.x, xy.y, xDelta, yDelta);
+            handled = element.handleMouseDrag(xy.x - this.x, xy.y - this.y, xDelta, yDelta);
         }
 
         if (handled) {
@@ -320,18 +322,18 @@ Container.prototype.mouseUpHandler = function(e, xy) {
         if (element instanceof Container) {
             handled = element.mouseUpHandler.call(element, e, xy);
         } else if (element.focus) {
-            handled = element.handleMouseUp(xy.x, xy.y);
+            handled = element.handleMouseUp(xy.x - this.x, xy.y - this.y);
             if (isClicked(xy.x, xy.y, element)) {
                 var clickHandled = false;
 
                 var now = new Date().getTime();
                 if (e.button === 2) {
-                    clickHandled = element.handleMouseRightClick(xy.x, xy.y);
+                    clickHandled = element.handleMouseRightClick(xy.x - this.x, xy.y - this.y);
                 } else if (Container.state.lastClick.element == element && now - Container.state.lastClick.time < 500) {
-                    clickHandled = element.handleMouseDoubleClick(xy.x, xy.y);
+                    clickHandled = element.handleMouseDoubleClick(xy.x - this.x, xy.y - this.y);
                     Container.state.lastClick.element = null;
                 } else {
-                    clickHandled = element.handleMouseClick(xy.x, xy.y);
+                    clickHandled = element.handleMouseClick(xy.x - this.x, xy.y - this.y);
                     Container.state.lastClick.element = element;
                     Container.state.lastClick.time = now;
                 }
@@ -410,9 +412,9 @@ function Label(x, y, text) {
     }
     UIElement.call(this, x, y, 0, 0);
 
-    this.fontSize = '12pt';
-    this.font = 'Calibri';
-    this.color = 'black';
+    this.fontSize = "12pt";
+    this.font = "Calibri";
+    this.color = "black";
 
     this.onSizeChange = function() { };
     this.setText(text);
@@ -424,10 +426,11 @@ Label.prototype.constructor = Label;
 Label.prototype.setText = function(text) {
     this.text = text;
     this.measureText();
+    this.dirty = true;
 };
 
 Label.prototype.measureText = function() {
-    this.scratchPad.font = this.fontSize + ' ' + this.font;
+    this.scratchPad.font = this.fontSize + " " + this.font;
     var maxWidth = 0;
     var height = -6; // Remove padding
     var lines = this.text.split("\n");
@@ -445,7 +448,7 @@ Label.prototype.measureText = function() {
 };
 
 Label.prototype.draw = function(context) {
-    context.font = this.fontSize + ' ' + this.font;
+    context.font = this.fontSize + " " + this.font;
     var lines = this.text.split("\n");
     var yPos = this.y + 12;
     for (var i = 0; i < lines.length; i++) {
@@ -460,7 +463,7 @@ Label.prototype.draw = function(context) {
 /// FixedWidthLabel ///
 
 function FixedWidthLabel(x, y, width, text) {
-    Label.call(this, x, y, '');
+    Label.call(this, x, y, "");
     this.setWidth(width);
     this.setText(text);
 }
@@ -486,11 +489,11 @@ FixedWidthLabel.prototype.setText = function(text) {
 };
 
 FixedWidthLabel.prototype.fitText = function(text, width) {
-    this.scratchPad.font = '12pt Calibri';
+    this.scratchPad.font = "12pt Calibri";
     var fittedText = [];
-    var words = text.split(' ');
+    var words = text.split(" ");
 
-    var line = '';
+    var line = "";
     for (var n = 0; n < words.length; n++) {
         var testLine = line + words[n];
         var lineWidth = this.scratchPad.measureText(testLine).width;
@@ -499,7 +502,7 @@ FixedWidthLabel.prototype.fitText = function(text, width) {
             line = words[n];
         }
         else {
-            line = testLine + ' ';
+            line = testLine + " ";
         }
     }
 
@@ -511,7 +514,7 @@ FixedWidthLabel.prototype.fitText = function(text, width) {
 };
 
 FixedWidthLabel.prototype.draw = function(context) {
-    context.font = '12pt Calibri';
+    context.font = "12pt Calibri";
     var lines = this.text.split("\n");
     var yPos = this.y + 12;
     for (var i = 0; i < lines.length; i++) {
@@ -526,7 +529,7 @@ FixedWidthLabel.prototype.draw = function(context) {
 
 function Textbox(x, y, width, height) {
     UIElement.call(this, x, y, width, height);
-    this.text = '';
+    this.text = "";
     this.cursorPos = 0;
     this.xScroll = 0;
     this.submitHandler = function(msg) { };
@@ -568,12 +571,12 @@ Textbox.prototype.handleKey = function(e) {
     } else if (e.keyCode == 13) { // Enter
         this.submitHandler(this.text);
         this.cursorPos = 0;
-        this.text = '';
+        this.text = "";
     } else if (e.ctrlKey) {
         // No ctrl handling yet
-    } else if (char >= 'A' && char <= 'Z' || char == ' ' || char >= '0' && char <='9') {
+    } else if (char >= "A" && char <= "Z" || char == " " || char >= "0" && char <="9") {
         var trueChar;
-        if (char >= 'A' && char <= 'Z') {
+        if (char >= "A" && char <= "Z") {
             trueChar = (e.shiftKey ? char : String.fromCharCode(e.keyCode + 32));
         }
         else {
@@ -599,7 +602,7 @@ Textbox.prototype.draw = function(context) {
     if (this.focus) {
         var cursorXpos = Math.ceil(this.x + context.measureText(this.text.substring(0, this.cursorPos)).width + 3 + this.xScroll);
 
-        // Adjust cursor if it's out of the box
+        // Adjust cursor if it"s out of the box
         if (cursorXpos > this.x + this.width - 3) {
             this.xScroll -= cursorXpos - (this.x + this.width - 3);
             cursorXpos = this.x + this.width - 3;
@@ -609,7 +612,7 @@ Textbox.prototype.draw = function(context) {
             cursorXpos = this.x + 3;
         }
 
-        // Adjust again if there's extra text and the cursor isn't at the end
+        // Adjust again if there"s extra text and the cursor isn"t at the end
         if (cursorXpos < this.x + this.width - 3) {
             var availSpace = Math.min(-this.xScroll, (this.x + this.width - 3) - cursorXpos);
             this.xScroll += availSpace;
@@ -620,10 +623,10 @@ Textbox.prototype.draw = function(context) {
     }
 
     context.lineWidth = 2;
-    context.strokeStyle = 'black';
+    context.strokeStyle = "black";
     context.stroke();
 
-    context.font = '12pt Calibri';
+    context.font = "12pt Calibri";
     context.fillText(this.text, this.x + 3 + this.xScroll, this.y + this.height - 4);
 
     context.restore();
@@ -632,7 +635,7 @@ Textbox.prototype.draw = function(context) {
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
     context.lineWidth = 2;
-    context.strokeStyle = 'black';
+    context.strokeStyle = "black";
     context.stroke();
 };
 
@@ -730,24 +733,24 @@ ScrollArea.prototype.draw = function(context) {
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
     context.lineWidth = 2;
-    context.strokeStyle = 'black';
+    context.strokeStyle = "black";
     context.stroke();
 
     if (this.scrollBar.visible) {
         context.beginPath();
         context.rect(this.x + this.width - 10, this.y, 10, this.height);
-        context.fillStyle = '#cccccc';
+        context.fillStyle = "#cccccc";
         context.fill();
         context.lineWidth = 2;
-        context.strokeStyle = 'black';
+        context.strokeStyle = "black";
         context.stroke();
 
         context.beginPath();
         context.rect(this.scrollBar.x, this.scrollBar.y, this.scrollBar.width, this.scrollBar.height);
-        context.fillStyle = 'black';
+        context.fillStyle = "black";
         context.fill();
         context.lineWidth = 2;
-        context.strokeStyle = 'black';
+        context.strokeStyle = "black";
         context.stroke();
     }
 };
@@ -786,14 +789,14 @@ Button.prototype = Object.create(Label.prototype);
 Button.prototype.constructor = Button;
 
 Button.prototype.draw = function(context) {
-    context.font = '12pt Calibri';
-    context.fillStyle = 'black';
+    context.font = "12pt Calibri";
+    context.fillStyle = "black";
     context.fillText(this.text, this.x + 3, this.y + 15);
 
     context.beginPath();
     context.rect(this.x, this.y, this.width + 6, this.height + 6);
     context.lineWidth = 2;
-    context.strokeStyle = 'black';
+    context.strokeStyle = "black";
     context.stroke();
 };
 
@@ -803,7 +806,7 @@ Button.prototype.draw = function(context) {
 function Table(x, y, width) {
     UIElement.call(this, x, y, width, 0);
     this.elements = [];
-    this.emptyText = '';
+    this.emptyText = "";
 }
 
 Table.prototype = Object.create(UIElement.prototype);
@@ -853,7 +856,7 @@ Table.prototype.draw = function(context) {
     this.setHeight(this.elements.length * 20);
     if (this.elements.length == 0) {
         this.setHeight(20);
-        context.font = '12pt Calibri';
+        context.font = "12pt Calibri";
         context.fillText(this.emptyText, this.x + 3, this.y + 15);
     }
 
@@ -861,7 +864,7 @@ Table.prototype.draw = function(context) {
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
     context.lineWidth = 2;
-    context.strokeStyle = 'black';
+    context.strokeStyle = "black";
     context.stroke();
 
     // Draw row lines
@@ -928,7 +931,7 @@ function Picture(x, y, width, height, path) {
     this.loaded = this.img.complete;
     if (!this.loaded) {
         var _this = this;
-        this.img.addEventListener('load', function () {
+        this.img.addEventListener("load", function () {
             _this.loaded = true;
             _this.dirty = true;
         }, false);
@@ -946,7 +949,7 @@ Picture.prototype.draw = function(context) {
         context.beginPath();
         context.rect(this.x, this.y, this.width, this.height);
         context.lineWidth = 2;
-        context.strokeStyle = 'black';
+        context.strokeStyle = "black";
         context.stroke();
     }
 };
