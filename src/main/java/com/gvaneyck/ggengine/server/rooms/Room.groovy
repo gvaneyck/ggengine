@@ -1,4 +1,7 @@
-package com.gvaneyck.ggengine.server
+package com.gvaneyck.ggengine.server.rooms
+
+import com.gvaneyck.ggengine.server.Message
+import com.gvaneyck.ggengine.server.User
 
 public abstract class Room {
 

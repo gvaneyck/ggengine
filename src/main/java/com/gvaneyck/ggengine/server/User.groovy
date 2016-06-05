@@ -1,5 +1,6 @@
 package com.gvaneyck.ggengine.server
 
+import com.gvaneyck.ggengine.server.rooms.Room
 import groovy.json.JsonBuilder
 import org.java_websocket.WebSocket
 

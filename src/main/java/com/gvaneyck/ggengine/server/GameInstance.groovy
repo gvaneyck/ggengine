@@ -1,7 +1,8 @@
 package com.gvaneyck.ggengine.server
 
-import com.gvaneyck.ggengine.Action
-import com.gvaneyck.ggengine.GameManager
+import com.gvaneyck.ggengine.game.actions.ActionRef
+import com.gvaneyck.ggengine.game.GameManager
+import com.gvaneyck.ggengine.server.rooms.GameRoom
 import com.gvaneyck.ggengine.ui.GGui
 
 public class GameInstance implements Runnable, GGui {
@@ -68,7 +69,7 @@ public class GameInstance implements Runnable, GGui {
     }
 
     @Override
-    public Action resolveChoice(List<Action> actions) {
+    public ActionRef resolveChoice(List<ActionRef> actions) {
         synchronized (gameThread) {
             actionOptions = actions
             idToPlayer.each { id, player ->
@@ -109,8 +110,7 @@ public class GameInstance implements Runnable, GGui {
 
     @Override
     void run() {
-        gameManager = new GameManager([players: playerNameToId.size()], this)
-        gameManager.loadGame('games', game)
+        gameManager = new GameManager([players: playerNameToId.size()], this, 'games', game)
         gameManager.gameLoop()
     }
 }

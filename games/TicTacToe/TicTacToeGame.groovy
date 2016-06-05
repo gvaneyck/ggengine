@@ -1,51 +1,42 @@
 package TicTacToe
 
-import com.gvaneyck.ggengine.Action
-import com.gvaneyck.ggengine.Game
+import com.gvaneyck.ggengine.game.Game
+import com.gvaneyck.ggengine.game.GameManager
 
-class TicTacToeGame extends Game {
-    static gm
-    static gs
+class TicTacToeGame implements Game {
 
-    public void init() {
+    public void init(GameManager gm, Map<String, Object> gs) {
         gs.currentPlayer = 1
         gs.board = new int[3][3]
     }
 
-    public void turn() {
+    public void turn(GameManager gm, Map<String, Object> gs) {
         def board = gs.board
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (board[i][j] == 0)
-                    gm.addAction(new Action(gs.currentPlayer, this, 'play', [i, j]))
+                    gm.addAction(gs.currentPlayer, 'TicTacToeGame', 'play', [i, j])
             }
         }
         gm.resolveActions()
-        changeTurn()
+
+        gs.currentPlayer = (gs.currentPlayer == 1 ? 2 : 1)
     }
 
-    def play(int x, int y) {
-        gs.board[x][y] = gs.currentPlayer
+    public boolean isFinished(GameManager gm, Map<String, Object> gs) {
+        return (getWinner(gs) != 0)
     }
 
-    def changeTurn() {
-        if (gs.currentPlayer == 1)
-            gs.currentPlayer = 2
-        else
-            gs.currentPlayer = 1
-    }
-
-    public boolean isFinished() {
-        return (getWinner() != 0)
-    }
-
-    public Map end() {
-        System.out.println(getWinner())
-
+    public Map end(GameManager gm, Map<String, Object> gs) {
+        System.out.println(getWinner(gs))
         return [:]
     }
 
-    def getWinner() {
+    def play = { gm, gs, x, y ->
+        gs.board[x][y] = gs.currentPlayer
+    }
+
+    def getWinner = { gs ->
         def board = gs.board
 
         if (board[0][0] != 0 && board[0][0] == board[1][1] && board[0][0] == board[2][2])

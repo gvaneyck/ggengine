@@ -1,4 +1,4 @@
-package com.gvaneyck.ggengine;
+package com.gvaneyck.ggengine.game;
 
 import java.lang.reflect.Field;
 import java.util.Random;

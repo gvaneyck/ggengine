@@ -253,8 +253,10 @@ function onMessage(evt) {
         state.rooms.game = {};
         for (var i in cmd.names) {
             var name = cmd.names[i];
-            state.rooms.game[name] = { type: "game", name: name, members: [], messages: [] };
+            state.rooms.game[name] = {type: "game", name: name, members: [], messages: []};
         }
+    } else if (cmd.cmd == "roomCreate") {
+        state.rooms[cmd.type][cmd.name] = {type: cmd.type, name: cmd.name, members: [], messages: []};
     } else if (cmd.cmd == "roomLeave") {
         var room = state.rooms[cmd.type][cmd.name];
         room.members.splice(room.members.indexOf(cmd.member), 1);

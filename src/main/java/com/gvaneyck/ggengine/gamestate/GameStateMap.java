@@ -17,7 +17,7 @@ public class GameStateMap implements Map {
 
     public void mark() {
         if (undos == null) {
-            undos = new ArrayList<UndoStep>();
+            undos = new ArrayList<>();
         }
         else {
             undos.get(undos.size() - 1).mark = true;

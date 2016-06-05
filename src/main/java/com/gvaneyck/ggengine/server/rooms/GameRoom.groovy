@@ -1,4 +1,6 @@
-package com.gvaneyck.ggengine.server
+package com.gvaneyck.ggengine.server.rooms
+
+import com.gvaneyck.ggengine.server.GameInstance
 
 public class GameRoom extends Room {
 

@@ -1,4 +1,6 @@
-package com.gvaneyck.ggengine.server
+package com.gvaneyck.ggengine.server.rooms
+
+import com.gvaneyck.ggengine.server.User
 
 public class DirectRoom extends Room {
 

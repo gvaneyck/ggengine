@@ -1,5 +1,8 @@
 package com.gvaneyck.ggengine.server
 
+import com.gvaneyck.ggengine.server.rooms.GameRoom
+import com.gvaneyck.ggengine.server.rooms.LobbyRoom
+import com.gvaneyck.ggengine.server.rooms.Room
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.java_websocket.WebSocket
@@ -36,6 +39,7 @@ public class GGServer extends WebSocketServer {
             Room room = user.rooms[0]
             room.leave(user)
             if (room.users.isEmpty() && room.type != 'lobby') {
+                rooms[room.type].remove(room.name)
                 sendToAll([cmd: 'roomDestroy', type: room.type, name: room.name])
             }
         }

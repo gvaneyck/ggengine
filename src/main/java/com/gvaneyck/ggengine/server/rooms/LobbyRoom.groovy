@@ -1,4 +1,4 @@
-package com.gvaneyck.ggengine.server
+package com.gvaneyck.ggengine.server.rooms
 
 public class LobbyRoom extends Room {
 
