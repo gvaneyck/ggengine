@@ -154,7 +154,7 @@ public class GGServer extends WebSocketServer {
                 if (user.gameInstance.done) {
                     user.game = null
                 } else {
-                    user.gameInstance.setChoice(user, cmd.action, cmd.args?.toArray())
+                    user.gameInstance.setChoice(user, cmd.getActionRef, cmd.args?.toArray())
                 }
             }
     ]

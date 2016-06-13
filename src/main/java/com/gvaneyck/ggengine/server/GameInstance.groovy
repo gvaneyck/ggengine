@@ -1,6 +1,6 @@
 package com.gvaneyck.ggengine.server
 
-import com.gvaneyck.ggengine.game.actions.ActionRef
+import com.gvaneyck.ggengine.game.actions.ActionOption
 import com.gvaneyck.ggengine.game.GameManager
 import com.gvaneyck.ggengine.server.rooms.GameRoom
 import com.gvaneyck.ggengine.ui.GGui
@@ -69,7 +69,7 @@ public class GameInstance implements Runnable, GGui {
     }
 
     @Override
-    public ActionRef resolveChoice(List<ActionRef> actions) {
+    public ActionOption resolveChoice(List<ActionOption> actions) {
         synchronized (gameThread) {
             actionOptions = actions
             idToPlayer.each { id, player ->

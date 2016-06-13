@@ -5,12 +5,12 @@ import com.gvaneyck.ggengine.game.GameManager;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-public class StaticMethodAction extends Action {
+public class StaticMethodActionRef extends ActionRef {
 
     private Method method;
 
-    public StaticMethodAction(String clazz, String name, Method method) {
-        super(clazz, name);
+    public StaticMethodActionRef(String name, Method method) {
+        super(name);
         this.method = method;
     }
 

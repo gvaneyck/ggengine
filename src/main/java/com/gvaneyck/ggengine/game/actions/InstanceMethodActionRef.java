@@ -5,13 +5,13 @@ import com.gvaneyck.ggengine.game.GameManager;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-public class InstanceMethodAction extends Action {
+public class InstanceMethodActionRef extends ActionRef {
 
     private Object instance;
     private Method method;
 
-    public InstanceMethodAction(String clazz, String name, Object instance, Method method) {
-        super(clazz, name);
+    public InstanceMethodActionRef(String name, Object instance, Method method) {
+        super(name);
         this.instance = instance;
         this.method = method;
     }

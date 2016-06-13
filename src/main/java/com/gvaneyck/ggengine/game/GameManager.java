@@ -2,9 +2,10 @@ package com.gvaneyck.ggengine.game;
 
 import com.gvaneyck.ggengine.game.actions.Action;
 import com.gvaneyck.ggengine.game.actions.ActionRef;
-import com.gvaneyck.ggengine.game.actions.ClosureAction;
-import com.gvaneyck.ggengine.game.actions.InstanceMethodAction;
-import com.gvaneyck.ggengine.game.actions.StaticMethodAction;
+import com.gvaneyck.ggengine.game.actions.ActionOption;
+import com.gvaneyck.ggengine.game.actions.ClosureActionRef;
+import com.gvaneyck.ggengine.game.actions.InstanceMethodActionRef;
+import com.gvaneyck.ggengine.game.actions.StaticMethodActionRef;
 import com.gvaneyck.ggengine.gamestate.GameStateFilter;
 import com.gvaneyck.ggengine.gamestate.PublicGSF;
 import com.gvaneyck.ggengine.ui.GGui;
@@ -24,13 +25,13 @@ import java.util.Random;
 
 public class GameManager {
     private Map<String, Object> gs;
-    private Map<String, Action> actions = new HashMap<>();
+    private Map<String, ActionRef> actions = new HashMap<>();
     private GroovyClassLoader loader = null;
 
     private Game game;
     private GameStateFilter gsf = new PublicGSF();
     private GGui ui;
-    private List<ActionRef> pendingActions = new ArrayList<>();
+    private List<ActionOption> pendingActions = new ArrayList<>();
 
     private AccessibleRandom internalRand = new AccessibleRandom();
     public Random rand = internalRand.getRand();
@@ -100,22 +101,31 @@ public class GameManager {
                 gsf = (GameStateFilter)instance;
             }
 
-            // TODO: Hide some things like set property and private methods/fields
             for (Method method : groovyClass.getMethods()) {
-                String name = clazz + "." + method.getName();
+                Action action = method.getAnnotation(Action.class);
+                if (action == null) {
+                    continue;
+                }
+
+                String name = (action.name().isEmpty() ? clazz + "." + method.getName() : action.name());
                 if (Modifier.isStatic(method.getModifiers())) {
-                    actions.put(name, new StaticMethodAction(clazz, method.getName(), method));
+                    actions.put(name, new StaticMethodActionRef(name, method));
                 } else {
-                    actions.put(name, new InstanceMethodAction(clazz, method.getName(), instance, method));
+                    actions.put(name, new InstanceMethodActionRef(name, instance, method));
                 }
             }
 
             for (Field field : groovyClass.getDeclaredFields()) {
-                String name = clazz + "." + field.getName();
+                Action action = field.getAnnotation(Action.class);
+                if (action == null) {
+                    continue;
+                }
+
+                String name = (action.name().isEmpty() ? clazz + "." + field.getName() : action.name());
                 field.setAccessible(true);
                 Object fieldInstance = field.get(instance);
                 if (fieldInstance != null && Closure.class.isAssignableFrom(fieldInstance.getClass())) {
-                    actions.put(name, new ClosureAction(clazz, field.getName(), (Closure)fieldInstance));
+                    actions.put(name, new ClosureActionRef(name, (Closure)fieldInstance));
                 }
             }
         }
@@ -135,32 +145,32 @@ public class GameManager {
         ui.resolveEnd(game.end(this, gs));
     }
 
-    public void addAction(int player, String clazz, String name) {
-        addAction(player, clazz, name, null);
+    public void addAction(int player, String name) {
+        addAction(player, name, null);
     }
 
-    public void addAction(int player, String clazz, String name, List<Object> args) {
-        Action action = actions.get(clazz + "." + name);
-        if (action == null) {
-            System.err.println("No action found for " + clazz + "." + name);
+    public void addAction(int player, String name, List<Object> args) {
+        ActionRef actionRef = actions.get(name);
+        if (actionRef == null) {
+            System.err.println("No action found for " + name);
         } else {
-            pendingActions.add(new ActionRef(player, action, args));
+            pendingActions.add(new ActionOption(player, actionRef, args));
         }
     }
 
     public void resolveActions() {
         while (!pendingActions.isEmpty()) {
-            ActionRef action = ui.resolveChoice(pendingActions);
+            ActionOption option = ui.resolveChoice(pendingActions);
 
             // Remove player's actions from pending in case resolveActions is called again during action resolution
-            Iterator<ActionRef> it = pendingActions.iterator();
+            Iterator<ActionOption> it = pendingActions.iterator();
             while (it.hasNext()) {
-                if (it.next().getPlayerId() == action.getPlayerId()) {
+                if (it.next().getPlayerId() == option.getPlayerId()) {
                     it.remove();
                 }
             }
 
-            action.invoke(this, gs);
+            option.getActionRef().invoke(this, gs, option.getArgs());
         }
     }
 

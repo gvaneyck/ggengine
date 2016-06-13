@@ -5,12 +5,12 @@ import groovy.lang.Closure;
 
 import java.util.Map;
 
-public class ClosureAction extends Action {
+public class ClosureActionRef extends ActionRef {
 
     private Closure closure;
 
-    public ClosureAction(String clazz, String method, Closure closure) {
-        super(clazz, method);
+    public ClosureActionRef(String name, Closure closure) {
+        super(name);
         this.closure = closure;
     }
 

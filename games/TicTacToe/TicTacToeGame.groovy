@@ -2,6 +2,7 @@ package TicTacToe
 
 import com.gvaneyck.ggengine.game.Game
 import com.gvaneyck.ggengine.game.GameManager
+import com.gvaneyck.ggengine.game.actions.Action
 
 class TicTacToeGame implements Game {
 
@@ -15,7 +16,7 @@ class TicTacToeGame implements Game {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (board[i][j] == 0)
-                    gm.addAction(gs.currentPlayer, 'TicTacToeGame', 'play', [i, j])
+                    gm.addAction(gs.currentPlayer, 'play', [i, j])
             }
         }
         gm.resolveActions()
@@ -32,6 +33,7 @@ class TicTacToeGame implements Game {
         return [:]
     }
 
+    @Action(name = 'play')
     def play = { gm, gs, x, y ->
         gs.board[x][y] = gs.currentPlayer
     }

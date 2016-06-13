@@ -1,46 +1,19 @@
 package com.gvaneyck.ggengine.game.actions;
 
-import com.gvaneyck.ggengine.game.GameManager;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.util.Map;
-
-public abstract class Action {
-
-    private String clazz;
-    private String name;
-
-    private String fullName;
-    private Integer hash = null;
-
-    public Action(String clazz, String name) {
-        this.clazz = clazz;
-        this.name = name;
-        this.fullName = clazz + "." + name;
-    }
-
-    public String getClazz() {
-        return clazz;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public boolean equals(Action other) {
-        if (!clazz.equals(other.getClazz())) {
-            return false;
-        }
-
-        if (!name.equals(other.getName())) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public String toString() {
-        return fullName;
-    }
-
-    public abstract void invoke(GameManager gm, Map<String, Object> gs, Object[] args);
+/**
+ * Marks a Method or Field as a callable action.
+ */
+@Target({ElementType.METHOD, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Action {
+    /**
+     * The name used to call this action.
+     * Defaults to Class.Method or Class.Field
+     */
+    String name() default "";
 }
