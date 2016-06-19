@@ -8,7 +8,7 @@ public class User {
 
     String name
     List<Room> rooms = Collections.synchronizedList([])
-    GameInstance gameInstance
+    GameServer gameInstance
     WebSocket conn
 
     public User(WebSocket conn) {

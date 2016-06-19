@@ -144,7 +144,7 @@ public class GGServer extends WebSocketServer {
             startGame: { cmd, user ->
                 GameRoom room = rooms.game[cmd.name]
                 if (room?.canStart()) {
-                    room.gameInstance = new GameInstance(room)
+                    room.gameInstance = new GameServer(room)
                     room.users.each {
                         it.gameInstance = room.gameInstance
                     }

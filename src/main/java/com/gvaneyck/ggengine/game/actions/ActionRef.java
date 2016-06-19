@@ -1,6 +1,6 @@
 package com.gvaneyck.ggengine.game.actions;
 
-import com.gvaneyck.ggengine.game.GameManager;
+import com.gvaneyck.ggengine.game.GameInstance;
 
 import java.util.Map;
 
@@ -28,5 +28,5 @@ public abstract class ActionRef {
         return name;
     }
 
-    public abstract void invoke(GameManager gm, Map<String, Object> gs, Object[] args);
+    public abstract void invoke(GameInstance gm, Map<String, Object> gs, Object[] args);
 }

@@ -15,5 +15,5 @@ public @interface Action {
      * The name used to call this action.
      * Defaults to Class.Method or Class.Field
      */
-    String name() default "";
+    String value() default "";
 }

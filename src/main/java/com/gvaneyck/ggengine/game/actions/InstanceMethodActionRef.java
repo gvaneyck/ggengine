@@ -1,6 +1,6 @@
 package com.gvaneyck.ggengine.game.actions;
 
-import com.gvaneyck.ggengine.game.GameManager;
+import com.gvaneyck.ggengine.game.GameInstance;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -16,7 +16,7 @@ public class InstanceMethodActionRef extends ActionRef {
         this.method = method;
     }
 
-    public void invoke(GameManager gm, Map<String, Object> gs, Object[] args) {
+    public void invoke(GameInstance gm, Map<String, Object> gs, Object[] args) {
         Object[] newArgs = new Object[args.length + 2];
         newArgs[0] = gm;
         newArgs[1] = gs;

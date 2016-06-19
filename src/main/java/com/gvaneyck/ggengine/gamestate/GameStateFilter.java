@@ -3,5 +3,5 @@ package com.gvaneyck.ggengine.gamestate;
 import java.util.Map;
 
 public interface GameStateFilter {
-    public Map filterGameState(Map gs, int player);
+    public Map<String, Object> filterGameState(Map<String, Object> gs, int player);
 }

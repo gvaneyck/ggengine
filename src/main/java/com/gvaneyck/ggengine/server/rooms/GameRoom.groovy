@@ -1,6 +1,6 @@
 package com.gvaneyck.ggengine.server.rooms
 
-import com.gvaneyck.ggengine.server.GameInstance
+import com.gvaneyck.ggengine.server.GameServer
 
 public class GameRoom extends Room {
 
@@ -8,7 +8,7 @@ public class GameRoom extends Room {
     String password
     Integer minSize
     Integer maxSize
-    GameInstance gameInstance
+    GameServer gameInstance
 
     public GameRoom(Map args) {
         this((String)args.name, (String)args.game, (String)args.password, (Integer)args.minSize, (Integer)args.maxSize)

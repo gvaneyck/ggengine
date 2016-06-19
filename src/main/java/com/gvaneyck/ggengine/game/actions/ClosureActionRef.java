@@ -1,6 +1,6 @@
 package com.gvaneyck.ggengine.game.actions;
 
-import com.gvaneyck.ggengine.game.GameManager;
+import com.gvaneyck.ggengine.game.GameInstance;
 import groovy.lang.Closure;
 
 import java.util.Map;
@@ -14,7 +14,7 @@ public class ClosureActionRef extends ActionRef {
         this.closure = closure;
     }
 
-    public void invoke(GameManager gm, Map<String, Object> gs, Object[] args) {
+    public void invoke(GameInstance gm, Map<String, Object> gs, Object[] args) {
         Object[] newArgs = new Object[args.length + 2];
         newArgs[0] = gm;
         newArgs[1] = gs;

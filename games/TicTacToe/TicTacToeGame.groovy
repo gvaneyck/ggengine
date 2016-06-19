@@ -1,17 +1,17 @@
 package TicTacToe
 
 import com.gvaneyck.ggengine.game.Game
-import com.gvaneyck.ggengine.game.GameManager
+import com.gvaneyck.ggengine.game.GameInstance
 import com.gvaneyck.ggengine.game.actions.Action
 
 class TicTacToeGame implements Game {
 
-    public void init(GameManager gm, Map<String, Object> gs) {
+    public void init(GameInstance gm, Map<String, Object> gs) {
         gs.currentPlayer = 1
         gs.board = new int[3][3]
     }
 
-    public void turn(GameManager gm, Map<String, Object> gs) {
+    public void turn(GameInstance gm, Map<String, Object> gs) {
         def board = gs.board
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -19,21 +19,21 @@ class TicTacToeGame implements Game {
                     gm.addAction(gs.currentPlayer, 'play', [i, j])
             }
         }
-        gm.resolveActions()
+        gm.resolveOneAction()
 
         gs.currentPlayer = (gs.currentPlayer == 1 ? 2 : 1)
     }
 
-    public boolean isFinished(GameManager gm, Map<String, Object> gs) {
+    public boolean isFinished(GameInstance gm, Map<String, Object> gs) {
         return (getWinner(gs) != 0)
     }
 
-    public Map end(GameManager gm, Map<String, Object> gs) {
+    public Map end(GameInstance gm, Map<String, Object> gs) {
         System.out.println(getWinner(gs))
         return [:]
     }
 
-    @Action(name = 'play')
+    @Action('play')
     def play = { gm, gs, x, y ->
         gs.board[x][y] = gs.currentPlayer
     }

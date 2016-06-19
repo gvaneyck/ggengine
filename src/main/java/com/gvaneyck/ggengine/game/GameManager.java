@@ -2,7 +2,6 @@ package com.gvaneyck.ggengine.game;
 
 import com.gvaneyck.ggengine.game.actions.Action;
 import com.gvaneyck.ggengine.game.actions.ActionRef;
-import com.gvaneyck.ggengine.game.actions.ActionOption;
 import com.gvaneyck.ggengine.game.actions.ClosureActionRef;
 import com.gvaneyck.ggengine.game.actions.InstanceMethodActionRef;
 import com.gvaneyck.ggengine.game.actions.StaticMethodActionRef;
@@ -16,29 +15,17 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class GameManager {
-    private Map<String, Object> gs;
     private Map<String, ActionRef> actions = new HashMap<>();
     private GroovyClassLoader loader = null;
 
-    private Game game;
-    private GameStateFilter gsf = new PublicGSF();
-    private GGui ui;
-    private List<ActionOption> pendingActions = new ArrayList<>();
+    private Class gameClass;
+    private Class gsfClass = PublicGSF.class;
 
-    private AccessibleRandom internalRand = new AccessibleRandom();
-    public Random rand = internalRand.getRand();
-
-    public GameManager(Map<String, Object> initialGameState, GGui ui, String baseDir, String game) {
-        this.gs = initialGameState;
-        this.ui = ui;
+    public GameManager(String baseDir, String game) {
         loadClasses(baseDir, game);
     }
 
@@ -49,17 +36,17 @@ public class GameManager {
             loader.addClasspath(dir);
         }
 
-        File sourceDir = new File(dir + "/" + pkg);
+        String sourcePath = dir + "/" + pkg;
+        File sourceDir = new File(sourcePath);
         if (!sourceDir.exists() || !sourceDir.isDirectory()) {
-            System.err.println("Source directory does not exist: " + dir);
+            System.err.println("Warning - Source directory does not exist: " + sourcePath);
             return;
         }
 
         loadClasses(pkg + ".", sourceDir);
 
-        if (game == null) {
-            System.err.println("No Game class found, aborting");
-            System.exit(0);
+        if (gameClass == null) {
+            System.err.println("Warning - No game class found: " + sourcePath);
         }
     }
 
@@ -91,14 +78,14 @@ public class GameManager {
             Object instance = groovyClass.newInstance();
 
             if (Game.class.isAssignableFrom(groovyClass)) {
-                if (game != null) {
-                    throw new Exception("Found two Game classes aborting: " + game.getClass().getName() + " " + groovyClass.getName());
+                if (gameClass != null) {
+                    throw new Exception("Found two Game classes aborting: " + gameClass.getName() + " " + groovyClass.getName());
                 }
-                game = (Game)instance;
+                gameClass = groovyClass;
             }
 
             if (GameStateFilter.class.isAssignableFrom(groovyClass)) {
-                gsf = (GameStateFilter)instance;
+                gsfClass = groovyClass;
             }
 
             for (Method method : groovyClass.getMethods()) {
@@ -107,7 +94,7 @@ public class GameManager {
                     continue;
                 }
 
-                String name = (action.name().isEmpty() ? clazz + "." + method.getName() : action.name());
+                String name = (action.value().isEmpty() ? clazz + "." + method.getName() : action.value());
                 if (Modifier.isStatic(method.getModifiers())) {
                     actions.put(name, new StaticMethodActionRef(name, method));
                 } else {
@@ -121,7 +108,7 @@ public class GameManager {
                     continue;
                 }
 
-                String name = (action.name().isEmpty() ? clazz + "." + field.getName() : action.name());
+                String name = (action.value().isEmpty() ? clazz + "." + field.getName() : action.value());
                 field.setAccessible(true);
                 Object fieldInstance = field.get(instance);
                 if (fieldInstance != null && Closure.class.isAssignableFrom(fieldInstance.getClass())) {
@@ -137,56 +124,16 @@ public class GameManager {
         }
     }
 
-    public void gameLoop() {
-        game.init(this, gs);
-        while (!game.isFinished(this, gs)) {
-            game.turn(this, gs);
+    public GameInstance getGameInstance(GGui ui, Map<String, Object> initialGameState) {
+        if (gameClass == null) {
+            return null;
         }
-        ui.resolveEnd(game.end(this, gs));
-    }
 
-    public void addAction(int player, String name) {
-        addAction(player, name, null);
-    }
-
-    public void addAction(int player, String name, List<Object> args) {
-        ActionRef actionRef = actions.get(name);
-        if (actionRef == null) {
-            System.err.println("No action found for " + name);
-        } else {
-            pendingActions.add(new ActionOption(player, actionRef, args));
+        try {
+            return new GameInstance(ui, (Game)gameClass.newInstance(), (GameStateFilter)gsfClass.newInstance(), actions, initialGameState);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-    }
-
-    public void resolveActions() {
-        while (!pendingActions.isEmpty()) {
-            ActionOption option = ui.resolveChoice(pendingActions);
-
-            // Remove player's actions from pending in case resolveActions is called again during action resolution
-            Iterator<ActionOption> it = pendingActions.iterator();
-            while (it.hasNext()) {
-                if (it.next().getPlayerId() == option.getPlayerId()) {
-                    it.remove();
-                }
-            }
-
-            option.getActionRef().invoke(this, gs, option.getArgs());
-        }
-    }
-
-    public void sendMessage(String message) {
-        for (int i = 1; i <= (Integer)gs.get("players"); i++) {
-            sendMessage(i, message);
-        }
-    }
-
-    public void sendMessage(int player, String message) {
-        ui.sendMessage(player, message);
-    }
-
-    public Map getGameState(int player) {
-        Map gameState = gsf.filterGameState(gs, player);
-        gameState.put("me", player);
-        return gameState;
     }
 }

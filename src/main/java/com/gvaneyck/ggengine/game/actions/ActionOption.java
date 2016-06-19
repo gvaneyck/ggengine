@@ -1,9 +1,6 @@
 package com.gvaneyck.ggengine.game.actions;
 
-import com.gvaneyck.ggengine.game.GameManager;
-
 import java.util.List;
-import java.util.Map;
 
 public class ActionOption {
 
@@ -12,7 +9,9 @@ public class ActionOption {
     private Object[] args; // TODO: action ranges
 
     public ActionOption(int playerId, ActionRef actionRef) {
-        this(playerId, actionRef, null);
+        this.playerId = playerId;
+        this.actionRef = actionRef;
+        this.args = new Object[0];
     }
 
     public ActionOption(int playerId, ActionRef actionRef, List<Object> args) {
