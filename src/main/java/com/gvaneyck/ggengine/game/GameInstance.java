@@ -26,7 +26,8 @@ public class GameInstance {
     private AccessibleRandom internalRand = new AccessibleRandom();
     public Random rand = internalRand.getRand();
 
-    public GameInstance(GGui ui, Game game, GameStateFilter gsf, Map<String, ActionRef> actions, Map<String, Object> initialGameState) {
+    // Package private
+    protected GameInstance(GGui ui, Game game, GameStateFilter gsf, Map<String, ActionRef> actions, Map<String, Object> initialGameState) {
         this.ui = ui;
         this.game = game;
         this.gsf = gsf;

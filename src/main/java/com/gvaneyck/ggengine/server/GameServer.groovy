@@ -1,15 +1,16 @@
 package com.gvaneyck.ggengine.server
 
+import com.gvaneyck.ggengine.game.GameInstanceFactory
 import com.gvaneyck.ggengine.game.GameManager
 import com.gvaneyck.ggengine.game.actions.ActionOption
 import com.gvaneyck.ggengine.server.rooms.GameRoom
+import com.gvaneyck.ggengine.ui.ConsoleUI
 import com.gvaneyck.ggengine.ui.GGui
 
 public class GameServer implements Runnable, GGui {
 
     def name
     def game
-    def gameManager
     def gameInstance
     final Thread gameThread
 
@@ -89,7 +90,7 @@ public class GameServer implements Runnable, GGui {
     }
 
     private showChoicesToPlayer(id, player) {
-        player.send([cmd: 'gs', gs: gameManager.getGameState(id)])
+        player.send([cmd: 'gs', gs: gameInstance.getGameState(id)])
 
         def playerActions = actionOptions.findAll { it.getPlayerId() == id }
         if (playerActions) {
@@ -111,8 +112,7 @@ public class GameServer implements Runnable, GGui {
 
     @Override
     void run() {
-        gameManager = new GameManager('games', game)
-        gameInstance = gameManager.getGameInstance(this, [players: playerNameToId.size()])
+        gameInstance = GameInstanceFactory.getGameInstance('games', game, this, [players: playerNameToId.size()])
         gameInstance.startGame()
     }
 }

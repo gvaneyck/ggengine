@@ -15,18 +15,42 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class GameManager {
-    private Map<String, ActionRef> actions = new HashMap<>();
+
+    private static Map<String, GameManager> instances = new LinkedHashMap<>();
+
+    private Map<String, ActionRef> actions = new LinkedHashMap<>();
     private GroovyClassLoader loader = null;
 
     private Class gameClass;
     private Class gsfClass = PublicGSF.class;
 
-    public GameManager(String baseDir, String game) {
+    private GameManager(String baseDir, String game) {
         loadClasses(baseDir, game);
+    }
+
+    // Package private
+    protected static GameManager getInstance(String baseDir, String game) {
+        String key = baseDir + "/" + game;
+        if (!instances.containsKey(key)) {
+            instances.put(key, new GameManager(baseDir, game));
+        }
+        return instances.get(key);
+    }
+
+    public Class getGameClass() {
+        return gameClass;
+    }
+
+    public Class getGsfClass() {
+        return gsfClass;
+    }
+
+    public Map<String, ActionRef> getActions() {
+        return actions;
     }
 
     private void loadClasses(String dir, String pkg) {
@@ -121,19 +145,6 @@ public class GameManager {
         }
         catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    public GameInstance getGameInstance(GGui ui, Map<String, Object> initialGameState) {
-        if (gameClass == null) {
-            return null;
-        }
-
-        try {
-            return new GameInstance(ui, (Game)gameClass.newInstance(), (GameStateFilter)gsfClass.newInstance(), actions, initialGameState);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
     }
 }
