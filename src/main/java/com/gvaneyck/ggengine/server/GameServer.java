@@ -3,13 +3,14 @@ package com.gvaneyck.ggengine.server;
 import com.gvaneyck.ggengine.game.GameInstance;
 import com.gvaneyck.ggengine.game.GameInstanceFactory;
 import com.gvaneyck.ggengine.game.actions.ActionOption;
+import com.gvaneyck.ggengine.server.domain.User;
 import com.gvaneyck.ggengine.server.dto.server.ServerActionsDto;
 import com.gvaneyck.ggengine.server.dto.server.ServerEndDto;
 import com.gvaneyck.ggengine.server.dto.server.ServerGsDto;
 import com.gvaneyck.ggengine.server.dto.server.ServerMessageDto;
-import com.gvaneyck.ggengine.server.rooms.GameRoom;
+import com.gvaneyck.ggengine.server.domain.GameRoom;
 import com.gvaneyck.ggengine.server.util.JSON;
-import com.gvaneyck.ggengine.ui.GGui;
+import com.gvaneyck.ggengine.game.ui.GGui;
 import lombok.Getter;
 import lombok.Setter;
 

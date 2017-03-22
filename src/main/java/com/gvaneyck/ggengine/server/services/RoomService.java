@@ -1,8 +1,8 @@
 package com.gvaneyck.ggengine.server.services;
 
-import com.gvaneyck.ggengine.server.User;
-import com.gvaneyck.ggengine.server.rooms.GameRoom;
-import com.gvaneyck.ggengine.server.rooms.LobbyRoom;
+import com.gvaneyck.ggengine.server.domain.User;
+import com.gvaneyck.ggengine.server.domain.GameRoom;
+import com.gvaneyck.ggengine.server.domain.LobbyRoom;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;

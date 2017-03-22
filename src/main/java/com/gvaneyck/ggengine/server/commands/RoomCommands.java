@@ -1,9 +1,9 @@
 package com.gvaneyck.ggengine.server.commands;
 
-import com.gvaneyck.ggengine.server.User;
+import com.gvaneyck.ggengine.server.domain.User;
 import com.gvaneyck.ggengine.server.dto.client.ClientCommand;
 import com.gvaneyck.ggengine.server.dto.client.ClientRoomDto;
-import com.gvaneyck.ggengine.server.rooms.GameRoom;
+import com.gvaneyck.ggengine.server.domain.GameRoom;
 import com.gvaneyck.ggengine.server.services.RoomService;
 import com.gvaneyck.ggengine.server.util.JSON;
 import lombok.Setter;

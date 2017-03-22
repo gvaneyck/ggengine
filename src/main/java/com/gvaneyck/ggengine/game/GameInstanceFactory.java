@@ -1,8 +1,8 @@
 package com.gvaneyck.ggengine.game;
 
 import com.gvaneyck.ggengine.game.actions.ActionRef;
-import com.gvaneyck.ggengine.gamestate.GameStateFilter;
-import com.gvaneyck.ggengine.ui.GGui;
+import com.gvaneyck.ggengine.game.state.GameStateFilter;
+import com.gvaneyck.ggengine.game.ui.GGui;
 
 import java.util.Map;
 

@@ -1,4 +1,4 @@
-package com.gvaneyck.ggengine.gamestate;
+package com.gvaneyck.ggengine.game.state;
 
 import java.util.Map;
 

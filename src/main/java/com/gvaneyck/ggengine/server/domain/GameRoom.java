@@ -1,7 +1,5 @@
-package com.gvaneyck.ggengine.server.rooms;
+package com.gvaneyck.ggengine.server.domain;
 
-import com.gvaneyck.ggengine.server.Message;
-import com.gvaneyck.ggengine.server.User;
 import lombok.Getter;
 
 import java.util.ArrayList;

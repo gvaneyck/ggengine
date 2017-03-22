@@ -1,8 +1,7 @@
-package com.gvaneyck.ggengine.server;
+package com.gvaneyck.ggengine.server.domain;
 
+import com.gvaneyck.ggengine.server.GameServer;
 import com.gvaneyck.ggengine.server.dto.server.ServerChatDto;
-import com.gvaneyck.ggengine.server.rooms.GameRoom;
-import com.gvaneyck.ggengine.server.rooms.LobbyRoom;
 import com.gvaneyck.ggengine.server.util.JSON;
 import lombok.Getter;
 import lombok.Setter;

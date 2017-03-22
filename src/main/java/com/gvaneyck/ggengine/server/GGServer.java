@@ -3,6 +3,7 @@ package com.gvaneyck.ggengine.server;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.gvaneyck.ggengine.server.commands.Command;
 import com.gvaneyck.ggengine.server.commands.CommandRef;
+import com.gvaneyck.ggengine.server.domain.User;
 import com.gvaneyck.ggengine.server.dto.client.ClientCommand;
 import com.gvaneyck.ggengine.server.services.RoomService;
 import com.gvaneyck.ggengine.server.services.UserService;

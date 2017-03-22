@@ -1,7 +1,7 @@
 package com.gvaneyck.ggengine.server.commands;
 
-import com.gvaneyck.ggengine.server.Message;
-import com.gvaneyck.ggengine.server.User;
+import com.gvaneyck.ggengine.server.domain.Message;
+import com.gvaneyck.ggengine.server.domain.User;
 import com.gvaneyck.ggengine.server.dto.client.ClientCommand;
 import com.gvaneyck.ggengine.server.dto.client.ClientMessageDto;
 import com.gvaneyck.ggengine.server.services.RoomService;

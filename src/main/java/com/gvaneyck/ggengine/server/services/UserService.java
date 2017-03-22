@@ -1,6 +1,6 @@
 package com.gvaneyck.ggengine.server.services;
 
-import com.gvaneyck.ggengine.server.User;
+import com.gvaneyck.ggengine.server.domain.User;
 import org.java_websocket.WebSocket;
 
 import java.util.Collections;

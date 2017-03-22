@@ -1,6 +1,6 @@
 package com.gvaneyck.ggengine.server.services;
 
-import com.gvaneyck.ggengine.server.User;
+import com.gvaneyck.ggengine.server.domain.User;
 
 public class GameService {
 

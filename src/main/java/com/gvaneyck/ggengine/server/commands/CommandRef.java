@@ -1,7 +1,7 @@
 package com.gvaneyck.ggengine.server.commands;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gvaneyck.ggengine.server.User;
+import com.gvaneyck.ggengine.server.domain.User;
 import lombok.AllArgsConstructor;
 
 import java.lang.reflect.Method;

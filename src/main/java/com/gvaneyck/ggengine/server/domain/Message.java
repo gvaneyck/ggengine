@@ -1,4 +1,4 @@
-package com.gvaneyck.ggengine.server;
+package com.gvaneyck.ggengine.server.domain;
 
 import lombok.Getter;
 

@@ -1,4 +1,4 @@
-package com.gvaneyck.ggengine.ui;
+package com.gvaneyck.ggengine.game.ui;
 
 import com.gvaneyck.ggengine.game.actions.ActionOption;
 import com.gvaneyck.ggengine.server.util.JSON;

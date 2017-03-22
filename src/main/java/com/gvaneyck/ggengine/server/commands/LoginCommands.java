@@ -1,11 +1,11 @@
 package com.gvaneyck.ggengine.server.commands;
 
-import com.gvaneyck.ggengine.server.User;
+import com.gvaneyck.ggengine.server.domain.User;
 import com.gvaneyck.ggengine.server.dto.client.ClientCommand;
 import com.gvaneyck.ggengine.server.dto.client.ClientLoginDto;
 import com.gvaneyck.ggengine.server.dto.server.ServerGameListDto;
 import com.gvaneyck.ggengine.server.dto.server.ServerLoginDto;
-import com.gvaneyck.ggengine.server.rooms.GameRoom;
+import com.gvaneyck.ggengine.server.domain.GameRoom;
 import com.gvaneyck.ggengine.server.services.GameService;
 import com.gvaneyck.ggengine.server.services.RoomService;
 import com.gvaneyck.ggengine.server.services.UserService;
