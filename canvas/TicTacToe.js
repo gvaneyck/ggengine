@@ -1,14 +1,11 @@
-function loadGameState() {
-    if (state.gameState == undefined) {
-        return;
-    }
-    console.log(state.gameState);
+function gameStateHandler(gameState) {
+    console.log(gameState);
 
     // mainContainer.elements = [];
 }
 
-function handleActions() {
-    console.log(state.actions);
+function actionHandler(actions) {
+    console.log(actions);
 
     // mainContainer.addElement(ui.roomLabel);
     // mainContainer.addElement(ui.chatLabel);
@@ -17,9 +14,9 @@ function handleActions() {
     // mainContainer.dirty = true;
 }
 
-function makeSendCmd(action) {
+function makeSendCmd(action, args) {
     return function() {
-        sendCmd({cmd: "action", action: action.method, args: action.args});
+        sendCmd({cmd: "action", action: action, args: args});
         return true;
     }
 }

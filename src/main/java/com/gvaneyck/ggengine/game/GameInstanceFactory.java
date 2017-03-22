@@ -15,7 +15,7 @@ public class GameInstanceFactory {
         Map<String, ActionRef> actions = gameManager.getActions();
 
         if (gameClass == null) {
-            System.err.println("Unable to find game class for " + baseDir + "/" + game);
+            System.err.println("Unable to find Game class for " + baseDir + "/" + game);
             return null;
         }
 

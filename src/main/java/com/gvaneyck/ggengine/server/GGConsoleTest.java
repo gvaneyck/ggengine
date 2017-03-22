@@ -1,8 +1,6 @@
 package com.gvaneyck.ggengine.server;
 
-import com.gvaneyck.ggengine.game.GameInstance;
 import com.gvaneyck.ggengine.game.GameInstanceFactory;
-import com.gvaneyck.ggengine.game.GameManager;
 import com.gvaneyck.ggengine.ui.ConsoleUI;
 
 import java.util.LinkedHashMap;

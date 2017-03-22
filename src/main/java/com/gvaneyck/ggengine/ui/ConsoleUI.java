@@ -1,7 +1,7 @@
 package com.gvaneyck.ggengine.ui;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gvaneyck.ggengine.game.actions.ActionOption;
+import com.gvaneyck.ggengine.server.util.JSON;
 
 import java.util.List;
 import java.util.Map;
@@ -10,7 +10,6 @@ import java.util.Scanner;
 public class ConsoleUI implements GGui {
 
     private Scanner in = new Scanner(System.in);
-    private ObjectMapper objectMapper = new ObjectMapper();
 
     public void sendMessage(int player, String message) {
         System.out.println("@" + player + " - " + message);
@@ -25,10 +24,6 @@ public class ConsoleUI implements GGui {
     }
 
     public void resolveEnd(Map data) {
-        try {
-            System.out.println(objectMapper.writeValueAsString(data));
-        } catch (Exception e) {
-
-        }
+        System.out.println(JSON.writeValueAsString(data));
     }
 }

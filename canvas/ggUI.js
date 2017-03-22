@@ -1,10 +1,10 @@
 // Big TODOs
 // - Label - Copy text, links, emoji, onHover card images
 // - Add in full keyboard support for textboxes
-// - Text box - control key, shift selection, copy/paste, don"t scroll left until off left side
+// - Text box - control key, shift selection, copy/paste, don't scroll left until off left side
 // - Authentication/Sessions (cookie + server)
 // - Send action to clients when chosen for logging
-// - Don"t send gamestate if it hasn"t changed for a player (hide decision timing)
+// - Don't send gamestate if it hasn't changed for a player (hide decision timing)
 // - Deal with half pixels
 // - Redo temp context shenanigans in resize to actually create an element and destroy it on draw
 // - Add set pos methods for cascading to children, as well as for empty constructors for dynamically positioned elements
@@ -16,7 +16,7 @@
 // - Double encoding game state
 // - Reconnect to lobbies
 // - Player names in games
-// - Redraw doesn"t always happen when changing tabs
+// - Redraw doesn't always happen when changing tabs
 // - Default visibility false?
 
 
@@ -127,7 +127,7 @@ UIElement.prototype.setVisible = function(visible) { if (this.visible != visible
 UIElement.prototype.scratchPad = document.createElement("canvas").getContext("2d");
 UIElement.prototype.getZLevel = function() { return this.zLevel; };
 UIElement.prototype.isDirty = function() { return this.dirty; };
-UIElement.prototype.draw = function(context) { };
+UIElement.prototype.draw = function(context) { this.dirty = false };
 UIElement.prototype.setFocus = function(focus) { this.focus = focus; };
 UIElement.prototype.setHover = function(hover) { this.hover = hover; };
 UIElement.prototype.handleMouseDown = function(x, y) { return true; };
@@ -174,6 +174,17 @@ Container.prototype.onresize = function() {
     // TODO: Chain
 };
 
+Container.prototype.onlyVisible = function(elements) {
+    for (var i in this.elements) {
+        var e = this.elements[i];
+        if (elements.includes(e)) {
+            e.setVisible(true);
+        } else {
+            e.setVisible(false);
+        }
+    }
+};
+
 Container.prototype.isDirty = function() {
     if (this.dirty) {
         return true;
@@ -198,7 +209,6 @@ Container.prototype.draw = function(context) {
         var element = this.elements[i];
         if (element.visible) {
             element.draw(context);
-            element.dirty = false;
         }
     }
 
@@ -457,6 +467,8 @@ Label.prototype.draw = function(context) {
         context.fillText(line, this.x, yPos);
         yPos += 20;
     }
+
+    this.dirty = false;
 };
 
 
@@ -522,6 +534,8 @@ FixedWidthLabel.prototype.draw = function(context) {
         context.fillText(line, this.x, yPos);
         yPos += 20;
     }
+
+    this.dirty = false;
 };
 
 
@@ -637,6 +651,8 @@ Textbox.prototype.draw = function(context) {
     context.lineWidth = 2;
     context.strokeStyle = "black";
     context.stroke();
+
+    this.dirty = false;
 };
 
 
@@ -753,6 +769,8 @@ ScrollArea.prototype.draw = function(context) {
         context.strokeStyle = "black";
         context.stroke();
     }
+
+    this.dirty = false;
 };
 
 ScrollArea.prototype.handleMouseDown = function(x, y) {
@@ -798,6 +816,8 @@ Button.prototype.draw = function(context) {
     context.lineWidth = 2;
     context.strokeStyle = "black";
     context.stroke();
+
+    this.dirty = false;
 };
 
 
@@ -912,6 +932,8 @@ Table.prototype.draw = function(context) {
 
         yPos += 20;
     }
+
+    this.dirty = false;
 };
 
 
@@ -952,5 +974,7 @@ Picture.prototype.draw = function(context) {
         context.strokeStyle = "black";
         context.stroke();
     }
+
+    this.dirty = false;
 };
 

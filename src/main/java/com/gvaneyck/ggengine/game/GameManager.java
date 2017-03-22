@@ -7,7 +7,6 @@ import com.gvaneyck.ggengine.game.actions.InstanceMethodActionRef;
 import com.gvaneyck.ggengine.game.actions.StaticMethodActionRef;
 import com.gvaneyck.ggengine.gamestate.GameStateFilter;
 import com.gvaneyck.ggengine.gamestate.PublicGSF;
-import com.gvaneyck.ggengine.ui.GGui;
 import groovy.lang.Closure;
 import groovy.lang.GroovyClassLoader;
 

@@ -7,18 +7,20 @@ var state = {
     activeRoom: null,
     rooms: { lobby: {}, game: {}, direct: {} },
     game: null,
-    loadGameState: function() {},
-    handleActions: function() {}
+    gameStateHandler: function(gs) {},
+    actionHandler: function(actions) {}
 };
 
 var mainContainer;
+var gameContainer = new Container();
 var generalMessage; // TODO
 var ui = {
     loginContainer: null,
     gameBrowseContainer: null,
     gameCreateContainer: null,
     gameLobbyContainer: null,
-    chatContainer: null
+    chatContainer: null,
+    gameContainer: gameContainer
 };
 
 var loginUI = {
@@ -55,16 +57,16 @@ var chatUI = {
     chatBox: null
 };
 
-function setupLobby(canvasElement, gameName, loadGameState, handleActions) {
+function setupLobby(canvasElement, gameName, gameStateHandler, actionHandler) {
     state.gameName = gameName;
 
     initUi();
     initRootContainer(mainContainer, canvasElement);
 
     showLoginUI();
-    state.loadGameState = loadGameState;
-    mainContainer.onresize = loadGameState;
-    state.handleActions = handleActions;
+    // TODO: mainContainer.onresize = gameStateHandler;
+    state.gameStateHandler = gameStateHandler;
+    state.actionHandler = actionHandler;
 }
 
 function initUi() {
@@ -153,12 +155,7 @@ function initUi() {
 }
 
 function showLoginUI() {
-    ui.loginContainer.setVisible(true);
-
-    ui.gameBrowseContainer.setVisible(false);
-    ui.gameCreateContainer.setVisible(false);
-    ui.gameLobbyContainer.setVisible(false);
-    ui.chatContainer.setVisible(false);
+    mainContainer.onlyVisible([ ui.loginContainer ]);
 }
 
 function login(nickname, host) {
@@ -173,9 +170,7 @@ function login(nickname, host) {
 }
 
 function startCreateGame() {
-    ui.gameBrowseContainer.setVisible(false);
-
-    ui.gameCreateContainer.setVisible(true);
+    mainContainer.onlyVisible([ ui.chatContainer, ui.gameCreateContainer ]);
 }
 
 function createGameLobby(lobbyName) {
@@ -183,10 +178,7 @@ function createGameLobby(lobbyName) {
 }
 
 function leaveGame() {
-    ui.gameCreateContainer.setVisible(false);
-    ui.gameLobbyContainer.setVisible(false);
-
-    ui.gameBrowseContainer.setVisible(true);
+    mainContainer.onlyVisible([ ui.chatContainer, ui.gameBrowseContainer ]);
 
     if (state.activeRoom.type == "game") {
         sendCmd({ cmd: "leaveRoom", type: "game", name: state.activeRoom.name });
@@ -202,9 +194,7 @@ function startGame() {
 /// Web sockets ///
 
 function onClose(evt) {
-    for (var key in ui) {
-        ui[key].setVisible(false);
-    }
+    mainContainer.onlyVisible([ ]);
 
     generalMessage.setText("You were disconnected from the server.  Reconnecting...");
 
@@ -219,10 +209,7 @@ function onMessage(evt) {
         if (cmd.success) {
             state.playerName = cmd.name;
 
-            ui.loginContainer.setVisible(false);
-
-            ui.gameBrowseContainer.setVisible(true);
-            ui.chatContainer.setVisible(true);
+            mainContainer.onlyVisible([ ui.chatContainer, ui.gameBrowseContainer ]);
         } else {
             generalMessage.setText("Invalid name");
         }
@@ -273,11 +260,9 @@ function onMessage(evt) {
         state.activeRoom = state.activeRoom.messages.concat({ time: cmd.time, message: cmd.message });
         updateChat();
     } else if (cmd.cmd == "gs") {
-        state.gameState = cmd.gs;
-        state.loadGameState();
+        state.gameStateHandler(cmd.gs);
     } else if (cmd.cmd == "actions") {
-        state.actions = cmd.actions;
-        state.handleActions();
+        state.actionHandler(cmd.actions);
     } else if (cmd.cmd == "end") {
         handleEndGame(cmd);
     }
@@ -326,20 +311,15 @@ function sendCmd(cmd) {
 function handleEndGame(cmd) {
     mainContainer.elements = [];
 
-    initUi();
     for (var i in mainContainer.elements) {
         mainContainer.elements[i].setVisible(false);
     }
 
-    ui.chatContainer.setVisible(true);
     showGameLobbyUI();
 }
 
 function showGameLobbyUI() {
-    ui.gameBrowseContainer.setVisible(false);
-    ui.gameCreateContainer.setVisible(false);
-
-    ui.gameLobbyContainer.setVisible(true);
+    mainContainer.onlyVisible([ ui.chatContainer, ui.gameLobbyContainer ]);
 
     gameLobbyUI.gamePlayerLabel.setText("Player List for \"" + state.activeRoom.name + "\"");
     gameLobbyUI.gamePlayerList.setText(state.activeRoom.members.join("\n"));
