@@ -9,5 +9,5 @@ import lombok.Setter;
 public class ClientMessageDto {
     @NonNull private String type;
     @NonNull private String target;
-    @NonNull private String msg;
+    @NonNull private String message;
 }

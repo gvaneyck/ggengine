@@ -5,6 +5,7 @@ import com.gvaneyck.ggengine.server.commands.Command;
 import com.gvaneyck.ggengine.server.commands.CommandRef;
 import com.gvaneyck.ggengine.server.domain.User;
 import com.gvaneyck.ggengine.server.dto.client.ClientCommand;
+import com.gvaneyck.ggengine.server.services.MessageService;
 import com.gvaneyck.ggengine.server.services.RoomService;
 import com.gvaneyck.ggengine.server.services.UserService;
 import com.gvaneyck.ggengine.server.util.JSON;
@@ -25,6 +26,7 @@ import java.util.Set;
 
 public class GGServer extends WebSocketServer {
 
+    private MessageService messageService;
     private RoomService roomService;
     private UserService userService;
 
@@ -33,12 +35,13 @@ public class GGServer extends WebSocketServer {
     public GGServer(int port) throws UnknownHostException {
         super(new InetSocketAddress(port), Collections.singletonList(new Draft_17()));
 
+        messageService = new MessageService();
         roomService = new RoomService();
-        userService = new UserService();
+        userService = new UserService(roomService);
 
         try {
             Reflections reflections = new Reflections("com.gvaneyck.ggengine.server.commands");
-            Set<Class<? extends Object>> classes = reflections.getSubTypesOf(Object.class);
+            Set<Class<?>> classes = reflections.getSubTypesOf(Object.class);
             for (Class clazz : classes) {
                 Object instance = clazz.newInstance();
                 for (Method method : clazz.getMethods()) {
@@ -83,20 +86,17 @@ public class GGServer extends WebSocketServer {
 
         Map<String, Object> args = JSON.readValue(s, new TypeReference<LinkedHashMap<String, Object>>() { });
         if (args == null) {
-            // Invalid arguments
-            return;
+            throw new GGException("Invalid arguments");
         }
 
         String command = args.get("cmd").toString();
         if (command == null || !commands.containsKey(command)) {
-            // Invalid command
-            return;
+            throw new GGException("Invalid command");
         }
 
         User user = userService.getUser(webSocket);
         if (user.isGuest() && !command.equals(ClientCommand.USER_LOGIN.toString())) {
-            // Guests can only login
-            return;
+            throw new GGException("Guests can only login");
         }
 
         commands.get(command).invoke(user, args);
@@ -105,6 +105,6 @@ public class GGServer extends WebSocketServer {
     @Override
     public void onError(WebSocket webSocket, Exception e) {
         System.out.println(webSocket.getRemoteSocketAddress().getAddress().getHostAddress() + " ERROR");
-        e.printStackTrace();
+        throw new GGException("Websocket error", e);
     }
 }

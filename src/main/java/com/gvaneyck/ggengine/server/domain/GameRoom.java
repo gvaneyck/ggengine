@@ -2,6 +2,7 @@ package com.gvaneyck.ggengine.server.domain;
 
 import com.gvaneyck.ggengine.server.GameServer;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +13,7 @@ public class GameRoom {
 
     String name;
     String password;
-    List<User> users;
+    List<User> players;
     List<User> spectators;
     List<Message> messages;
 
@@ -20,12 +21,12 @@ public class GameRoom {
     int minSize;
     int maxSize;
 
-    GameServer gameServer;
+    @Setter GameServer gameServer;
 
     public GameRoom(String name, String password, String game, int minSize, int maxSize) {
         this.name = name;
         this.password = password;
-        this.users = Collections.synchronizedList(new ArrayList<>());
+        this.players = Collections.synchronizedList(new ArrayList<>());
         this.spectators = Collections.synchronizedList(new ArrayList<>());
         this.messages = Collections.synchronizedList(new ArrayList<>());
 

@@ -7,9 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class ServerEndDto {
-    private final ServerCommand cmd = ServerCommand.MESSAGE;
-    private String type;
-    private String message;
-    private long time;
+public class ServerLobbyJoinDto {
+    private final ServerCommand cmd = ServerCommand.LOBBY_JOIN;
+    private String name;
+    private String user;
 }

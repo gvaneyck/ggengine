@@ -1,19 +1,14 @@
 package com.gvaneyck.ggengine.server.commands;
 
-import com.gvaneyck.ggengine.game.actions.ActionRef;
-import com.gvaneyck.ggengine.server.GameServer;
+import com.gvaneyck.ggengine.server.GGException;
 import com.gvaneyck.ggengine.server.domain.User;
 import com.gvaneyck.ggengine.server.dto.client.ClientActionDto;
 import com.gvaneyck.ggengine.server.dto.client.ClientCommand;
 import com.gvaneyck.ggengine.server.dto.client.ClientGameDto;
 import com.gvaneyck.ggengine.server.dto.client.ClientNameDto;
 import com.gvaneyck.ggengine.server.dto.client.ClientRoomDto;
-import com.gvaneyck.ggengine.server.domain.GameRoom;
 import com.gvaneyck.ggengine.server.services.RoomService;
-import com.gvaneyck.ggengine.server.util.JSON;
 import lombok.Setter;
-
-import java.util.List;
 
 public class GameCommands {
 
@@ -32,6 +27,7 @@ public class GameCommands {
 
     @Command(ClientCommand.GAME_LEAVE)
     public void leaveGame(User user, ClientNameDto cmd) {
+        roomService.leaveGame(user, cmd.getName());
     }
 
     @Command(ClientCommand.GAME_START)
@@ -41,13 +37,10 @@ public class GameCommands {
 
     @Command(ClientCommand.PLAY_ACTION)
     public void playAction(User user, ClientActionDto clientActionDto) {
-        ClientActionDto cmd = JSON.convertValue(args, ClientActionDto.class);
-        ActionRef actionRef = JSON.convertValue(args.get("actionRef"), ActionRef.class);
-        List<Object> actionArgs = (List<Object>)args.get("args");
-//        if (user.getGameServer().isDone()) {
-//            user.setGameServer(null);
-//        } else {
-//            user.getGameServer().setChoice(user, actionRef, actionArgs);
-//        }
+        if (user.getGameServer() == null) {
+            throw new GGException("User is not in a game");
+        }
+
+        user.getGameServer().setChoice(user, clientActionDto.getActionRef(), clientActionDto.getArgs());
     }
 }

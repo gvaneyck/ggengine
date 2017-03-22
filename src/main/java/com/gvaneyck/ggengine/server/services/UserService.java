@@ -1,5 +1,8 @@
 package com.gvaneyck.ggengine.server.services;
 
+import com.gvaneyck.ggengine.server.GGException;
+import com.gvaneyck.ggengine.server.domain.GameRoom;
+import com.gvaneyck.ggengine.server.domain.LobbyRoom;
 import com.gvaneyck.ggengine.server.domain.User;
 import org.java_websocket.WebSocket;
 
@@ -9,11 +12,17 @@ import java.util.Map;
 
 public class UserService {
 
+    private RoomService roomService;
+
     private Map<WebSocket, User> socketToUser = Collections.synchronizedMap(new LinkedHashMap<>());
     private Map<String, User> nameToUser = Collections.synchronizedMap(new LinkedHashMap<>());
     // TODO: maps to list of users for one account logged in multiple times
     // Make sure logging off only removes one connection
     // Make sure room state is copied when logging on, maybe more state?
+
+    public UserService(RoomService roomService) {
+        this.roomService = roomService;
+    }
 
     public User getUser(WebSocket webSocket) {
         return socketToUser.get(webSocket);
@@ -26,7 +35,7 @@ public class UserService {
 
     public void login(User user, String name, String password) {
         if (nameToUser.containsKey("name")) {
-            throw new RuntimeException("User is already logged in");
+            throw new GGException("User is already logged in");
         }
 
         user.setName(name);
@@ -37,17 +46,15 @@ public class UserService {
         User user = socketToUser.remove(webSocket);
         if (user != null) {
             nameToUser.remove(user.getName());
+
+            for (LobbyRoom lobbyRoom : user.getLobbyRooms()) {
+                roomService.leaveLobby(user, lobbyRoom.getName());
+            }
+
+            for (GameRoom gameRoom : user.getGameRooms()) {
+                roomService.leaveGame(user, gameRoom.getName());
+            }
         }
         webSocket.close();
-
-        // TODO: leave rooms
-//        while (!user.getRooms().isEmpty()) {
-//            Room room = user.getRooms().get(0);
-//            room.leave(user);
-//            if (room.getUsers().isEmpty() && !room.getType().equals("lobby")) {
-//                rooms.get(room.getType()).remove(room.getName());
-//            sendToAll([cmd: "roomDestroy", type: room.type, name: room.name])
-//            }
-//        }
     }
 }
