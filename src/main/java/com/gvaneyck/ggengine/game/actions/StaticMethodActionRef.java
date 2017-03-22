@@ -1,6 +1,7 @@
 package com.gvaneyck.ggengine.game.actions;
 
 import com.gvaneyck.ggengine.game.GameInstance;
+import com.gvaneyck.ggengine.server.GGException;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -24,10 +25,8 @@ public class StaticMethodActionRef extends ActionRef {
 
         try {
             method.invoke(null, newArgs);
-        }
-        catch (Exception e) {
-            System.err.println("Error invoking method " + toString());
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new GGException("Error invoking method " + toString(), e);
         }
     }
 }

@@ -4,6 +4,8 @@ import com.gvaneyck.ggengine.game.actions.ActionOption;
 import com.gvaneyck.ggengine.game.actions.ActionRef;
 import com.gvaneyck.ggengine.game.state.GameStateFilter;
 import com.gvaneyck.ggengine.game.ui.GGui;
+import com.gvaneyck.ggengine.game.util.AccessibleRandom;
+import com.gvaneyck.ggengine.server.GGException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -40,12 +42,12 @@ public class GameInstance {
     }
 
     public void addAction(int player, String name, List<Object> args) {
-        ActionRef actionRef = actions.get(name);
-        if (actionRef == null) {
-            System.err.println("No action found for " + name);
-        } else {
-            pendingActions.add(new ActionOption(player, actionRef, args));
+        if (!actions.containsKey(name)) {
+            throw new GGException("No action found for " + name);
         }
+
+        ActionRef actionRef = actions.get(name);
+        pendingActions.add(new ActionOption(player, actionRef, args));
     }
 
     public void resolveAllActions() {
@@ -82,8 +84,7 @@ public class GameInstance {
 
     public void startGame() {
         if (started) {
-            System.err.println("Tried to start an already started game");
-            return;
+            throw new GGException("Game has already been started");
         }
 
         game.init(this, gs);
@@ -94,8 +95,6 @@ public class GameInstance {
     }
 
     public Map<String, Object> getGameState(int player) {
-        Map<String, Object> gameState = gsf.filterGameState(gs, player);
-        gameState.put("me", player);
-        return gameState;
+        return gsf.filterGameState(gs, player);
     }
 }

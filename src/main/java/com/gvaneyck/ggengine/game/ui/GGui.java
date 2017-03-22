@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface GGui {
-    public void sendMessage(int player, String message);
-    public ActionOption resolveChoice(List<ActionOption> actions);
-    public void resolveEnd(Map data);
+    ActionOption resolveChoice(List<ActionOption> actions);
+    void sendMessage(int player, String message);
+    void resolveEnd(Map data);
 }

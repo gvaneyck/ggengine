@@ -11,16 +11,16 @@ public class ConsoleUI implements GGui {
 
     private Scanner in = new Scanner(System.in);
 
-    public void sendMessage(int player, String message) {
-        System.out.println("@" + player + " - " + message);
-    }
-
     public ActionOption resolveChoice(List<ActionOption> actions) {
         for (int i = 0; i < actions.size(); i++) {
             System.out.println(i + ") " + actions.get(i).toString());
         }
         int choice = in.nextInt();
         return actions.get(choice);
+    }
+
+    public void sendMessage(int player, String message) {
+        System.out.println("@" + player + " - " + message);
     }
 
     public void resolveEnd(Map data) {

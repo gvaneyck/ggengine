@@ -1,5 +1,6 @@
 package com.gvaneyck.ggengine.server.domain;
 
+import com.gvaneyck.ggengine.server.GameServer;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -18,6 +19,8 @@ public class GameRoom {
     String game;
     int minSize;
     int maxSize;
+
+    GameServer gameServer;
 
     public GameRoom(String name, String password, String game, int minSize, int maxSize) {
         this.name = name;

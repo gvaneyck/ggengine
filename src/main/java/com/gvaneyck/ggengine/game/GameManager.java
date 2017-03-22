@@ -7,6 +7,7 @@ import com.gvaneyck.ggengine.game.actions.InstanceMethodActionRef;
 import com.gvaneyck.ggengine.game.actions.StaticMethodActionRef;
 import com.gvaneyck.ggengine.game.state.GameStateFilter;
 import com.gvaneyck.ggengine.game.state.PublicGSF;
+import com.gvaneyck.ggengine.server.GGException;
 import groovy.lang.Closure;
 import groovy.lang.GroovyClassLoader;
 
@@ -62,14 +63,13 @@ public class GameManager {
         String sourcePath = dir + "/" + pkg;
         File sourceDir = new File(sourcePath);
         if (!sourceDir.exists() || !sourceDir.isDirectory()) {
-            System.err.println("Warning - Source directory does not exist: " + sourcePath);
-            return;
+            throw new GGException("Source directory does not exist: " + sourcePath);
         }
 
         loadClasses(pkg + ".", sourceDir);
 
         if (gameClass == null) {
-            System.err.println("Warning - No game class found: " + sourcePath);
+            throw new GGException("No game class found: " + sourcePath);
         }
     }
 
@@ -79,8 +79,7 @@ public class GameManager {
             String fileName = f.getName();
             if (f.isDirectory()) {
                 loadClasses(pkg + fileName + ".", f);
-            }
-            else {
+            } else {
                 if (fileName.endsWith(".groovy")) {
                     String clazz = fileName.substring(0, fileName.length() - 7);
                     loadClass(pkg, clazz);
@@ -138,12 +137,10 @@ public class GameManager {
                     actions.put(name, new ClosureActionRef(name, (Closure)fieldInstance));
                 }
             }
-        }
-        catch (ClassNotFoundException e) {
-            System.err.println("Found file named " + clazz + ".groovy, but it wasn't a class");
-        }
-        catch (Exception e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            throw new GGException("Found file named " + clazz + ".groovy, but it wasn't a class", e);
+        } catch (Exception e) {
+            throw new GGException("Error loading class " + pkg + "." + clazz, e);
         }
     }
 }

@@ -3,6 +3,7 @@ package com.gvaneyck.ggengine.game;
 import com.gvaneyck.ggengine.game.actions.ActionRef;
 import com.gvaneyck.ggengine.game.state.GameStateFilter;
 import com.gvaneyck.ggengine.game.ui.GGui;
+import com.gvaneyck.ggengine.server.GGException;
 
 import java.util.Map;
 
@@ -14,16 +15,10 @@ public class GameInstanceFactory {
         Class gsfClass = gameManager.getGsfClass();
         Map<String, ActionRef> actions = gameManager.getActions();
 
-        if (gameClass == null) {
-            System.err.println("Unable to find Game class for " + baseDir + "/" + game);
-            return null;
-        }
-
         try {
             return new GameInstance(ui, (Game)gameClass.newInstance(), (GameStateFilter)gsfClass.newInstance(), actions, initialGameState);
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            throw new GGException("Error creating GameInstance", null);
         }
     }
 

@@ -1,8 +1,10 @@
 package com.gvaneyck.ggengine.server.services;
 
-import com.gvaneyck.ggengine.server.domain.User;
+import com.gvaneyck.ggengine.server.GGException;
+import com.gvaneyck.ggengine.server.GameServer;
 import com.gvaneyck.ggengine.server.domain.GameRoom;
 import com.gvaneyck.ggengine.server.domain.LobbyRoom;
+import com.gvaneyck.ggengine.server.domain.User;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -86,6 +88,24 @@ public class RoomService {
     }
 
     public void startGame(User user, String name) {
+        GameRoom room = games.get(name);
+        if (room == null) {
+            throw new GGException("Room does not exist");
+        }
 
+        if (room.getGameServer() != null) {
+            throw new GGException("Game has already started");
+        }
+
+        if (room.getMinSize() > room.getUsers().size() || room.getMaxSize() < room.getUsers().size()) {
+            throw new GGException("Game does not have the right number of players");
+        }
+
+
+        GameServer gameServer = new GameServer(room);
+        room.setGameServer(gameServer);
+        for (User u : room.getUsers()) {
+            u.setGameServer(gameServer);
+        }
     }
 }

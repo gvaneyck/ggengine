@@ -36,23 +36,7 @@ public class GameCommands {
 
     @Command(ClientCommand.GAME_START)
     public void startGame(User user, ClientNameDto cmd) {
-        String name = args.get("name").toString();
-        if (name == null) {
-            return;
-        }
-
-        GameRoom room = (GameRoom)rooms.get("game").get(name);
-        if (room == null) {
-            return;
-        }
-
-        if (room.canStart()) {
-            GameServer gameServer = new GameServer(room);
-            room.setGameServer(gameServer);
-            for (User u : room.getUsers()) {
-                u.setGameServer(gameServer);
-            }
-        }
+        roomService.startGame(user, cmd.getName());
     }
 
     @Command(ClientCommand.PLAY_ACTION)

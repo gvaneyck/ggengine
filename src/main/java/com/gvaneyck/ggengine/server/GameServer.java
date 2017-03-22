@@ -21,14 +21,14 @@ import java.util.Map;
 
 @Getter
 @Setter
-public class GameServer implements Runnable, GGui {
+public class GameServer implements GGui {
 
     private String name;
     private String game;
     private GameInstance gameInstance;
     private final Thread gameThread;
 
-    private Map<String, Integer> playerNameToId;
+    private Map<User, Integer> playerToId;
     private Map<Integer, User> idToPlayer;
 
     private List<ActionOption> actionOptions;
@@ -42,24 +42,39 @@ public class GameServer implements Runnable, GGui {
 
         int i = 1;
         for (User user : room.getUsers()) {
-            playerNameToId.put(user.getName(), i);
+            playerToId.put(user, i);
             idToPlayer.put(i, user);
             i++;
         }
 
         done = false;
 
-        gameThread = new Thread(this);
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("players", playerToId.size());
+        gameInstance = GameInstanceFactory.getGameInstance("games", game, this, params);
+
+        StringBuilder threadName = new StringBuilder();
+        threadName.append("Game Server [");
+        threadName.append(game);
+        threadName.append("] |");
+        for (User user : idToPlayer.values()) {
+            threadName.append(' ');
+            threadName.append(user.getName());
+            threadName.append(" |");
+        }
+
+        gameThread = new Thread(() -> { gameInstance.startGame(); });
+        gameThread.setName(threadName.toString());
+        gameThread.setDaemon(true);
         gameThread.start();
     }
 
     public void doReconnect(User player) {
-        String playerName = player.getName();
-        if (!playerNameToId.containsKey(playerName)) {
+        if (!playerToId.containsKey(player)) {
             return;
         }
 
-        int playerId = playerNameToId.get(playerName);
+        int playerId = playerToId.get(player);
         idToPlayer.put(playerId, player);
         showChoicesToPlayer(playerId, player);
     }
@@ -80,7 +95,7 @@ public class GameServer implements Runnable, GGui {
     }
 
     public void setChoice(User player, String action, Object[] args) {
-        Integer playerId = playerNameToId.get(player.getName());
+        Integer playerId = playerToId.get(player);
         if (playerId == null) {
             return;
         }
@@ -101,17 +116,6 @@ public class GameServer implements Runnable, GGui {
     }
 
     @Override
-    public void sendMessage(int player, String message) {
-        User user = idToPlayer.get(player);
-        if (user == null) {
-            System.err.print("Invalid player ID " + player + " in game " + game);
-            return;
-        }
-
-        user.send(new ServerMessageDto("game", message, System.currentTimeMillis()));
-    }
-
-    @Override
     public ActionOption resolveChoice(List<ActionOption> actions) {
         synchronized (gameThread) {
             actionOptions = actions;
@@ -126,7 +130,7 @@ public class GameServer implements Runnable, GGui {
             }
 
             if (choice == null) {
-                System.err.println("resolveChoice was notified without a choice being specified");
+                throw new GGException("resolveChoice was notified without a choice being specified");
             }
 
             ActionOption choicePicked = choice;
@@ -137,19 +141,21 @@ public class GameServer implements Runnable, GGui {
     }
 
     @Override
+    public void sendMessage(int player, String message) {
+        if (!idToPlayer.containsKey(player)) {
+            throw new GGException("Invalid player ID " + player + " in game " + game);
+        }
+
+        User user = idToPlayer.get(player);
+        user.send(new ServerMessageDto("game", message, System.currentTimeMillis()));
+    }
+
+    @Override
     public void resolveEnd(Map data) {
         ServerEndDto cmd = new ServerEndDto("game", JSON.writeValueAsString(data), System.currentTimeMillis());
         for (User user : idToPlayer.values()) {
             user.send(cmd);
         }
         done = true;
-    }
-
-    @Override
-    public void run() {
-        Map<String, Object> params = new LinkedHashMap<>();
-        params.put("players", playerNameToId.size());
-        gameInstance = GameInstanceFactory.getGameInstance("games", game, this, params);
-        gameInstance.startGame();
     }
 }
