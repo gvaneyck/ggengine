@@ -55,7 +55,7 @@ Phaser.TextBox = function(game, x, y, width, text, options) {
         self._cursorInterval = setInterval(function() {
             self._cursor = !self._cursor;
             self.render();
-        }, 500)
+        }, 500);
     });
 };
 
@@ -161,5 +161,11 @@ Object.defineProperty(Phaser.TextBox.prototype, 'placeHolder', {
     },
     set: function(value) {
         this._canvasInput.placeHolder(value);
+    }
+});
+
+Object.defineProperty(Phaser.TextBox.prototype, 'onsubmit', {
+    set: function(value) {
+        this._canvasInput.onsubmit(value);
     }
 });
