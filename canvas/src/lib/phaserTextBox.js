@@ -1,7 +1,7 @@
 'use strict';
 
 Phaser.TextBox = function(game, x, y, width, text, options) {
-
+    // TODO: Properly handle scaling (see _res in Phaser.Text)
     x = x || 0;
     y = y || 0;
     width = width || 200;
@@ -64,9 +64,9 @@ Phaser.TextBox.prototype.constructor = Phaser.TextBox;
 
 Phaser.TextBox.prototype.destroy = function(destroyChildren) {
     // TODO: Make sure all canvases are returned to the pool
-    // TODO: Destroy CanvasInput
     // TODO: Make sure CanvasInput cleans up itself well (doesn't double destroy anything, cleans up events)
     this.texture.destroy(true);
+    this._canvasInput.destroy();
     Phaser.Component.Destroy.prototype.destroy.call(this, destroyChildren);
 };
 
@@ -90,239 +90,76 @@ Phaser.TextBox.prototype._renderCanvas = function(renderSession) {
 
 };
 
-// Object.defineProperty(Phaser.TextBox.prototype, 'text', {
-//
-//     get: function() {
-//         return this._text;
-//     },
-//
-//     set: function(value) {
-//
-//         if (value !== this._text)
-//         {
-//             this._text = value.toString() || '';
-//             this.dirty = true;
-//
-//             if (this.parent)
-//             {
-//                 this.updateTransform();
-//             }
-//         }
-//
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'cssFont', {
-//
-//     get: function() {
-//         return this.componentsToFont(this._fontComponents);
-//     },
-//
-//     set: function(value)
-//     {
-//         value = value || 'bold 20pt Arial';
-//         this._fontComponents = this.fontToComponents(value);
-//         this.updateFont(this._fontComponents);
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'font', {
-//
-//     get: function() {
-//         return this._fontComponents.fontFamily;
-//     },
-//
-//     set: function(value) {
-//
-//         value = value || 'Arial';
-//         value = value.trim();
-//
-//         // If it looks like the value should be quoted, but isn't, then quote it.
-//         if (!/^(?:inherit|serif|sans-serif|cursive|fantasy|monospace)$/.exec(value) && !/['",]/.exec(value))
-//         {
-//             value = "'" + value + "'";
-//         }
-//
-//         this._fontComponents.fontFamily = value;
-//         this.updateFont(this._fontComponents);
-//
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'fontSize', {
-//
-//     get: function() {
-//
-//         var size = this._fontComponents.fontSize;
-//
-//         if (size && /(?:^0$|px$)/.exec(size))
-//         {
-//             return parseInt(size, 10);
-//         }
-//         else
-//         {
-//             return size;
-//         }
-//
-//     },
-//
-//     set: function(value) {
-//
-//         value = value || '0';
-//
-//         if (typeof value === 'number')
-//         {
-//             value = value + 'px';
-//         }
-//
-//         this._fontComponents.fontSize = value;
-//         this.updateFont(this._fontComponents);
-//
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'fontWeight', {
-//
-//     get: function() {
-//         return this._fontComponents.fontWeight || 'normal';
-//     },
-//
-//     set: function(value) {
-//
-//         value = value || 'normal';
-//         this._fontComponents.fontWeight = value;
-//         this.updateFont(this._fontComponents);
-//
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'fontStyle', {
-//
-//     get: function() {
-//         return this._fontComponents.fontStyle || 'normal';
-//     },
-//
-//     set: function(value) {
-//
-//         value = value || 'normal';
-//         this._fontComponents.fontStyle = value;
-//         this.updateFont(this._fontComponents);
-//
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'fontVariant', {
-//
-//     get: function() {
-//         return this._fontComponents.fontVariant || 'normal';
-//     },
-//
-//     set: function(value) {
-//
-//         value = value || 'normal';
-//         this._fontComponents.fontVariant = value;
-//         this.updateFont(this._fontComponents);
-//
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'fill', {
-//
-//     get: function() {
-//         return this.style.fill;
-//     },
-//
-//     set: function(value) {
-//
-//         if (value !== this.style.fill)
-//         {
-//             this.style.fill = value;
-//             this.dirty = true;
-//         }
-//
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'align', {
-//
-//     get: function() {
-//         return this.style.align;
-//     },
-//
-//     set: function(value) {
-//
-//         if (value !== this.style.align)
-//         {
-//             this.style.align = value;
-//             this.dirty = true;
-//         }
-//
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'stroke', {
-//
-//     get: function() {
-//         return this.style.stroke;
-//     },
-//
-//     set: function(value) {
-//
-//         if (value !== this.style.stroke)
-//         {
-//             this.style.stroke = value;
-//             this.dirty = true;
-//         }
-//
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'strokeThickness', {
-//
-//     get: function() {
-//         return this.style.strokeThickness;
-//     },
-//
-//     set: function(value) {
-//
-//         if (value !== this.style.strokeThickness)
-//         {
-//             this.style.strokeThickness = value;
-//             this.dirty = true;
-//         }
-//
-//     }
-//
-// });
-//
-// Object.defineProperty(Phaser.TextBox.prototype, 'width', {
-//
-//     get: function() {
-//
-//         if (this.dirty)
-//         {
-//             this.updateText();
-//             this.dirty = false;
-//         }
-//
-//         return this.scale.x * (this.texture.frame.width / this.resolution);
-//     },
-//
-//     set: function(value) {
-//
-//         this.scale.x = value / this.texture.frame.width;
-//         this._width = value;
-//     }
-//
-// });
-//
+Object.defineProperty(Phaser.TextBox.prototype, 'text', {
+    get: function() {
+        return this._canvasInput.value();
+    },
+    set: function(value) {
+        this._canvasInput.value(value);
+    }
+});
+
+Object.defineProperty(Phaser.TextBox.prototype, 'width', {
+    get: function() {
+        return this._canvasInput.width() + this._padding * 2 + 2;
+    },
+    set: function(value) {
+        this._canvasInput.width(value - this._padding * 2 - 2);
+    }
+});
+
+Object.defineProperty(Phaser.TextBox.prototype, 'padding', {
+    get: function() {
+        return this._padding;
+    },
+    set: function(value) {
+        this._padding = value;
+        this._canvasInput.padding(value);
+        this._canvasInput.width(this._canvasInput.width() - this._padding * 2 - 2);
+    }
+});
+
+Object.defineProperty(Phaser.TextBox.prototype, 'fontSize', {
+    get: function() {
+        return this._canvasInput.fontSize();
+    },
+    set: function(value) {
+        this._canvasInput.fontSize(value);
+    }
+});
+
+Object.defineProperty(Phaser.TextBox.prototype, 'fontFamily', {
+    get: function() {
+        return this._canvasInput.fontFamily();
+    },
+    set: function(value) {
+        this._canvasInput.fontFamily(value);
+    }
+});
+
+Object.defineProperty(Phaser.TextBox.prototype, 'fontWeight', {
+    get: function() {
+        return this._canvasInput.fontWeight();
+    },
+    set: function(value) {
+        this._canvasInput.fontWeight(value);
+    }
+});
+
+Object.defineProperty(Phaser.TextBox.prototype, 'fontStyle', {
+    get: function() {
+        return this._canvasInput.fontStyle();
+    },
+    set: function(value) {
+        this._canvasInput.fontStyle(value);
+    }
+});
+
+Object.defineProperty(Phaser.TextBox.prototype, 'placeHolder', {
+    get: function() {
+        return this._canvasInput.placeHolder();
+    },
+    set: function(value) {
+        this._canvasInput.placeHolder(value);
+    }
+});
