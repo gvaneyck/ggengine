@@ -9,7 +9,7 @@ import java.util.Map;
 @Getter
 @Setter
 @AllArgsConstructor
-public class ServerGsDto {
+public class ServerGameStateDto {
     private final ServerCommand cmd = ServerCommand.GAME_STATE;
     private Map<String, Object> gs;
 }

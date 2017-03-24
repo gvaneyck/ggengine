@@ -7,7 +7,7 @@ import com.gvaneyck.ggengine.game.ui.GGui;
 import com.gvaneyck.ggengine.server.domain.GameRoom;
 import com.gvaneyck.ggengine.server.domain.User;
 import com.gvaneyck.ggengine.server.dto.server.ServerActionsDto;
-import com.gvaneyck.ggengine.server.dto.server.ServerGsDto;
+import com.gvaneyck.ggengine.server.dto.server.ServerGameStateDto;
 import com.gvaneyck.ggengine.server.dto.server.ServerMessageDto;
 import com.gvaneyck.ggengine.server.util.JSON;
 import lombok.Getter;
@@ -79,7 +79,7 @@ public class GameServer implements GGui {
     }
 
     private void showChoicesToPlayer(int playerId, User player) {
-        player.send(new ServerGsDto(gameInstance.getGameState(playerId)));
+        player.send(new ServerGameStateDto(gameInstance.getGameState(playerId)));
 
         List<ActionOption> playerOptions = new ArrayList<>();
         for (ActionOption actionOption : actionOptions) {

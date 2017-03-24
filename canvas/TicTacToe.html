@@ -4,11 +4,7 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title>TicTacToe</title>
-    <script src="reconnectingWebSocket.js"></script>
-    <script src="requestAnimationFrame.js"></script>
-    <script src="ggUI.js"></script>
-    <script src="ggLobby.js"></script>
-    <script src="TicTacToe.js"></script>
+    <script data-main="src/main" src="src/lib/require.js"></script>
     <style>
         html, body {
             width: 100%;
@@ -22,10 +18,6 @@
 </head>
 
 <body style="margin: 0">
-
-<canvas id="ticTacToeCanvas" width="640" height="480"></canvas>
-<script>setupLobby(document.getElementById('ticTacToeCanvas'), 'TicTacToe', gameStateHandler, actionHandler);</script>
-
 </body>
 
 </html>

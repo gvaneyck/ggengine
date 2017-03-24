@@ -28,8 +28,8 @@ public class User {
         this.gameRooms = Collections.synchronizedList(new ArrayList<>());
     }
 
-    public void sendMsg(String type, String room, Message msg) {
-        send(new ServerChatDto(type, room, msg.getFrom(), msg.getMessage(), msg.getTime()));
+    public void sendMessage(String type, String room, Message message) {
+        send(new ServerChatDto(type, room, message.getFrom(), message.getMessage(), message.getTime()));
     }
 
     public void send(Object data) {

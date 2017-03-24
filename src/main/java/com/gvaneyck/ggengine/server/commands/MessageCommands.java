@@ -10,8 +10,8 @@ public class MessageCommands {
 
     @Setter private MessageService messageService;
 
-    @Command(ClientCommand.SEND_MSG)
-    public void sendMsg(User user, ClientMessageDto cmd) {
+    @Command(ClientCommand.SEND_MESSAGE)
+    public void sendMessage(User user, ClientMessageDto cmd) {
         messageService.handleClientMessage(user, cmd.getType(), cmd.getTarget(), cmd.getMessage());
     }
 }

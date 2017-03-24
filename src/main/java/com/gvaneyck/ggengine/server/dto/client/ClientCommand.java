@@ -10,7 +10,7 @@ public enum ClientCommand {
     LOBBY_JOIN("startGame"),
     LOBBY_CREATE("startGame"),
     PLAY_ACTION("playAction"),
-    SEND_MSG("startGame"),
+    SEND_MESSAGE("startGame"),
     USER_LOGIN("login"),
     USER_LOGOUT("logout");
 
