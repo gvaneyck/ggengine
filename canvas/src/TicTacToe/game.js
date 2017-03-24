@@ -1,6 +1,6 @@
 'use strict';
 
-define([ 'phaser', 'CanvasInput', 'phaserTextBox' ], function (Phaser) {
+define([ 'phaser', 'phaserTextBox' ], function (Phaser) {
 
     function Game() {
     }
@@ -11,45 +11,31 @@ define([ 'phaser', 'CanvasInput', 'phaserTextBox' ], function (Phaser) {
         this.game.state.start('Game');
     };
 
+    Game.prototype.preload = function() {
+        this.game.load.image('button', 'assets/button.png');
+    };
+
     Game.prototype.create = function() {
-        // this.makeInput(20, 20, 400, 20);
-        this.game.world.add(new Phaser.TextBox(this.game, 20, 20, 200, 'foo', { placeHolder: 'bar' }));
+        this.game.stage.backgroundColor = '#ffffff';
 
-        var text = '- phaser -\n with a sprinkle of \n pixi dust.';
-        var style = { font: '65px Arial', fill: '#ff0044', align: 'center' };
-        this.game.add.text(this.game.world.centerX-300, 0, text, style);
+        this.username = this.game.world.add(new Phaser.TextBox(this.game, 100, 20, 200, '', { placeHolder: 'Username' }));
+        this.password = this.game.world.add(new Phaser.TextBox(this.game, 100, 60, 200, '', { placeHolder: 'Password' }));
+        this.password.onsubmit = this.login;
+
+        this.button = this.game.add.image(226, 100, 'button');
+        this.button.scale.setTo(0.03, 0.03);
+        this.button.inputEnabled = true;
+        this.button.input.useHandCursor = true;
+        this.button.events.onInputUp.add(this.login, this);
+
+        var style = { font: '14px Arial', fontWeight: 'bold' };
+        this.game.add.text(20, 23, 'Username', style);
+        this.game.add.text(20, 63, 'Password', style);
     };
 
-    Game.prototype.makeInput = function(x, y, width, fontSize) {
-        var padding =  Math.floor(fontSize / 4);
-        var height = fontSize + padding * 2 + 1;
-        var inputWidth = width - padding * 2 - 1;
-
-        var bitmap = this.game.add.bitmapData(width, height);
-        var sprite = this.game.add.sprite(x, y, bitmap);
-
-        sprite.canvasInput = new CanvasInput({
-            canvas: bitmap.canvas,
-            fontSize: fontSize,
-            fontFamily: 'Arial',
-            fontColor: '#212121',
-            width: inputWidth,
-            padding: padding,
-            borderWidth: 1,
-            borderColor: '#000',
-            borderRadius: 1,
-            boxShadow: '0px 0px 0px #fff',
-            innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
-            placeHolder: 'Enter message here...'
-        });
-        sprite.inputEnabled = true;
-        sprite.input.useHandCursor = true;
-        // myInput.events.onInputUp.add(function(sprite) { sprite.canvasInput.focus(); }, myInput);
-        sprite.events.onInputUp.add(this.inputFocus, sprite);
-    };
-
-    Game.prototype.inputFocus = function(sprite) {
-        sprite.canvasInput.focus();
+    Game.prototype.login = function() {
+        console.log(this.username.text);
+        console.log(this.password.text);
     };
 
     return Game;
